@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
@@ -11,6 +11,9 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
+  const supabaseServer = createServerComponentClient({ cookies });
+  const { data: { session } } = await supabaseServer.auth.getSession();
+
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -26,8 +29,12 @@ export default async function ProductPage({
     notFound();
   }
 
+  if (!session) {
+    redirect('/auth/login');
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-300 via-pink-200 to-blue-300 p-4">
       <div className="container mx-auto max-w-4xl">
         <Card className="p-6 bg-white/80 backdrop-blur-sm">
           <div className="grid md:grid-cols-2 gap-8">

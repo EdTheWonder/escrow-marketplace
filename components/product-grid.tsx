@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Product } from "@/types/index";
 import Image from "next/image";
 
-export default function ProductGrid({ products }: { products: Product[] }) {
+export default function ProductGrid({ products, isPublic = false }: { products: Product[], isPublic?: boolean }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {products.map((product) => (
@@ -30,7 +30,9 @@ export default function ProductGrid({ products }: { products: Product[] }) {
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold">${product.price}</span>
               <Button asChild>
-                <Link href={`/products/${product.id}`}>View Details</Link>
+                <Link href={isPublic ? "/auth/login" : `/products/${product.id}`}>
+                  {isPublic ? "Sign in to Buy" : "View Details"}
+                </Link>
               </Button>
             </div>
           </div>
