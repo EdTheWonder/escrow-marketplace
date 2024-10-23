@@ -33,7 +33,7 @@ export default function Login() {
       if (data.user) {
         toast.success("Logged in successfully!");
         // Force a router refresh before navigation
-        router.refresh();
+        
         router.push("/dashboard");
       }
     } catch (error: any) {
