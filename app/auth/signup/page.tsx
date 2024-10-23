@@ -42,8 +42,15 @@ export default function SignUp() {
 
         if (profileError) throw profileError;
 
-        toast.success("Account created successfully!");
-        window.location.href = '/dashboard';
+        // Wait for session to be established
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData.session) {
+          toast.success("Account created successfully!");
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error("Failed to establish session");
+        }
       }
     } catch (error: any) {
       toast.error(error.message);

@@ -31,9 +31,15 @@ export default function Login() {
       if (error) throw error;
 
       if (data.user) {
-        toast.success("Logged in successfully!");
-        // Use window.location for a full page refresh
-        window.location.href = '/dashboard';
+        // Wait for session to be established
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData.session) {
+          toast.success("Logged in successfully!");
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error("Failed to establish session");
+        }
       }
     } catch (error: any) {
       toast.error(error.message);
