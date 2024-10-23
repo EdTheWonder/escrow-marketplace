@@ -5,5 +5,11 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <GradientBackground>{children}</GradientBackground>;
+  return (
+    <GradientBackground>
+      <div className="container mx-auto px-4 py-4">
+        {children}
+      </div>
+    </GradientBackground>
+  );
 }

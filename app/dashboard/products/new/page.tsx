@@ -68,7 +68,14 @@ export default function NewProduct() {
         imageUrls.push(publicUrl);
       }
 
-      // Create product listing
+      // Log the image URLs after upload
+      console.log('Uploaded image URLs:', {
+        urls: imageUrls,
+        bucketPath: `${user.id}/${new Date().toISOString()}`,
+        fileTypes: images.map(f => f.type)
+      });
+
+      // Create product with logged URLs
       const { error: productError } = await supabase
         .from('products')
         .insert({
@@ -81,6 +88,13 @@ export default function NewProduct() {
         });
 
       if (productError) throw productError;
+
+      // Log the final product creation
+      console.log('Product created with images:', {
+        title: formData.title,
+        imageUrls,
+        timestamp: new Date().toISOString()
+      });
 
       toast.success("Product listed successfully!");
       router.push("/dashboard");

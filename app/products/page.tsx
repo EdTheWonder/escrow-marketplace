@@ -24,7 +24,7 @@ export default async function ProductsPage() {
             <Link href="/auth/login">Sign in to Purchase</Link>
           </Button>
         </div>
-        <ProductGrid products={products || []} isPublic />
+        <ProductGrid products={products || []} />
       </div>
     </div>
   );

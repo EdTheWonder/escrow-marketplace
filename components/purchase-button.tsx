@@ -82,9 +82,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
       <Button 
         onClick={handlePurchaseInit} 
         disabled={loading}
-        className="w-full"
+        size="sm"
       >
-        {loading ? "Processing..." : "Buy Now"}
+        {loading ? "Processing..." : "Buy"}
       </Button>
 
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
