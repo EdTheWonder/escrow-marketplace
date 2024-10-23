@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
@@ -26,18 +27,21 @@ export default async function ProductPage({
   }
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 p-4">
       <div className="container mx-auto max-w-4xl">
-        <Card className="p-6">
+        <Card className="p-6 bg-white/80 backdrop-blur-sm">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              {product.image_urls.map((url: string, index: number) => (
-                <img
-                  key={index}
-                  src={url}
-                  alt={`${product.title} - Image ${index + 1}`}
-                  className="w-full rounded-lg"
-                />
+              {product.image_urls && product.image_urls.map((url: string, index: number) => (
+                <div key={index} className="relative aspect-video">
+                  <Image
+                    src={url}
+                    alt={`${product.title} - Image ${index + 1}`}
+                    fill
+                    className="rounded-lg object-cover"
+                    priority={index === 0}
+                  />
+                </div>
               ))}
             </div>
             <div>

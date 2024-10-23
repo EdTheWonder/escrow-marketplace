@@ -10,6 +10,7 @@ import { Package, ShoppingBag, Wallet, LogOut, Plus, ShoppingCart } from "lucide
 import Link from "next/link";
 import ProductGrid from "@/components/product-grid";
 import { Product } from "@/types/index";
+import NavMenu from "@/components/nav-menu";
 
 interface UserProfile {
   id: string;
@@ -113,17 +114,12 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
+    <div className="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400">
+      <header className="bg-white/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">
-              {user.role === 'buyer' ? 'Buyer' : 'Seller'} Dashboard
-            </h1>
-            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm">
-              {user.role}
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold">
+            {user.role === 'buyer' ? 'Marketplace' : 'Your Products'}
+          </h1>
           <div className="flex items-center gap-4">
             {user.role === 'buyer' && (
               <Link href="/cart" className="relative">
@@ -135,10 +131,7 @@ export default function Dashboard() {
                 )}
               </Link>
             )}
-            <Button onClick={handleSignOut} variant="ghost">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <NavMenu role={user.role} />
           </div>
         </div>
       </header>
