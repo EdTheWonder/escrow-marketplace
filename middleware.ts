@@ -32,8 +32,18 @@ export async function middleware(req: NextRequest) {
 
     // Restrict seller-only routes
     if (
-      req.nextUrl.pathname.startsWith('/dashboard/products/new') &&
+      (req.nextUrl.pathname.startsWith('/dashboard/products/new') ||
+      req.nextUrl.pathname.startsWith('/products/new')) &&
       userRole !== 'seller'
+    ) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+
+    // Restrict buyer-only routes
+    if (
+      (req.nextUrl.pathname.startsWith('/cart') ||
+      req.nextUrl.pathname.startsWith('/products')) &&
+      userRole === 'seller'
     ) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }

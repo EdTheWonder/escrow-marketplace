@@ -9,12 +9,34 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 export default function NewProduct() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    price: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImages(Array.from(e.target.files));
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,10 +46,10 @@ export default function NewProduct() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const formData = new FormData(e.currentTarget);
-      const title = formData.get("title") as string;
-      const description = formData.get("description") as string;
-      const price = parseFloat(formData.get("price") as string);
+      // Validate form data
+      if (!formData.title || !formData.description || !formData.price || images.length === 0) {
+        throw new Error("Please fill all required fields and add at least one image");
+      }
 
       // Upload images
       const imageUrls = [];
@@ -51,9 +73,9 @@ export default function NewProduct() {
         .from('products')
         .insert({
           seller_id: user.id,
-          title,
-          description,
-          price,
+          title: formData.title,
+          description: formData.description,
+          price: parseFloat(formData.price),
           image_urls: imageUrls,
           status: 'available'
         });
@@ -80,6 +102,8 @@ export default function NewProduct() {
               <Input
                 id="title"
                 name="title"
+                value={formData.title}
+                onChange={handleInputChange}
                 required
                 placeholder="Product title"
               />
@@ -90,6 +114,8 @@ export default function NewProduct() {
               <Textarea
                 id="description"
                 name="description"
+                value={formData.description}
+                onChange={handleInputChange}
                 required
                 placeholder="Describe your product"
                 rows={4}
@@ -103,6 +129,8 @@ export default function NewProduct() {
                 name="price"
                 type="number"
                 step="0.01"
+                value={formData.price}
+                onChange={handleInputChange}
                 required
                 min="0"
                 placeholder="0.00"
@@ -118,11 +146,7 @@ export default function NewProduct() {
                     accept="image/*"
                     multiple
                     className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        setImages(Array.from(e.target.files));
-                      }
-                    }}
+                    onChange={handleImageChange}
                   />
                   <ImagePlus className="w-8 h-8 text-muted-foreground" />
                 </label>
@@ -133,6 +157,13 @@ export default function NewProduct() {
                       alt={`Preview ${index}`}
                       className="w-full h-full object-cover rounded-lg"
                     />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

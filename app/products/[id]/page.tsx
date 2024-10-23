@@ -32,7 +32,7 @@ export default async function ProductPage({
         <Card className="p-6">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              {product.image_urls.map((url, index) => (
+              {product.image_urls.map((url: string, index: number) => (
                 <img
                   key={index}
                   src={url}
@@ -53,4 +53,15 @@ export default async function ProductPage({
       </div>
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: products } = await supabase
+    .from('products')
+    .select('id');
+
+  return (products || []).map((product) => ({
+    id: product.id,
+  }));
 }

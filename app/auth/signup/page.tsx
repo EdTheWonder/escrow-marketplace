@@ -25,22 +25,38 @@ export default function SignUp() {
     const password = formData.get("password") as string;
 
     try {
+      // First check if user exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', email)
+        .eq('role', role)
+        .single();
+
+      if (existingUser) {
+        throw new Error(`You already have a ${role} account with this email`);
+      }
+
+      // Sign up user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { role },
-        },
       });
 
       if (error) throw error;
 
       if (data.user) {
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          role,
-          wallet_balance: 0,
-        });
+        // Create profile
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            email: email,
+            role,
+            wallet_balance: 0,
+          });
+
+        if (profileError) throw profileError;
 
         toast.success("Account created successfully!");
         router.push("/auth/login");

@@ -3,18 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  image_urls: string[];
-  seller_id: string;
-  profiles: {
-    email: string;
-  };
-}
+import { Product } from "@/types/index";
 
 export default function ProductGrid({ products }: { products: Product[] }) {
   return (
@@ -26,6 +15,9 @@ export default function ProductGrid({ products }: { products: Product[] }) {
               src={product.image_urls[0]}
               alt={product.title}
               className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image';
+              }}
             />
           </div>
           <div className="p-4">

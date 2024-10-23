@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Package, ShoppingBag, Wallet, LogOut } from "lucide-react";
+import { Package, ShoppingBag, Wallet, LogOut, Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import ProductGrid from "@/components/product-grid";
+import { Product } from "@/types/index";
 
 interface UserProfile {
   id: string;
@@ -19,12 +21,17 @@ interface UserProfile {
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     getUser();
-    getRecentTransactions();
-  }, []);
+    if (user?.role === 'seller') {
+      getSellerProducts();
+    } else {
+      getRecommendedProducts();
+    }
+  }, [user?.role]);
 
   async function getUser() {
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -39,23 +46,24 @@ export default function Dashboard() {
     }
   }
 
-  async function getRecentTransactions() {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          products:product_id (title, price),
-          buyers:buyer_id (email),
-          sellers:seller_id (email)
-        `)
-        .or(`buyer_id.eq.${authUser.id},seller_id.eq.${authUser.id}`)
-        .order('created_at', { ascending: false })
-        .limit(5);
+  async function getSellerProducts() {
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('seller_id', user?.id)
+      .order('created_at', { ascending: false });
+    
+    if (data) setProducts(data);
+  }
 
-      if (data) setRecentTransactions(data);
-    }
+  async function getRecommendedProducts() {
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'available')
+      .limit(6);
+    
+    if (data) setProducts(data);
   }
 
   async function handleSignOut() {
@@ -70,16 +78,36 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <Button onClick={handleSignOut} variant="ghost">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">
+              {user.role === 'buyer' ? 'Buyer' : 'Seller'} Dashboard
+            </h1>
+            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm">
+              {user.role}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            {user.role === 'buyer' && (
+              <Link href="/cart" className="relative">
+                <ShoppingCart className="w-6 h-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
+            <Button onClick={handleSignOut} variant="ghost">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        {/* Shared Stats Section */}
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card className="p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -114,80 +142,47 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Buyer View */}
-          {user.role === 'buyer' && (
-            <>
+        {/* Role-specific Content */}
+        {user.role === 'buyer' ? (
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-                <div className="space-y-4">
-                  <Button asChild className="w-full">
-                    <Link href="/products">Browse Products</Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href="/dashboard/transactions">View Purchases</Link>
-                  </Button>
-                </div>
+                <h2 className="text-xl font-semibold mb-4">Recent Purchases</h2>
+                <Link href="/dashboard/transactions" className="text-primary hover:underline">
+                  View All Transactions
+                </Link>
               </Card>
-            </>
-          )}
-
-          {/* Seller View */}
-          {user.role === 'seller' && (
-            <>
               <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Seller Actions</h2>
-                <div className="space-y-4">
-                  <Button asChild className="w-full">
-                    <Link href="/dashboard/products/new">Create New Listing</Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href="/dashboard/transactions">View Sales</Link>
-                  </Button>
-                </div>
+                <h2 className="text-xl font-semibold mb-4">Shopping Cart</h2>
+                <Link href="/cart" className="text-primary hover:underline">
+                  View Cart ({cartCount} items)
+                </Link>
               </Card>
-            </>
-          )}
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-            <div className="space-y-4">
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction: any) => (
-                  <div
-                    key={transaction.id}
-                    className="flex justify-between items-center p-3 bg-muted rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{transaction.products.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        ${transaction.products.price}
-                      </p>
-                    </div>
-                    <span
-                      className="px-2 py-1 text-xs rounded-full"
-                      style={{
-                        backgroundColor:
-                          transaction.status === 'completed'
-                            ? 'var(--success)'
-                            : transaction.status === 'in_escrow'
-                            ? 'var(--warning)'
-                            : 'var(--muted)',
-                        color: 'white',
-                      }}
-                    >
-                      {transaction.status}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  No recent transactions
-                </p>
-              )}
             </div>
-          </Card>
-        </div>
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Recommended Products</h2>
+                <Button asChild>
+                  <Link href="/products">Browse All Products</Link>
+                </Button>
+              </div>
+              <ProductGrid products={products} />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Your Products</h2>
+              <Button asChild>
+                <Link href="/dashboard/products/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Product
+                </Link>
+              </Button>
+            </div>
+            <ProductGrid products={products} />
+          </div>
+        )}
       </main>
     </div>
   );
