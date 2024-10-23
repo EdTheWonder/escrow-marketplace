@@ -23,7 +23,6 @@ export default function SignUp() {
     const password = formData.get("password") as string;
 
     try {
-      // Sign up user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -32,21 +31,23 @@ export default function SignUp() {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: data.user.id,
             email: email,
-            role: 'buyer', // Default role is buyer
+            role: 'buyer',
             wallet_balance: 0,
           });
 
         if (profileError) throw profileError;
 
         toast.success("Account created successfully!");
-        router.refresh();
-        router.replace('/dashboard');
+        
+        // Wait a brief moment for the session to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       toast.error(error.message);

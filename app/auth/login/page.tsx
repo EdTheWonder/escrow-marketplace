@@ -31,16 +31,12 @@ export default function Login() {
       if (error) throw error;
 
       if (data.user) {
-        // Get user profile to check role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
         toast.success("Logged in successfully!");
-        router.refresh();
-        router.replace('/dashboard');
+        
+        // Wait a brief moment for the session to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       toast.error(error.message);
