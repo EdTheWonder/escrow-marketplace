@@ -27,6 +27,20 @@ export async function POST(request: Request) {
         .update({ status: 'in_escrow' })
         .eq('payment_reference', reference);
 
+      // Update product status
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('product_id')
+        .eq('payment_reference', reference)
+        .single();
+
+      if (transaction) {
+        await supabase
+          .from('products')
+          .update({ status: 'pending' })
+          .eq('id', transaction.product_id);
+      }
+
       return NextResponse.json({ success: true });
     }
 
@@ -41,4 +55,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

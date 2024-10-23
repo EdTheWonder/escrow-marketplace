@@ -23,13 +23,18 @@ export default function Dashboard() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const [purchases, setPurchases] = useState<Product[]>([]);
+  const [earnings, setEarnings] = useState(0);
 
   useEffect(() => {
     getUser();
+  }, []);
+
+  useEffect(() => {
     if (user?.role === 'seller') {
-      getSellerProducts();
-    } else {
-      getRecommendedProducts();
+      getSellerData();
+    } else if (user?.role === 'buyer') {
+      getBuyerData();
     }
   }, [user?.role]);
 
@@ -46,24 +51,57 @@ export default function Dashboard() {
     }
   }
 
-  async function getSellerProducts() {
-    const { data } = await supabase
+  async function getSellerData() {
+    if (!user) return;
+
+    // Get seller's products
+    const { data: productsData } = await supabase
       .from('products')
       .select('*')
-      .eq('seller_id', user?.id)
+      .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
     
-    if (data) setProducts(data);
+    if (productsData) setProducts(productsData);
+
+    // Calculate earnings from completed transactions
+    const { data: transactionsData } = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('seller_id', user.id)
+      .eq('status', 'completed');
+
+    if (transactionsData) {
+      const total = transactionsData.reduce((sum, t) => sum + t.amount, 0);
+      setEarnings(total);
+    }
   }
 
-  async function getRecommendedProducts() {
-    const { data } = await supabase
-      .from('products')
+  async function getBuyerData() {
+    if (!user) return;
+
+    // Get buyer's purchases and recommended products
+    const [purchasesResponse, recommendedResponse] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*, transactions!inner(*)')
+        .eq('transactions.buyer_id', user.id),
+      supabase
+        .from('products')
+        .select('*')
+        .eq('status', 'available')
+        .limit(6)
+    ]);
+
+    if (purchasesResponse.data) setPurchases(purchasesResponse.data);
+    if (recommendedResponse.data) setProducts(recommendedResponse.data);
+
+    // Get cart count
+    const { data: cartData } = await supabase
+      .from('cart')
       .select('*')
-      .eq('status', 'available')
-      .limit(6);
+      .eq('user_id', user.id);
     
-    if (data) setProducts(data);
+    setCartCount(cartData?.length || 0);
   }
 
   async function handleSignOut() {

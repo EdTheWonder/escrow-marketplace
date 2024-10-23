@@ -61,19 +61,11 @@ export default function PurchaseButton({ product }: { product: Product }) {
           buyer_id: user.id,
           seller_id: product.seller_id,
           amount: product.price,
-          status: 'in_escrow',
+          status: 'pending',
           payment_reference: reference
         });
 
       if (transactionError) throw transactionError;
-
-      // Update product status
-      const { error: productError } = await supabase
-        .from('products')
-        .update({ status: 'pending' })
-        .eq('id', product.id);
-
-      if (productError) throw productError;
 
       toast.success("Purchase successful! Check your dashboard for status.");
       router.push("/dashboard");

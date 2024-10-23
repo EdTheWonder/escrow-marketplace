@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { initializePayment } from '@/lib/mono';
 import { toast } from "sonner";
 
 interface MonoPaymentProps {
@@ -12,7 +13,7 @@ interface MonoPaymentProps {
 
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
   useEffect(() => {
-    // Initialize Mono Connect
+    // Load Mono Connect script
     const script = document.createElement('script');
     script.src = "https://connect.mono.co/connect.js";
     script.async = true;
@@ -23,27 +24,38 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
     };
   }, []);
 
-  const handlePayment = () => {
-    const MonoConnect = (window as any).MonoConnect;
-    
-    const monoInstance = new MonoConnect({
-      key: process.env.NEXT_PUBLIC_MONO_TEST_PUBLIC_KEY,
-      onClose: () => onClose(),
-      onSuccess: ({ reference }: { reference: string }) => {
-        onSuccess(reference);
-      },
-    });
+  async function handlePayment() {
+    try {
+      // Initialize payment
+      const paymentData = await initializePayment(amount);
+      
+      // Launch Mono Connect
+      const MonoConnect = (window as any).Connect;
+      const monoInstance = new MonoConnect({
+        key: process.env.NEXT_PUBLIC_MONO_TEST_PUBLIC_KEY,
+        reference: paymentData.reference,
+        onClose: () => {
+          onClose();
+        },
+        onSuccess: (response: any) => {
+          onSuccess(paymentData.reference);
+        },
+      });
 
-    monoInstance.open();
-  };
+      monoInstance.open();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
 
   return (
-    <Button 
-      onClick={handlePayment}
-      className="w-full"
-    >
-      Pay ${amount}
-    </Button>
+    <div className="p-4">
+      <p className="text-lg font-semibold mb-4">
+        Amount to Pay: ${amount}
+      </p>
+      <Button onClick={handlePayment} className="w-full">
+        Pay Now
+      </Button>
+    </div>
   );
 }
-
