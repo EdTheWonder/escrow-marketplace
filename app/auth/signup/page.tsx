@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -14,7 +13,6 @@ import Link from "next/link";
 export default function SignUp() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState("buyer");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,18 +23,6 @@ export default function SignUp() {
     const password = formData.get("password") as string;
 
     try {
-      // First check if user exists
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('email', email)
-        .eq('role', role)
-        .single();
-
-      if (existingUser) {
-        throw new Error(`You already have a ${role} account with this email`);
-      }
-
       // Sign up user
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -52,14 +38,14 @@ export default function SignUp() {
           .insert({
             id: data.user.id,
             email: email,
-            role,
+            role: 'buyer', // Default role is buyer
             wallet_balance: 0,
           });
 
         if (profileError) throw profileError;
 
         toast.success("Account created successfully!");
-        router.push("/auth/login");
+        router.push("/dashboard");
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -92,23 +78,6 @@ export default function SignUp() {
               required
               placeholder="Create a password"
             />
-          </div>
-          <div className="space-y-2">
-            <Label>Account Type</Label>
-            <RadioGroup
-              defaultValue="buyer"
-              onValueChange={setRole}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="buyer" id="buyer" />
-                <Label htmlFor="buyer">Buyer</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="seller" id="seller" />
-                <Label htmlFor="seller">Seller</Label>
-              </div>
-            </RadioGroup>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating Account..." : "Sign Up"}
