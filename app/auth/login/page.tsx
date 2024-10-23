@@ -32,10 +32,7 @@ export default function Login() {
 
       if (data.user) {
         toast.success("Logged in successfully!");
-        
-        // Wait a brief moment for the session to be fully established
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        // Use window.location for a full page refresh
         window.location.href = '/dashboard';
       }
     } catch (error: any) {

@@ -43,10 +43,6 @@ export default function SignUp() {
         if (profileError) throw profileError;
 
         toast.success("Account created successfully!");
-        
-        // Wait a brief moment for the session to be fully established
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
         window.location.href = '/dashboard';
       }
     } catch (error: any) {
