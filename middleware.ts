@@ -25,6 +25,8 @@ export async function middleware(req: NextRequest) {
       }
     }
 
+    // Commenting out all redirects for debugging
+    /*
     // Protect dashboard routes
     if (req.nextUrl.pathname.startsWith('/dashboard')) {
       if (!session) {
@@ -58,10 +60,10 @@ export async function middleware(req: NextRequest) {
     ) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
+    */
 
     return res;
   } catch (e) {
-    // If there's an error, allow the request to continue
     return NextResponse.next();
   }
 }
