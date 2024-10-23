@@ -1,14 +1,13 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Escrow Marketplace',
-  description: 'Secure marketplace with escrow payments',
+  title: "EscrowMarket",
+  description: "Secure marketplace with escrow protection",
 };
 
 export default function RootLayout({
@@ -17,17 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <div className="min-h-screen bg-gradient-to-br from-yellow-300 via-pink-200 to-blue-300 animate-gradient-xy">
           {children}
-          <Toaster />
-        </ThemeProvider>
+        </div>
+        <Toaster />
       </body>
     </html>
   );

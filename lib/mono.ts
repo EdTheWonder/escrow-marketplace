@@ -1,5 +1,5 @@
 const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_TEST_PUBLIC_KEY!;
-const MONO_SECRET_KEY = process.env.MONO_TEST_SECRET_KEY!;
+const MONO_SECRET_KEY = process.env.NEXT_PUBLIC_MONO_TEST_SECRET_KEY!;
 
 export async function initializePayment(amount: number) {
   try {

@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { initializePayment } from '@/lib/mono';
 import { toast } from "sonner";
+import Script from 'next/script';
 
 interface MonoPaymentProps {
   amount: number;
@@ -13,49 +13,46 @@ interface MonoPaymentProps {
 
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
   useEffect(() => {
-    // Load Mono Connect script
-    const script = document.createElement('script');
-    script.src = "https://connect.mono.co/connect.js";
-    script.async = true;
-    document.body.appendChild(script);
+    // @ts-ignore
+    const monoInstance = new window.MonoPay({
+      key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
+      onClose: () => onClose(),
+      onSuccess: (response: any) => {
+        onSuccess(response.reference);
+      },
+    });
 
     return () => {
-      document.body.removeChild(script);
+      monoInstance.close();
     };
-  }, []);
+  }, [onClose, onSuccess]);
 
-  async function handlePayment() {
-    try {
-      // Initialize payment
-      const paymentData = await initializePayment(amount);
-      
-      // Launch Mono Connect
-      const MonoConnect = (window as any).Connect;
-      const monoInstance = new MonoConnect({
-        key: process.env.NEXT_PUBLIC_MONO_TEST_PUBLIC_KEY,
-        reference: paymentData.reference,
-        onClose: () => {
-          onClose();
-        },
-        onSuccess: (response: any) => {
-          onSuccess(paymentData.reference);
-        },
-      });
-
-      monoInstance.open();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+  function handlePayment(event: React.MouseEvent<HTMLButtonElement>): void {
+    // @ts-ignore
+    const monoInstance = new window.MonoPay({
+      key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
+      onClose: () => onClose(),
+      onSuccess: (response: any) => {
+        onSuccess(response.reference);
+      },
+    });
+    monoInstance.open();
   }
 
   return (
-    <div className="p-4">
-      <p className="text-lg font-semibold mb-4">
-        Amount to Pay: ${amount}
-      </p>
-      <Button onClick={handlePayment} className="w-full">
-        Pay Now
-      </Button>
-    </div>
+    <>
+      <Script 
+        src="https://js.mono.co/v1/mono.min.js"
+        strategy="beforeInteractive"
+      />
+      <div className="p-4">
+        <p className="text-lg font-semibold mb-4">
+          Amount to Pay: ${amount}
+        </p>
+        <Button onClick={handlePayment} className="w-full">
+          Pay with Mono
+        </Button>
+      </div>
+    </>
   );
 }

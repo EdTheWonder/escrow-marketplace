@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
+import GradientBackground from "@/components/ui/gradient-background";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
@@ -11,9 +12,6 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
-  const supabaseServer = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabaseServer.auth.getSession();
-
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -29,13 +27,9 @@ export default async function ProductPage({
     notFound();
   }
 
-  if (!session) {
-    redirect('/auth/login');
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-300 via-pink-200 to-blue-300 p-4">
-      <div className="container mx-auto max-w-4xl">
+    <GradientBackground>
+      <div className="container mx-auto max-w-4xl p-4">
         <Card className="p-6 bg-white/80 backdrop-blur-sm">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
@@ -61,7 +55,7 @@ export default async function ProductPage({
           </div>
         </Card>
       </div>
-    </div>
+    </GradientBackground>
   );
 }
 

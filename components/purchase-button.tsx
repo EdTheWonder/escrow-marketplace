@@ -61,7 +61,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           buyer_id: user.id,
           seller_id: product.seller_id,
           amount: product.price,
-          status: 'pending',
+          status: 'in_escrow',
           payment_reference: reference
         });
 
