@@ -45,9 +45,8 @@ export default function SignUp() {
         if (profileError) throw profileError;
 
         toast.success("Account created successfully!");
-        // Force a router refresh before navigation
-        
-        router.push("/dashboard");
+        router.refresh();
+        router.replace('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message);

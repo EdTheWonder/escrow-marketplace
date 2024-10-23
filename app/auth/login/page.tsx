@@ -31,10 +31,16 @@ export default function Login() {
       if (error) throw error;
 
       if (data.user) {
+        // Get user profile to check role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
         toast.success("Logged in successfully!");
-        // Force a router refresh before navigation
-        
-        router.push("/dashboard");
+        router.refresh();
+        router.replace('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message);
