@@ -1,10 +1,7 @@
 import ProductGrid from "@/components/product-grid";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { supabase } from "@/lib/supabase";
 
 export default async function ProductsPage() {
-  const supabase = createServerComponentClient({ cookies });
-  
   const { data: products } = await supabase
     .from('products')
     .select(`

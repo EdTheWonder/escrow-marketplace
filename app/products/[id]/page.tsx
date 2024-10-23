@@ -1,16 +1,15 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 export default async function ProductPage({
   params: { id },
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerComponentClient({ cookies });
-
   const { data: product } = await supabase
     .from('products')
     .select(`
