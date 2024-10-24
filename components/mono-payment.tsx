@@ -12,10 +12,12 @@ interface MonoPaymentProps {
 
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   async function handlePayment() {
     try {
-      const response = await fetch('/api/mono/initialize', {
+      setLoading(true);
+      const response = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,20 +26,25 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
       });
 
       const data = await response.json();
-      if (!data.id) throw new Error('Failed to initialize payment');
+      if (!data.success) throw new Error(data.error || 'Payment initialization failed');
 
       const monoInstance = new (window as any).MonoPay({
         key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
         reference: data.reference,
-        onClose: () => onClose(),
+        onClose: () => {
+          setLoading(false);
+          onClose();
+        },
         onSuccess: (response: { reference: string }) => {
-          onSuccess(response.reference);
+          onSuccess(data.reference);
         },
       });
       
+      monoInstance.setup();
       monoInstance.open();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment initialization failed:', error);
+      setLoading(false);
     }
   }
 
@@ -54,8 +61,9 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
         <Button 
           onClick={handlePayment} 
           className="w-full"
+          disabled={loading || !isScriptLoaded}
         >
-          Pay with Mono
+          {loading ? "Initializing..." : "Pay with Mono"}
         </Button>
       </div>
     </>

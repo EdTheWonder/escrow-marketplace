@@ -17,7 +17,7 @@ export default function BuyerDashboard({ purchases, walletBalance }: BuyerDashbo
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="p-6">
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border border-white/20">
           <div className="flex items-center gap-4">
             <ShoppingBag className="w-8 h-8 text-primary" />
             <div>
@@ -26,7 +26,7 @@ export default function BuyerDashboard({ purchases, walletBalance }: BuyerDashbo
             </div>
           </div>
         </Card>
-        <Card className="p-6">
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border border-white/20">
           <div className="flex items-center gap-4">
             <Wallet className="w-8 h-8 text-primary" />
             <div>
