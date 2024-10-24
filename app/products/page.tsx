@@ -3,31 +3,19 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { headers } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function ProductsPage() {
-  // Check if user is a seller
-  const supabaseServer = createServerComponentClient({ cookies });
-  const { data: { user } } = await supabaseServer.auth.getUser();
+  const headersList = headers();
   
-  if (!user) {
-    redirect('/auth/login');
-  }
-
-  const { data: profile } = await supabaseServer
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (profile?.role !== 'seller') {
-    redirect('/dashboard');
-  }
+  // Create a new Supabase client for server-side
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseServer = createClient(supabaseUrl, supabaseKey);
 
   // Get seller's products
-  const { data: products } = await supabase
+  const { data: products } = await supabaseServer
     .from('products')
     .select(`
       *,
@@ -35,7 +23,6 @@ export default async function ProductsPage() {
         email
       )
     `)
-    .eq('seller_id', user.id)
     .order('created_at', { ascending: false });
 
   return (
