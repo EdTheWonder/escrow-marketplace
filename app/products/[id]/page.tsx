@@ -1,4 +1,5 @@
-import { createServerSupabase } from "@/lib/supabase-server";
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
@@ -10,7 +11,7 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerSupabase({}); // Fix: Added empty object as argument
+  const supabase = createServerComponentClient({ cookies });
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -59,7 +60,7 @@ export default async function ProductPage({
 }
 
 export async function generateStaticParams() {
-  const supabase = createServerSupabase({});
+  const supabase = createServerComponentClient({ cookies });
   const { data: products } = await supabase
     .from('products')
     .select('id');

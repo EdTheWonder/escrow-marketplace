@@ -1,10 +1,11 @@
 import ProductGrid from "@/components/product-grid";
-import { createServerSupabase } from "@/lib/supabase-server";
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 
 export default async function FeedPage() {
-  const supabase = createServerSupabase({});
+  const supabase = createServerComponentClient({ cookies });
   const { data: products } = await supabase
     .from('products')
     .select(`
