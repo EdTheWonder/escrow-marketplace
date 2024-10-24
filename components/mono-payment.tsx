@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import Script from 'next/script';
 
 interface MonoPaymentProps {
@@ -12,30 +11,21 @@ interface MonoPaymentProps {
 }
 
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
-  useEffect(() => {
-    // @ts-ignore
-    const monoInstance = new window.MonoPay({
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  function handlePayment() {
+    if (!isScriptLoaded || !(window as any).MonoPay) {
+      console.error('Mono script not loaded');
+      return;
+    }
+
+    const monoInstance = new (window as any).MonoPay({
       key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
       onClose: () => onClose(),
-      onSuccess: (response: any) => {
+      onSuccess: (response: { reference: string }) => {
         onSuccess(response.reference);
       },
     });
-
-    return () => {
-      monoInstance.close();
-    };
-  }, [onClose, onSuccess]);
-
-  function handlePayment(event: React.MouseEvent<HTMLButtonElement>): void {
-    // @ts-ignore
-    const monoInstance = new window.MonoPay({
-      key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
-      onClose: () => onClose(),
-      onSuccess: (response: any) => {
-        onSuccess(response.reference);
-      },
-    });
+    
     monoInstance.open();
   }
 
@@ -43,13 +33,13 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
     <>
       <Script 
         src="https://js.mono.co/v1/mono.min.js"
-        strategy="beforeInteractive"
+        onLoad={() => setIsScriptLoaded(true)}
       />
       <div className="p-4">
         <p className="text-lg font-semibold mb-4">
           Amount to Pay: ${amount}
         </p>
-        <Button onClick={handlePayment} className="w-full">
+        <Button onClick={handlePayment} className="w-full" disabled={!isScriptLoaded}>
           Pay with Mono
         </Button>
       </div>

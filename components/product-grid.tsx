@@ -10,21 +10,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import PurchaseButton from "./purchase-button";
-import { useState } from "react";
 
 interface ProductGridProps {
   products: Product[];
 }
 
 export default function ProductGrid({ products }: ProductGridProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {products.map((product) => (
         <Dialog key={product.id}>
           <Card className="overflow-hidden">
-            {product.image_urls && (
+            {product.image_urls && product.image_urls[0] && (
               <div className="relative h-48 w-full">
                 <Image
                   src={product.image_urls[0]}
@@ -40,7 +37,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
                 ${product.price}
               </p>
               <DialogTrigger asChild>
-                <Button className="w-full mt-4" onClick={() => setSelectedProduct(product)}>
+                <Button className="w-full mt-4">
                   View Details
                 </Button>
               </DialogTrigger>
@@ -48,7 +45,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
           </Card>
           <DialogContent>
             <div className="space-y-4">
-              {product.image_urls && (
+              {product.image_urls && product.image_urls[0] && (
                 <div className="relative h-64 w-full">
                   <Image
                     src={product.image_urls[0]}
