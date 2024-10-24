@@ -10,7 +10,7 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerSupabase();
+  const supabase = createServerSupabase({}); // Fix: Added empty object as argument
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -59,7 +59,7 @@ export default async function ProductPage({
 }
 
 export async function generateStaticParams() {
-  const supabase = createServerSupabase();
+  const supabase = createServerSupabase({});
   const { data: products } = await supabase
     .from('products')
     .select('id');

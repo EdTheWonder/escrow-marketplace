@@ -3,8 +3,8 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 
-export default async function FeedPage() {
-  const supabase = createServerSupabase();
+export async function getServerSideProps(context: any) {
+  const supabase = createServerSupabase(context);
   const { data: products } = await supabase
     .from('products')
     .select(`
@@ -16,6 +16,18 @@ export default async function FeedPage() {
     .eq('status', 'available')
     .order('created_at', { ascending: false });
 
+  return {
+    props: {
+      products: products || [],
+    },
+  };
+}
+
+interface FeedPageProps {
+  products: any[];
+}
+
+export default function FeedPage({ products }: FeedPageProps) {
   return (
     <div className="min-h-screen">
       <GradientBackground>
@@ -30,7 +42,7 @@ export default async function FeedPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <ProductGrid products={products || []} />
+            <ProductGrid products={products} />
           </div>
         </div>
       </GradientBackground>
