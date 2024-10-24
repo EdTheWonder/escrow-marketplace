@@ -12,18 +12,12 @@ export default async function ProductsPage() {
         email
       )
     `)
-    .eq('status', 'available')
     .order('created_at', { ascending: false });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-300 via-pink-200 to-blue-300 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 p-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Available Products</h1>
-          <Button asChild>
-            <Link href="/auth/login">Sign in to Purchase</Link>
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold mb-8">Latest Products</h1>
         <ProductGrid products={products || []} />
       </div>
     </div>

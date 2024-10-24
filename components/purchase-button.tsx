@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import MonoPayment from "@/components/mono-payment";
+import PaystackPayment from "@/components/paystack-payment";
 
 interface Product {
   id: string;
@@ -92,7 +92,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           <DialogHeader>
             <DialogTitle>Complete Purchase</DialogTitle>
           </DialogHeader>
-          <MonoPayment
+          <PaystackPayment
             amount={product.price}
             onSuccess={handlePaymentSuccess}
             onClose={() => setShowPayment(false)}
