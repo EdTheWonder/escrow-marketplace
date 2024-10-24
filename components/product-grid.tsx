@@ -19,10 +19,10 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products }: ProductGridProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <>
       {products.map((product) => (
         <Dialog key={product.id}>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
             {product.image_urls && product.image_urls[0] && (
               <div className="relative aspect-video">
                 <Image
@@ -35,20 +35,24 @@ export default function ProductGrid({ products }: ProductGridProps) {
               </div>
             )}
             <div className="p-4">
-              <h3 className="font-semibold">{product.title}</h3>
+              <h3 className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                {product.title}
+              </h3>
               <p className="text-sm text-muted-foreground mt-1">
                 ${product.price}
               </p>
               <DialogTrigger asChild>
-                <Button className="w-full mt-4">
+                <Button className="w-full mt-4 bg-primary/80 backdrop-blur-sm hover:bg-primary/90">
                   View Details
                 </Button>
               </DialogTrigger>
             </div>
           </Card>
-          <DialogContent>
+          <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20">
             <DialogHeader>
-              <DialogTitle>{product.title}</DialogTitle>
+              <DialogTitle className="text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                {product.title}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {product.image_urls && product.image_urls[0] && (
@@ -64,13 +68,15 @@ export default function ProductGrid({ products }: ProductGridProps) {
               )}
               <p className="text-muted-foreground">{product.description}</p>
               <div className="flex justify-between items-center">
-                <p className="text-xl font-bold">${product.price}</p>
+                <p className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  ${product.price}
+                </p>
                 <PurchaseButton product={product} />
               </div>
             </div>
           </DialogContent>
         </Dialog>
       ))}
-    </div>
+    </>
   );
 }

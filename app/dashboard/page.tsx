@@ -139,13 +139,14 @@ export default function Dashboard() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-          {/* Shared Stats Section */}
           <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <Card className="p-6">
+            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Role</p>
-                  <p className="text-2xl font-bold capitalize">{user.role}</p>
+                  <p className="text-2xl font-bold capitalize bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    {user.role}
+                  </p>
                 </div>
                 {user.role === 'buyer' ? (
                   <ShoppingBag className="w-8 h-8 text-primary" />
@@ -155,20 +156,24 @@ export default function Dashboard() {
               </div>
             </Card>
 
-            <Card className="p-6">
+            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Email</p>
-                  <p className="text-2xl font-bold">{user.email}</p>
+                  <p className="text-2xl font-bold truncate bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    {user.email}
+                  </p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6">
+            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Wallet Balance</p>
-                  <p className="text-2xl font-bold">${user.wallet_balance}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    ${user.wallet_balance}
+                  </p>
                 </div>
                 <Wallet className="w-8 h-8 text-primary" />
               </div>
