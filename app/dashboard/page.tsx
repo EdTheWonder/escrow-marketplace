@@ -80,8 +80,8 @@ export default function Dashboard() {
   async function getBuyerData() {
     if (!user) return;
 
-    // Get buyer's purchases and recommended products
-    const [purchasesResponse, recommendedResponse] = await Promise.all([
+    // Get buyer's purchases and feed products
+    const [purchasesResponse, feedResponse] = await Promise.all([
       supabase
         .from('products')
         .select('*, transactions!inner(*)')
@@ -90,11 +90,11 @@ export default function Dashboard() {
         .from('products')
         .select('*')
         .eq('status', 'available')
-        .limit(6)
+        .order('created_at', { ascending: false })
     ]);
 
     if (purchasesResponse.data) setPurchases(purchasesResponse.data);
-    if (recommendedResponse.data) setProducts(recommendedResponse.data);
+    if (feedResponse.data) setProducts(feedResponse.data);
 
     // Get cart count
     const { data: cartData } = await supabase

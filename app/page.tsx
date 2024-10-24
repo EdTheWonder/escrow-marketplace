@@ -5,7 +5,7 @@ import { Package } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
