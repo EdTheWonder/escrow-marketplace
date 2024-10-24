@@ -16,13 +16,12 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
-  // Try to get the session
-  const { data: { session }, error } = await supabase.auth.getSession();
+  // Check session
+  const { data: { session } } = await supabase.auth.getSession();
 
-  // If there's no session and we're not on a public path, redirect to login
-  if (!session && !isPublicPath) {
-    const redirectUrl = new URL('/auth/login', req.url);
-    return NextResponse.redirect(redirectUrl);
+  // Only redirect if trying to access protected routes without session
+  if (!session) {
+    return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
   return res;

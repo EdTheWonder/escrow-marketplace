@@ -31,16 +31,9 @@ export default function Login() {
       if (error) throw error;
 
       if (data.user) {
-        // Wait for session to be fully established
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const { data: sessionCheck } = await supabase.auth.getSession();
-        
-        if (sessionCheck.session) {
-          toast.success("Logged in successfully!");
-          window.location.href = '/dashboard';
-        } else {
-          throw new Error("Session not established");
-        }
+        toast.success("Logged in successfully!");
+        // Use replace to prevent back navigation to login
+        window.location.replace('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message);
