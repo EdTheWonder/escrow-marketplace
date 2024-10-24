@@ -13,35 +13,38 @@ interface MonoPaymentProps {
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   
-  useEffect(() => {
-    // Check if script is already loaded
-    if ((window as any).MonoPay) {
-      setIsScriptLoaded(true);
-    }
-  }, []);
+  async function handlePayment() {
+    try {
+      const response = await fetch('/api/mono/initialize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount })
+      });
 
-  function handlePayment() {
-    if (!isScriptLoaded || !(window as any).MonoPay) {
-      console.error('Mono script not loaded');
-      return;
-    }
+      const data = await response.json();
+      if (!data.id) throw new Error('Failed to initialize payment');
 
-    const monoInstance = new (window as any).MonoPay({
-      key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
-      onClose: () => onClose(),
-      onSuccess: (response: { reference: string }) => {
-        onSuccess(response.reference);
-      },
-    });
-    
-    monoInstance.open();
+      const monoInstance = new (window as any).MonoPay({
+        key: process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY,
+        reference: data.reference,
+        onClose: () => onClose(),
+        onSuccess: (response: { reference: string }) => {
+          onSuccess(response.reference);
+        },
+      });
+      
+      monoInstance.open();
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+    }
   }
 
   return (
     <>
       <Script 
         src="https://js.mono.co/v1/mono.min.js"
-        strategy="beforeInteractive"
         onLoad={() => setIsScriptLoaded(true)}
       />
       <div className="p-4">
@@ -50,8 +53,7 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
         </p>
         <Button 
           onClick={handlePayment} 
-          className="w-full" 
-          variant="default"
+          className="w-full"
         >
           Pay with Mono
         </Button>
