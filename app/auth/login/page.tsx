@@ -31,8 +31,11 @@ export default function Login() {
       if (error) throw error;
 
       if (data.user) {
+        // Force a hard reload to the dashboard
         toast.success("Logged in successfully!");
-        window.location.href = '/dashboard';
+        setTimeout(() => {
+          window.location.replace('/dashboard');
+        }, 500);
       }
     } catch (error: any) {
       toast.error(error.message);

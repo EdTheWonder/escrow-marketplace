@@ -6,21 +6,19 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  // Refresh session
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // Allow all auth routes to pass through
-  if (req.nextUrl.pathname.startsWith('/auth')) {
+  // Skip middleware for public routes
+  if (
+    req.nextUrl.pathname === '/' ||
+    req.nextUrl.pathname.startsWith('/auth') ||
+    req.nextUrl.pathname.startsWith('/feed')
+  ) {
     return res;
   }
 
-  // Protected routes
-  const protectedRoutes = ['/dashboard', '/products'];
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  );
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (isProtectedRoute && !session) {
+  // Redirect to login if no session and trying to access protected routes
+  if (!session) {
     return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
@@ -29,8 +27,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/products/:path*',
-    '/auth/:path*'
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ]
 };
