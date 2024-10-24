@@ -25,8 +25,10 @@ export default function FeedPage() {
         .from('products')
         .select(`
           *,
-          profiles:seller_id (
-            email
+          seller:seller_id (
+            id,
+            email,
+            role
           )
         `)
         .eq('status', 'available')
