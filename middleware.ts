@@ -6,36 +6,22 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  // Refresh session if it exists
-  await supabase.auth.getSession();
+  // Refresh session
+  const { data: { session } } = await supabase.auth.getSession();
 
-  // Skip middleware for auth routes and public routes
-  if (req.nextUrl.pathname.startsWith('/auth') || 
-      req.nextUrl.pathname === '/' ||
-      req.nextUrl.pathname.startsWith('/feed')) {
+  // Allow all auth routes to pass through
+  if (req.nextUrl.pathname.startsWith('/auth')) {
     return res;
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Protected routes
+  const protectedRoutes = ['/dashboard', '/products'];
+  const isProtectedRoute = protectedRoutes.some(route => 
+    req.nextUrl.pathname.startsWith(route)
+  );
 
-  // Redirect to login if no session
-  if (!session && req.nextUrl.pathname !== '/auth/login') {
+  if (isProtectedRoute && !session) {
     return NextResponse.redirect(new URL('/auth/login', req.url));
-  }
-
-  // For seller-only routes, check the user role
-  if (session && req.nextUrl.pathname.startsWith('/products')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (profile?.role !== 'seller') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
   }
 
   return res;
@@ -43,6 +29,8 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/dashboard/:path*',
+    '/products/:path*',
+    '/auth/:path*'
   ]
 };
