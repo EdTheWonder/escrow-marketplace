@@ -6,20 +6,23 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  // Skip middleware for public routes
-  if (
-    req.nextUrl.pathname === '/' ||
-    req.nextUrl.pathname.startsWith('/auth') ||
-    req.nextUrl.pathname.startsWith('/feed')
-  ) {
+  // Skip middleware for public routes and auth-related paths
+  const publicPaths = ['/', '/auth', '/feed'];
+  const isPublicPath = publicPaths.some(path => 
+    req.nextUrl.pathname === path || req.nextUrl.pathname.startsWith(`${path}/`)
+  );
+
+  if (isPublicPath) {
     return res;
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
+  // Try to get the session
+  const { data: { session }, error } = await supabase.auth.getSession();
 
-  // Redirect to login if no session and trying to access protected routes
-  if (!session) {
-    return NextResponse.redirect(new URL('/auth/login', req.url));
+  // If there's no session and we're not on a public path, redirect to login
+  if (!session && !isPublicPath) {
+    const redirectUrl = new URL('/auth/login', req.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return res;
