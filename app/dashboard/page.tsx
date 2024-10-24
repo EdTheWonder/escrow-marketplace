@@ -35,10 +35,7 @@ export default function DashboardPage() {
   }, []);
 
   async function getBuyerData() {
-    const {
-      data: { user },
-      error,
-    } = await supabaseClient.auth.getUser();
+    const { data: { user }, error } = await supabaseClient.auth.getUser();
 
     if (error) {
       console.error('Error fetching user:', error);
@@ -49,26 +46,23 @@ export default function DashboardPage() {
       const userProfile = user.user_metadata as UserProfile;
       setUser(userProfile);
 
-      // Get buyer's purchases and feed products
-      const [purchasesResponse, { data: feedProducts }] = await Promise.all([
-        supabaseClient
-          .from('products')
-          .select('*, transactions!inner(*)')
-          .eq('transactions.buyer_id', user.id),
-        supabaseClient
-          .from('products')
-          .select(`
-            *,
-            profiles:seller_id (
-              email
-            )
-          `)
-          .eq('status', 'available')
-          .order('created_at', { ascending: false })
-      ]);
+      // Get all available products for the feed
+      const { data: feedProducts, error: productsError } = await supabaseClient
+        .from('products')
+        .select(`
+          *,
+          profiles:seller_id (
+            email
+          )
+        `)
+        .eq('status', 'available')
+        .order('created_at', { ascending: false });
 
-      if (purchasesResponse.data) setPurchases(purchasesResponse.data);
-      if (feedProducts) setProducts(feedProducts);
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
+      } else {
+        setProducts(feedProducts || []);
+      }
 
       // Get cart count
       const { data: cartData, error: cartError } = await supabaseClient
@@ -122,17 +116,9 @@ export default function DashboardPage() {
         </header>
 
         <main className="container mx-auto py-8 px-4">
-          {user.role === 'buyer' ? (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Your Purchases</h2>
-              <ProductGrid products={purchases} />
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Your Products</h2>
-              <ProductGrid products={products} />
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ProductGrid products={products} />
+          </div>
         </main>
       </GradientBackground>
     </div>
