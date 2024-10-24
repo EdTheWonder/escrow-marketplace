@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import Script from 'next/script';
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
 import { toast } from "sonner";
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 interface PaystackPaymentProps {
   amount: number;

@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Menu, ShoppingBag, Package, History, Wallet, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export default function NavMenu({ role }: { role: 'buyer' | 'seller' }) {
   const router = useRouter();
