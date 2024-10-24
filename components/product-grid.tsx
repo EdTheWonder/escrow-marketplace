@@ -24,10 +24,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
       {products.map((product) => (
         <Dialog key={product.id}>
           <Card className="overflow-hidden">
-            {product.image_url && (
+            {product.image_urls && (
               <div className="relative h-48 w-full">
                 <Image
-                  src={product.image_url}
+                  src={product.image_urls[0]}
                   alt={product.title}
                   fill
                   className="object-cover"
@@ -48,10 +48,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
           </Card>
           <DialogContent>
             <div className="space-y-4">
-              {product.image_url && (
+              {product.image_urls && (
                 <div className="relative h-64 w-full">
                   <Image
-                    src={product.image_url}
+                    src={product.image_urls[0]}
                     alt={product.title}
                     fill
                     className="object-cover rounded-lg"
