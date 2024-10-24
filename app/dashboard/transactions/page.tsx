@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import BackButton from "@/components/back-button";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -73,49 +74,52 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="container mx-auto max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6">Transactions</h1>
-        <div className="space-y-4">
-          {transactions.map((transaction) => (
-            <Card key={transaction.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold">{transaction.products.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Amount: ${transaction.amount}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {user.id === transaction.buyer_id
-                      ? `Seller: ${transaction.sellers.email}`
-                      : `Buyer: ${transaction.buyers.email}`}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block px-2 py-1 rounded text-sm mb-2"
-                    style={{
-                      backgroundColor: 
-                        transaction.status === 'completed' ? 'var(--success)' :
-                        transaction.status === 'in_escrow' ? 'var(--warning)' :
-                        'var(--muted)',
-                      color: 'white'
-                    }}
-                  >
-                    {transaction.status}
-                  </span>
-                  {user.id === transaction.buyer_id && 
-                   transaction.status === 'in_escrow' && (
-                    <Button
-                      onClick={() => handleConfirmDelivery(transaction.id)}
-                      size="sm"
+    <div className="container mx-auto py-8 px-4">
+      <BackButton />
+      <div className="min-h-screen p-4">
+        <div className="container mx-auto max-w-4xl">
+          <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+          <div className="space-y-4">
+            {transactions.map((transaction) => (
+              <Card key={transaction.id} className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold">{transaction.products.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Amount: ${transaction.amount}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.id === transaction.buyer_id
+                        ? `Seller: ${transaction.sellers.email}`
+                        : `Buyer: ${transaction.buyers.email}`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block px-2 py-1 rounded text-sm mb-2"
+                      style={{
+                        backgroundColor: 
+                          transaction.status === 'completed' ? 'var(--success)' :
+                          transaction.status === 'in_escrow' ? 'var(--warning)' :
+                          'var(--muted)',
+                        color: 'white'
+                      }}
                     >
-                      Confirm Delivery
-                    </Button>
-                  )}
+                      {transaction.status}
+                    </span>
+                    {user.id === transaction.buyer_id && 
+                     transaction.status === 'in_escrow' && (
+                      <Button
+                        onClick={() => handleConfirmDelivery(transaction.id)}
+                        size="sm"
+                      >
+                        Confirm Delivery
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </div>
