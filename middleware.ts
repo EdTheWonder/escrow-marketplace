@@ -6,33 +6,35 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
+  // Refresh session if it exists
+  await supabase.auth.getSession();
+
+  // Skip middleware for auth routes and public routes
+  if (req.nextUrl.pathname.startsWith('/auth') || 
+      req.nextUrl.pathname === '/' ||
+      req.nextUrl.pathname.startsWith('/feed')) {
+    return res;
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Allow auth routes to pass through
-  if (req.nextUrl.pathname.startsWith('/auth/')) {
-    return res;
+  // Redirect to login if no session
+  if (!session && req.nextUrl.pathname !== '/auth/login') {
+    return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
-  // Protect dashboard and product routes
-  if (req.nextUrl.pathname.startsWith('/dashboard') || 
-      req.nextUrl.pathname.startsWith('/products')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/auth/login', req.url));
-    }
+  // For seller-only routes, check the user role
+  if (session && req.nextUrl.pathname.startsWith('/products')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
 
-    // For seller-only routes, check the user role
-    if (req.nextUrl.pathname.startsWith('/products')) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profile?.role !== 'seller') {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
+    if (profile?.role !== 'seller') {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   }
 
@@ -41,8 +43,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/products/:path*',
-    '/auth/:path*'
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ]
 };
