@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Package, ShoppingBag, Wallet, LogOut, Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import ProductGrid from "@/components/product-grid";
-import { Product } from "@/types/index";
 import NavMenu from "@/components/nav-menu";
 import GradientBackground from "@/components/ui/gradient-background";
 import { getAvailableProducts } from "@/lib/products";
@@ -22,91 +21,67 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
-  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [cartCount, setCartCount] = useState(0);
-  const [purchases, setPurchases] = useState<Product[]>([]);
-  const [earnings, setEarnings] = useState(0);
+  const [purchases, setPurchases] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [cartCount, setCartCount] = useState<number>(0);
+  const router = useRouter();
 
   useEffect(() => {
-    getUser();
+    // Fetch user data and buyer data
+    getBuyerData();
   }, []);
 
-  useEffect(() => {
-    if (user?.role === 'seller') {
-      getSellerData();
-    } else if (user?.role === 'buyer') {
-      getBuyerData();
-    }
-  }, [user?.role]);
-
-  async function getUser() {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-      
-      setUser({ ...authUser, ...profile });
-    }
-  }
-
-  async function getSellerData() {
-    if (!user) return;
-
-    // Get seller's products
-    const { data: productsData } = await supabase
-      .from('products')
-      .select('*')
-      .eq('seller_id', user.id)
-      .order('created_at', { ascending: false });
-    
-    if (productsData) setProducts(productsData);
-
-    // Calculate earnings from completed transactions
-    const { data: transactionsData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('seller_id', user.id)
-      .eq('status', 'completed');
-
-    if (transactionsData) {
-      const total = transactionsData.reduce((sum, t) => sum + t.amount, 0);
-      setEarnings(total);
-    }
-  }
-
   async function getBuyerData() {
-    if (!user) return;
+    const {
+      data: { user },
+      error,
+    } = await supabaseClient.auth.getUser();
 
-    // Get buyer's purchases and feed products
-    const [purchasesResponse, products] = await Promise.all([
-      supabase
-        .from('products')
-        .select('*, transactions!inner(*)')
-        .eq('transactions.buyer_id', user.id),
-      getAvailableProducts()
-    ]);
+    if (error) {
+      console.error('Error fetching user:', error);
+      return;
+    }
 
-    if (purchasesResponse.data) setPurchases(purchasesResponse.data);
-    if (products) setProducts(products);
+    if (user) {
+      const userProfile = user.user_metadata as UserProfile;
+      setUser(userProfile);
 
-    // Get cart count
-    const { data: cartData } = await supabase
-      .from('cart')
-      .select('*')
-      .eq('user_id', user.id);
-    
-    setCartCount(cartData?.length || 0);
+      // Get buyer's purchases and feed products
+      const [purchasesResponse, products] = await Promise.all([
+        supabaseClient
+          .from('products')
+          .select('*, transactions!inner(*)')
+          .eq('transactions.buyer_id', user.id),
+        getAvailableProducts()
+      ]);
+
+      if (purchasesResponse.data) setPurchases(purchasesResponse.data);
+      if (products) setProducts(products);
+
+      // Get cart count
+      const { data: cartData, error: cartError } = await supabaseClient
+        .from('cart')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (cartError) {
+        console.error('Error fetching cart data:', cartError);
+      } else {
+        setCartCount(cartData?.length || 0);
+      }
+    }
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
-    router.push("/");
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+      toast.error("Error signing out");
+    } else {
+      toast.success("Logged out successfully");
+      router.push("/");
+    }
   }
 
   if (!user) return null;
@@ -135,86 +110,15 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-8">
-          <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Role</p>
-                  <p className="text-2xl font-bold capitalize bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    {user.role}
-                  </p>
-                </div>
-                {user.role === 'buyer' ? (
-                  <ShoppingBag className="w-8 h-8 text-primary" />
-                ) : (
-                  <Package className="w-8 h-8 text-primary" />
-                )}
-              </div>
-            </Card>
-
-            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Email</p>
-                  <p className="text-2xl font-bold truncate bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Wallet Balance</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    ${user.wallet_balance}
-                  </p>
-                </div>
-                <Wallet className="w-8 h-8 text-primary" />
-              </div>
-            </Card>
-          </div>
-
-          {/* Role-specific Content */}
+        <main className="container mx-auto py-8 px-4">
           {user.role === 'buyer' ? (
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Recent Purchases</h2>
-                  <Link href="/dashboard/transactions" className="text-primary hover:underline">
-                    View All Transactions
-                  </Link>
-                </Card>
-                <Card className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Shopping Cart</h2>
-                  <Link href="/cart" className="text-primary hover:underline">
-                    View Cart ({cartCount} items)
-                  </Link>
-                </Card>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Product Feed</h2>
-                  <Button asChild>
-                    <Link href="/feed">View All Products</Link>
-                  </Button>
-                </div>
-                <ProductGrid products={products} />
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Your Purchases</h2>
+              <ProductGrid products={purchases} />
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Your Products</h2>
-                <Button asChild>
-                  <Link href="/dashboard/products/new">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add New Product
-                  </Link>
-                </Button>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Your Products</h2>
               <ProductGrid products={products} />
             </div>
           )}

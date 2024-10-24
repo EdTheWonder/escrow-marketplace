@@ -6,75 +6,55 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function Login() {
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast.success("Logged in successfully!");
-        router.push('/dashboard');
-      }
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
+  async function handleLogin() {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      console.error('Login error:', error);
+      toast.error("Login failed");
+    } else {
+      toast.success("Logged in successfully");
+      router.push("/dashboard");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
-      <Card className="w-full max-w-md p-6">
-        <h1 className="text-2xl font-bold text-center mb-6">Welcome Back</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+    <div className="min-h-screen flex items-center justify-center">
+      <Card className="p-8 w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6">Login</h2>
+        <div className="space-y-4">
+          <div>
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="Enter your email"
+            <Input 
+              id="email" 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
             />
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="Enter your password"
+            <Input 
+              id="password" 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-        <p className="text-center mt-4 text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link href="/auth/signup" className="text-primary hover:underline">
-            Sign Up
-          </Link>
+          <Button onClick={handleLogin}>Login</Button>
+        </div>
+        <p className="mt-4 text-sm">
+          Don't have an account? <Link href="/auth/register" className="text-primary">Register</Link>
         </p>
       </Card>
     </div>

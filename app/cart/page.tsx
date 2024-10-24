@@ -1,11 +1,12 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 import MonoPayment from "@/components/mono-payment";
 
 interface CartItem {
@@ -196,4 +197,3 @@ export default function CartPage() {
     </div>
   );
 }
-

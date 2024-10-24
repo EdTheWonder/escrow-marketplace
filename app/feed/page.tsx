@@ -1,12 +1,11 @@
 import ProductGrid from "@/components/product-grid";
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabase } from "@/lib/supabase-server";
 import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 
 export default async function FeedPage() {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: products } = await supabase
+  const supabase = createServerSupabase();
+  const { data: products, error } = await supabase
     .from('products')
     .select(`
       *,
@@ -16,6 +15,11 @@ export default async function FeedPage() {
     `)
     .eq('status', 'available')
     .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching products:', error);
+    return <div className="text-red-500">Failed to load products.</div>;
+  }
 
   return (
     <div className="min-h-screen">

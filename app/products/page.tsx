@@ -1,22 +1,14 @@
 import ProductGrid from "@/components/product-grid";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default async function ProductsPage() {
-  const headersList = headers();
+  const supabase = createServerSupabase();
   
-  // Create a new Supabase client for server-side
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const supabaseServer = createClient(supabaseUrl, supabaseKey);
-
-  // Get seller's products
-  const { data: products } = await supabaseServer
+  // Fetch seller's products
+  const { data: products, error } = await supabase
     .from('products')
     .select(`
       *,
@@ -25,6 +17,11 @@ export default async function ProductsPage() {
       )
     `)
     .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching seller products:', error);
+    return <div className="text-red-500">Failed to load your products.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">

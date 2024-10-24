@@ -7,7 +7,12 @@ export async function POST(request: Request) {
     const { amount } = await request.json();
     const supabase = createRouteHandlerClient({ cookies });
     
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Error fetching user:', error);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -28,6 +33,7 @@ export async function POST(request: Request) {
 
     const data = await response.json();
     if (!response.ok) {
+      console.error('Payment initialization failed:', data);
       throw new Error(data.message || 'Payment initialization failed');
     }
 
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
       data: data
     });
   } catch (error: any) {
-    console.error('Payment error:', error);
+    console.error('Payment initialization error:', error);
     return NextResponse.json(
       { error: error.message || 'Payment initialization failed' }, 
       { status: 500 }

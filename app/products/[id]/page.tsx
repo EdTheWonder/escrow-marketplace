@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
@@ -11,8 +10,8 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: product } = await supabase
+  const supabase = createServerSupabase();
+  const { data: product, error } = await supabase
     .from('products')
     .select(`
       *,
@@ -23,7 +22,8 @@ export default async function ProductPage({
     .eq('id', id)
     .single();
 
-  if (!product) {
+  if (error || !product) {
+    console.error('Product not found:', error);
     notFound();
   }
 
@@ -60,10 +60,15 @@ export default async function ProductPage({
 }
 
 export async function generateStaticParams() {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: products } = await supabase
+  const supabase = createServerSupabase();
+  const { data: products, error } = await supabase
     .from('products')
     .select('id');
+
+  if (error) {
+    console.error('Error fetching product IDs:', error);
+    return [];
+  }
 
   return (products || []).map((product) => ({
     id: product.id,
