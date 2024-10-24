@@ -54,15 +54,16 @@ export default function TransactionsPage() {
 
   async function handleConfirmDelivery(transactionId: string) {
     try {
-      // Update transaction status
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .update({ status: 'completed' })
-        .eq('id', transactionId);
+      const response = await fetch('/api/transactions/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId })
+      });
 
-      if (transactionError) throw transactionError;
-
-      // In a real app, trigger payment release to seller here
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to confirm delivery');
+      }
 
       toast.success("Delivery confirmed! Payment released to seller.");
       getTransactions();
@@ -120,3 +121,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

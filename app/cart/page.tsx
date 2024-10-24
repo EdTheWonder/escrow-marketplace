@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Image from 'next/image';  // Add this import at the top
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 import MonoPayment from "@/components/mono-payment";
@@ -136,10 +137,12 @@ export default function CartPage() {
             {items.map((item) => (
               <Card key={item.id} className="p-4">
                 <div className="flex gap-4">
-                  <img
+                  <Image 
                     src={item.products.image_urls[0]}
                     alt={item.products.title}
-                    className="w-24 h-24 object-cover rounded"
+                    width={100}
+                    height={100}
+                    className="w-24 h-24 object-cover rounded-lg"
                   />
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.products.title}</h3>

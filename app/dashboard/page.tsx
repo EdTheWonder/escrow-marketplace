@@ -20,6 +20,8 @@ interface UserProfile {
   wallet_balance: number;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function Dashboard() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [purchases, setPurchases] = useState<any[]>([]);

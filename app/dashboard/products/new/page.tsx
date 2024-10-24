@@ -10,6 +10,7 @@ import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
+import Image from 'next/image';  // Add this import at the top
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -168,10 +169,12 @@ export default function NewProduct() {
                 </label>
                 {images.map((image, index) => (
                   <div key={index} className="w-32 h-32 relative">
-                    <img
+                    <Image 
                       src={URL.createObjectURL(image)}
                       alt={`Preview ${index}`}
-                      className="w-full h-full object-cover rounded-lg"
+                      width={128}
+                      height={128}
+                      className="w-32 h-32 object-cover rounded-lg"
                     />
                     <button
                       type="button"

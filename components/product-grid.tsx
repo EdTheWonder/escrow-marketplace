@@ -1,17 +1,9 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import PurchaseButton from "./purchase-button";
 
 interface ProductGridProps {
   products: Product[];
@@ -19,64 +11,33 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products }: ProductGridProps) {
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product) => (
-        <Dialog key={product.id}>
-          <Card className="overflow-hidden backdrop-blur-md bg-white/30 border border-white/20 hover:bg-white/40 transition-all">
-            {product.image_urls && product.image_urls[0] && (
-              <div className="relative aspect-video">
+        <Link key={product.id} href={`/products/${product.id}`}>
+          <Card className="overflow-hidden group hover:shadow-lg transition-shadow">
+            <div className="relative aspect-square">
+              {product.image_urls?.[0] && (
                 <Image
                   src={product.image_urls[0]}
                   alt={product.title}
                   fill
-                  className="object-cover"
-                  unoptimized
+                  className="object-cover group-hover:scale-105 transition-transform"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-              </div>
-            )}
+              )}
+            </div>
             <div className="p-4">
-              <h3 className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                {product.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                ${product.price}
-              </p>
-              <DialogTrigger asChild>
-                <Button className="w-full mt-4 bg-primary/80 backdrop-blur-sm hover:bg-primary/90">
-                  View Details
-                </Button>
-              </DialogTrigger>
+              <h3 className="font-semibold truncate">{product.title}</h3>
+              <p className="text-lg font-bold">${product.price}</p>
+              {product.profiles && (
+                <p className="text-sm text-muted-foreground">
+                  Seller: {product.profiles.email}
+                </p>
+              )}
             </div>
           </Card>
-          <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20">
-            <DialogHeader>
-              <DialogTitle className="text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                {product.title}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {product.image_urls && product.image_urls[0] && (
-                <div className="relative aspect-video">
-                  <Image
-                    src={product.image_urls[0]}
-                    alt={product.title}
-                    fill
-                    className="object-cover rounded-lg"
-                    unoptimized
-                  />
-                </div>
-              )}
-              <p className="text-muted-foreground">{product.description}</p>
-              <div className="flex justify-between items-center">
-                <p className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  ${product.price}
-                </p>
-                <PurchaseButton product={product} />
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        </Link>
       ))}
-    </>
+    </div>
   );
 }
