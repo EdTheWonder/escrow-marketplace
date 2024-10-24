@@ -1,3 +1,5 @@
+"use client";
+
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -18,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-yellow-300 via-pink-200 to-blue-300 animate-gradient-xy">
+        <div className="min-h-screen bg-white/30 backdrop-blur-sm">
           {children}
         </div>
         <Toaster />

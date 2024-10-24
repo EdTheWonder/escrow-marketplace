@@ -24,11 +24,13 @@ export default function ProductGrid({ products }: ProductGridProps) {
         <Dialog key={product.id}>
           <Card className="overflow-hidden">
             {product.image_urls && product.image_urls[0] && (
-              <div className="relative h-48 w-full">
-                <img
+              <div className="relative aspect-video">
+                <Image
                   src={product.image_urls[0]}
                   alt={product.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -50,11 +52,13 @@ export default function ProductGrid({ products }: ProductGridProps) {
             </DialogHeader>
             <div className="space-y-4">
               {product.image_urls && product.image_urls[0] && (
-                <div className="relative h-64 w-full">
-                  <img
+                <div className="relative aspect-video">
+                  <Image
                     src={product.image_urls[0]}
                     alt={product.title}
-                    className="w-full h-full object-cover rounded-lg"
+                    fill
+                    className="object-cover rounded-lg"
+                    unoptimized
                   />
                 </div>
               )}

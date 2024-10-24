@@ -3,10 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import Script from 'next/script';
-import {
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface MonoPaymentProps {
   amount: number;
@@ -17,6 +13,13 @@ interface MonoPaymentProps {
 export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   
+  useEffect(() => {
+    // Check if script is already loaded
+    if ((window as any).MonoPay) {
+      setIsScriptLoaded(true);
+    }
+  }, []);
+
   function handlePayment() {
     if (!isScriptLoaded || !(window as any).MonoPay) {
       console.error('Mono script not loaded');
@@ -38,11 +41,9 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
     <>
       <Script 
         src="https://js.mono.co/v1/mono.min.js"
+        strategy="beforeInteractive"
         onLoad={() => setIsScriptLoaded(true)}
       />
-      <DialogHeader>
-        <DialogTitle>Complete Payment</DialogTitle>
-      </DialogHeader>
       <div className="p-4">
         <p className="text-lg font-semibold mb-4">
           Amount to Pay: ${amount}
@@ -50,7 +51,7 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
         <Button 
           onClick={handlePayment} 
           className="w-full" 
-          disabled={!isScriptLoaded}
+          variant="default"
         >
           Pay with Mono
         </Button>
