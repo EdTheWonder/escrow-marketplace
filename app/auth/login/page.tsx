@@ -32,8 +32,7 @@ export default function Login() {
 
       if (data.user) {
         toast.success("Logged in successfully!");
-        // Use replace to prevent back navigation to login
-        window.location.replace('/dashboard');
+        router.push('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message);
