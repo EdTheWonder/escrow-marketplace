@@ -22,7 +22,7 @@ interface UserProfile {
 
 export const dynamic = 'force-dynamic';
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
