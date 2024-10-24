@@ -28,6 +28,11 @@ export default function NavMenu({ role }: { role: 'buyer' | 'seller' }) {
       </SheetTrigger>
       <SheetContent>
         <div className="flex flex-col gap-4 mt-8">
+          <Link href="/feed" className="flex items-center gap-2 p-2 hover:bg-accent rounded-md">
+            <Package className="h-5 w-5" />
+            Product Feed
+          </Link>
+          
           <Link href="/dashboard" className="flex items-center gap-2 p-2 hover:bg-accent rounded-md">
             {role === 'buyer' ? (
               <ShoppingBag className="h-5 w-5" />
@@ -36,14 +41,24 @@ export default function NavMenu({ role }: { role: 'buyer' | 'seller' }) {
             )}
             Dashboard
           </Link>
+
+          {role === 'seller' && (
+            <Link href="/products" className="flex items-center gap-2 p-2 hover:bg-accent rounded-md">
+              <Package className="h-5 w-5" />
+              My Products
+            </Link>
+          )}
+
           <Link href="/dashboard/transactions" className="flex items-center gap-2 p-2 hover:bg-accent rounded-md">
             <History className="h-5 w-5" />
             Transactions
           </Link>
+
           <Link href="/dashboard/wallet" className="flex items-center gap-2 p-2 hover:bg-accent rounded-md">
             <Wallet className="h-5 w-5" />
             Wallet
           </Link>
+
           <Button variant="ghost" onClick={handleSignOut} className="flex items-center gap-2">
             <LogOut className="h-5 w-5" />
             Sign Out

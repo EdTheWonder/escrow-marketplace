@@ -31,9 +31,9 @@ export default function Home() {
         </p>
         <div className="flex justify-center gap-4">
           <Button size="lg" asChild>
-            <Link href="/products">
+            <Link href="/feed">
               <Package className="mr-2 h-5 w-5" />
-              Browse All Products
+              Browse Product Feed
             </Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
