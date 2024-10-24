@@ -11,6 +11,7 @@ import Link from "next/link";
 import ProductGrid from "@/components/product-grid";
 import { Product } from "@/types/index";
 import NavMenu from "@/components/nav-menu";
+import GradientBackground from "@/components/ui/gradient-background";
 
 interface UserProfile {
   id: string;
@@ -114,107 +115,109 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
-      <header className="bg-white/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">
-            {user.role === 'buyer' ? 'Marketplace' : 'Your Products'}
-          </h1>
-          <div className="flex items-center gap-4">
-            {user.role === 'buyer' && (
-              <Link href="/cart" className="relative">
-                <ShoppingCart className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-            )}
-            <NavMenu role={user.role} />
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        {/* Shared Stats Section */}
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <Card className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Role</p>
-                <p className="text-2xl font-bold capitalize">{user.role}</p>
-              </div>
-              {user.role === 'buyer' ? (
-                <ShoppingBag className="w-8 h-8 text-primary" />
-              ) : (
-                <Package className="w-8 h-8 text-primary" />
+    <div className="min-h-screen">
+      <GradientBackground>
+        <header className="bg-white/80 backdrop-blur-sm border-b">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              {user.role === 'buyer' ? 'Marketplace' : 'Your Products'}
+            </h1>
+            <div className="flex items-center gap-4">
+              {user.role === 'buyer' && (
+                <Link href="/cart" className="relative">
+                  <ShoppingCart className="w-6 h-6" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
               )}
+              <NavMenu role={user.role} />
             </div>
-          </Card>
+          </div>
+        </header>
 
-          <Card className="p-6">
-            <div className="flex items-start justify-between">
+        <main className="container mx-auto px-4 py-8">
+          {/* Shared Stats Section */}
+          <div className="grid gap-6 md:grid-cols-3 mb-8">
+            <Card className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Role</p>
+                  <p className="text-2xl font-bold capitalize">{user.role}</p>
+                </div>
+                {user.role === 'buyer' ? (
+                  <ShoppingBag className="w-8 h-8 text-primary" />
+                ) : (
+                  <Package className="w-8 h-8 text-primary" />
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-2xl font-bold">{user.email}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Wallet Balance</p>
+                  <p className="text-2xl font-bold">${user.wallet_balance}</p>
+                </div>
+                <Wallet className="w-8 h-8 text-primary" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Role-specific Content */}
+          {user.role === 'buyer' ? (
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Recent Purchases</h2>
+                  <Link href="/dashboard/transactions" className="text-primary hover:underline">
+                    View All Transactions
+                  </Link>
+                </Card>
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Shopping Cart</h2>
+                  <Link href="/cart" className="text-primary hover:underline">
+                    View Cart ({cartCount} items)
+                  </Link>
+                </Card>
+              </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Email</p>
-                <p className="text-2xl font-bold">{user.email}</p>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Product Feed</h2>
+                  <Button asChild>
+                    <Link href="/feed">View All Products</Link>
+                  </Button>
+                </div>
+                <ProductGrid products={products} />
               </div>
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Wallet Balance</p>
-                <p className="text-2xl font-bold">${user.wallet_balance}</p>
-              </div>
-              <Wallet className="w-8 h-8 text-primary" />
-            </div>
-          </Card>
-        </div>
-
-        {/* Role-specific Content */}
-        {user.role === 'buyer' ? (
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Recent Purchases</h2>
-                <Link href="/dashboard/transactions" className="text-primary hover:underline">
-                  View All Transactions
-                </Link>
-              </Card>
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Shopping Cart</h2>
-                <Link href="/cart" className="text-primary hover:underline">
-                  View Cart ({cartCount} items)
-                </Link>
-              </Card>
-            </div>
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Recommended Products</h2>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Your Products</h2>
                 <Button asChild>
-                  <Link href="/products">Browse All Products</Link>
+                  <Link href="/dashboard/products/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Product
+                  </Link>
                 </Button>
               </div>
               <ProductGrid products={products} />
             </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Your Products</h2>
-              <Button asChild>
-                <Link href="/dashboard/products/new">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Product
-                </Link>
-              </Button>
-            </div>
-            <ProductGrid products={products} />
-          </div>
-        )}
-      </main>
+          )}
+        </main>
+      </GradientBackground>
     </div>
   );
 }

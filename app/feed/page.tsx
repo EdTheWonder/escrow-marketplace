@@ -1,6 +1,7 @@
 import ProductGrid from "@/components/product-grid";
 import { supabase } from "@/lib/supabase";
 import { RefreshCcw } from "lucide-react";
+import GradientBackground from "@/components/ui/gradient-background";
 
 export default async function FeedPage() {
   const { data: products } = await supabase
@@ -15,7 +16,7 @@ export default async function FeedPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
+    <GradientBackground>
       <div className="container mx-auto py-8 px-4">
         <div className="flex items-center gap-3 mb-8">
           <h1 className="text-3xl font-bold">Product Feed</h1>
@@ -26,7 +27,6 @@ export default async function FeedPage() {
           <ProductGrid products={products || []} />
         </div>
       </div>
-    </div>
+    </GradientBackground>
   );
 }
-
