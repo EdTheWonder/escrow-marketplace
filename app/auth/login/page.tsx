@@ -54,7 +54,7 @@ export default function LoginPage() {
           <Button onClick={handleLogin}>Login</Button>
         </div>
         <p className="mt-4 text-sm">
-          Don&apos;t have an account? <Link href="/auth/register" className="text-primary">Register</Link>
+          Don&apos;t have an account? <Link href="/auth/signup" className="text-primary">Register</Link>
         </p>
       </Card>
     </div>
