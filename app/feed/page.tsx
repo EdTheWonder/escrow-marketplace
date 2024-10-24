@@ -25,7 +25,7 @@ export default function FeedPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_id (
+          seller:profiles!seller_id (
             id,
             email,
             role
@@ -35,6 +35,7 @@ export default function FeedPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Fetched products:', data); // Add this for debugging
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);

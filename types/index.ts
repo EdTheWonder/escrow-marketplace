@@ -1,14 +1,17 @@
 export interface Product {
+  profiles: any;
   id: string;
   title: string;
   description: string;
   price: number;
   image_urls: string[];
-  seller_id: string;
   status: 'available' | 'sold';
+  seller_id: string;
   created_at: string;
-  profiles?: {
+  seller: {
+    id: string;
     email: string;
+    role: string;
   };
 }
 
