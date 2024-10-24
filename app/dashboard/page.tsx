@@ -50,16 +50,25 @@ export default function DashboardPage() {
       setUser(userProfile);
 
       // Get buyer's purchases and feed products
-      const [purchasesResponse, products] = await Promise.all([
+      const [purchasesResponse, { data: feedProducts }] = await Promise.all([
         supabaseClient
           .from('products')
           .select('*, transactions!inner(*)')
           .eq('transactions.buyer_id', user.id),
-        getAvailableProducts()
+        supabaseClient
+          .from('products')
+          .select(`
+            *,
+            profiles:seller_id (
+              email
+            )
+          `)
+          .eq('status', 'available')
+          .order('created_at', { ascending: false })
       ]);
 
       if (purchasesResponse.data) setPurchases(purchasesResponse.data);
-      if (products) setProducts(products);
+      if (feedProducts) setProducts(feedProducts);
 
       // Get cart count
       const { data: cartData, error: cartError } = await supabaseClient

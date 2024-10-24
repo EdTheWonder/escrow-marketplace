@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import Image from 'next/image';  // Add this import at the top
+import BackButton from "@/components/back-button";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -109,91 +110,90 @@ export default function NewProduct() {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="container mx-auto max-w-2xl">
-        <Card className="p-6">
-          <h1 className="text-2xl font-bold mb-6">Create New Listing</h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                placeholder="Product title"
-              />
-            </div>
+    <div className="container mx-auto py-8 px-4">
+      <BackButton />
+      <Card className="max-w-2xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Create New Listing</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              required
+              placeholder="Product title"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-                placeholder="Describe your product"
-                rows={4}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              required
+              placeholder="Describe your product"
+              rows={4}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Price ($)</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                required
-                min="0"
-                placeholder="0.00"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Price ($)</Label>
+            <Input
+              id="price"
+              name="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={handleInputChange}
+              required
+              min="0"
+              placeholder="0.00"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label>Images</Label>
-              <div className="flex gap-4 flex-wrap">
-                <label className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleImageChange}
+          <div className="space-y-2">
+            <Label>Images</Label>
+            <div className="flex gap-4 flex-wrap">
+              <label className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <ImagePlus className="w-8 h-8 text-muted-foreground" />
+              </label>
+              {images.map((image, index) => (
+                <div key={index} className="w-32 h-32 relative">
+                  <Image 
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index}`}
+                    width={128}
+                    height={128}
+                    className="w-32 h-32 object-cover rounded-lg"
                   />
-                  <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                </label>
-                {images.map((image, index) => (
-                  <div key={index} className="w-32 h-32 relative">
-                    <Image 
-                      src={URL.createObjectURL(image)}
-                      alt={`Preview ${index}`}
-                      width={128}
-                      height={128}
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
+          </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating Listing..." : "Create Listing"}
-            </Button>
-          </form>
-        </Card>
-      </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating Listing..." : "Create Listing"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }
