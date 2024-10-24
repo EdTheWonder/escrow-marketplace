@@ -12,72 +12,62 @@ import {
 import PurchaseButton from "./purchase-button";
 import { useState } from "react";
 
-export default function ProductGrid({ products }: { products: Product[] }) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+interface ProductGridProps {
+  products: Product[];
+}
 
-  const handleImageError = (error: Error, productId: string, imageUrl: string) => {
-    console.error(`Image load error for product ${productId}:`, {
-      error: error.message,
-      imageUrl,
-      product: products.find(p => p.id === productId)
-    });
-  };
+export default function ProductGrid({ products }: ProductGridProps) {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <Card key={product.id} className="overflow-hidden bg-white/80 backdrop-blur-sm">
-            <DialogTrigger asChild>
-              <div 
-                className="aspect-video relative cursor-pointer" 
-                onClick={() => setSelectedImage(product.image_urls?.[0])}
-              >
-                {product.image_urls?.[0] && (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {products.map((product) => (
+        <Dialog key={product.id}>
+          <Card className="overflow-hidden">
+            {product.image_url && (
+              <div className="relative h-48 w-full">
+                <Image
+                  src={product.image_url}
+                  alt={product.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="p-4">
+              <h3 className="font-semibold">{product.title}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                ${product.price}
+              </p>
+              <DialogTrigger asChild>
+                <Button className="w-full mt-4" onClick={() => setSelectedProduct(product)}>
+                  View Details
+                </Button>
+              </DialogTrigger>
+            </div>
+          </Card>
+          <DialogContent>
+            <div className="space-y-4">
+              {product.image_url && (
+                <div className="relative h-64 w-full">
                   <Image
-                    src={product.image_urls[0]}
+                    src={product.image_url}
                     alt={product.title}
                     fill
-                    className="object-cover"
-                    priority
-                    onError={(e) => handleImageError(
-                      new Error('Image failed to load'),
-                      product.id,
-                      product.image_urls[0]
-                    )}
+                    className="object-cover rounded-lg"
                   />
-                )}
-              </div>
-            </DialogTrigger>
-            <div className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{product.title}</h2>
-              <p className="text-muted-foreground mb-4 line-clamp-2">
-                {product.description}
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold">${product.price}</span>
+                </div>
+              )}
+              <h2 className="text-2xl font-bold">{product.title}</h2>
+              <p className="text-muted-foreground">{product.description}</p>
+              <div className="flex justify-between items-center">
+                <p className="text-xl font-bold">${product.price}</p>
                 <PurchaseButton product={product} />
               </div>
             </div>
-          </Card>
-        ))}
-      </div>
-
-      <Dialog>
-        <DialogContent className="max-w-3xl">
-          {selectedImage && (
-            <div className="relative aspect-video">
-              <Image
-                src={selectedImage}
-                alt="Product preview"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogContent>
+        </Dialog>
+      ))}
+    </div>
   );
 }
