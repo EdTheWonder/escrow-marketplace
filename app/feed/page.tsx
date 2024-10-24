@@ -1,19 +1,10 @@
 import ProductGrid from "@/components/product-grid";
-import { supabase } from "@/lib/supabase";
+import { getAvailableProducts } from "@/lib/products";
 import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 
 export default async function FeedPage() {
-  const { data: products } = await supabase
-    .from('products')
-    .select(`
-      *,
-      profiles:seller_id (
-        email
-      )
-    `)
-    .eq('status', 'available')
-    .order('created_at', { ascending: false });
+  const products = await getAvailableProducts();
 
   return (
     <div className="min-h-screen">

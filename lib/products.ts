@@ -68,3 +68,18 @@ export async function deleteProduct(id: string) {
   if (error) throw error;
 }
 
+export async function getAvailableProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      profiles:seller_id (
+        email
+      )
+    `)
+    .eq('status', 'available')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}

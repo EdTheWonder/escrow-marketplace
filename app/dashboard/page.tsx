@@ -12,6 +12,7 @@ import ProductGrid from "@/components/product-grid";
 import { Product } from "@/types/index";
 import NavMenu from "@/components/nav-menu";
 import GradientBackground from "@/components/ui/gradient-background";
+import { getAvailableProducts } from "@/lib/products";
 
 interface UserProfile {
   id: string;
@@ -82,20 +83,16 @@ export default function Dashboard() {
     if (!user) return;
 
     // Get buyer's purchases and feed products
-    const [purchasesResponse, feedResponse] = await Promise.all([
+    const [purchasesResponse, products] = await Promise.all([
       supabase
         .from('products')
         .select('*, transactions!inner(*)')
         .eq('transactions.buyer_id', user.id),
-      supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'available')
-        .order('created_at', { ascending: false })
+      getAvailableProducts()
     ]);
 
     if (purchasesResponse.data) setPurchases(purchasesResponse.data);
-    if (feedResponse.data) setProducts(feedResponse.data);
+    if (products) setProducts(products);
 
     // Get cart count
     const { data: cartData } = await supabase
