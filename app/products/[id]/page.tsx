@@ -1,17 +1,16 @@
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import GradientBackground from "@/components/ui/gradient-background";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 
 export default async function ProductPage({
   params: { id },
 }: {
   params: { id: string };
 }) {
+  const supabase = createServerSupabase();
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -60,7 +59,7 @@ export default async function ProductPage({
 }
 
 export async function generateStaticParams() {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = createServerSupabase();
   const { data: products } = await supabase
     .from('products')
     .select('id');
