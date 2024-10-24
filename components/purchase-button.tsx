@@ -1,10 +1,12 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
 import {
   Dialog,
   DialogContent,
