@@ -5,7 +5,14 @@ const nextConfig = {
   },
   images: {
     domains: ['qzcrmwbdanlgwphuavnh.supabase.co'],
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'qzcrmwbdanlgwphuavnh.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
   webpack: (config) => {
     config.externals.push({

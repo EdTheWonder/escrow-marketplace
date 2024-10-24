@@ -1,14 +1,22 @@
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { amount } = await request.json();
+    const supabase = createRouteHandlerClient({ cookies });
     
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const response = await fetch('https://api.mono.co/v1/payments/initialize', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_MONO_SECRET_KEY}`
+        'Authorization': `Bearer ${process.env.MONO_SECRET_KEY}`
       },
       body: JSON.stringify({
         amount: amount * 100,
@@ -19,9 +27,20 @@ export async function POST(request: Request) {
     });
 
     const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: 'Payment initialization failed' }, { status: 500 });
+    if (!response.ok) {
+      throw new Error(data.message || 'Payment initialization failed');
+    }
+
+    return NextResponse.json({
+      success: true,
+      reference: data.reference || data.id,
+      data: data
+    });
+  } catch (error: any) {
+    console.error('Payment error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Payment initialization failed' }, 
+      { status: 500 }
+    );
   }
 }
-

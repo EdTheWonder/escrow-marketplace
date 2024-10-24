@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import Script from 'next/script';
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface MonoPaymentProps {
   amount: number;
@@ -17,10 +19,19 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
   async function handlePayment() {
     try {
       setLoading(true);
+      
+      // Check authentication first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login to continue");
+        return;
+      }
+
       const response = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ amount })
       });
@@ -40,10 +51,9 @@ export default function MonoPayment({ amount, onSuccess, onClose }: MonoPaymentP
         },
       });
       
-      monoInstance.setup();
       monoInstance.open();
     } catch (error: any) {
-      console.error('Payment initialization failed:', error);
+      toast.error(error.message);
       setLoading(false);
     }
   }
