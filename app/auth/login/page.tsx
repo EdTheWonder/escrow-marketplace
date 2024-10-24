@@ -36,7 +36,7 @@ export default function Login() {
         
         if (sessionData.session) {
           toast.success("Logged in successfully!");
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
         } else {
           throw new Error("Failed to establish session");
         }

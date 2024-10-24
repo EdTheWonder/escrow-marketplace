@@ -47,7 +47,7 @@ export default function SignUp() {
         
         if (sessionData.session) {
           toast.success("Account created successfully!");
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
         } else {
           throw new Error("Failed to establish session");
         }

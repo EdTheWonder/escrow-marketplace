@@ -10,21 +10,29 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Check if user is authenticated
-  if (!session) {
-    return NextResponse.redirect(new URL('/auth/login', req.url));
+  // Allow auth routes to pass through
+  if (req.nextUrl.pathname.startsWith('/auth/')) {
+    return res;
   }
 
-  // For seller-only routes, check the user role
-  if (req.nextUrl.pathname.startsWith('/products')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
+  // Protect dashboard and product routes
+  if (req.nextUrl.pathname.startsWith('/dashboard') || 
+      req.nextUrl.pathname.startsWith('/products')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth/login', req.url));
+    }
 
-    if (profile?.role !== 'seller') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+    // For seller-only routes, check the user role
+    if (req.nextUrl.pathname.startsWith('/products')) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.role !== 'seller') {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
     }
   }
 
@@ -32,5 +40,9 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/products/:path*', '/dashboard/:path*']
+  matcher: [
+    '/dashboard/:path*',
+    '/products/:path*',
+    '/auth/:path*'
+  ]
 };
