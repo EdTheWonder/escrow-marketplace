@@ -15,7 +15,7 @@ export default function SellerDashboard({ products, earnings }: SellerDashboardP
   const soldItems = products.filter(p => p.status === 'sold');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 p-6 rounded-lg">
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-6">
           <div className="flex items-center gap-4">

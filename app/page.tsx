@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { Package } from "lucide-react";
 
 export default function Home() {
   return (
@@ -31,8 +32,8 @@ export default function Home() {
         <div className="flex justify-center gap-4">
           <Button size="lg" asChild>
             <Link href="/products">
-              <ShoppingBag className="mr-2 h-5 w-5" />
-              Browse Products
+              <Package className="mr-2 h-5 w-5" />
+              Browse All Products
             </Link>
           </Button>
           <Button size="lg" variant="outline" asChild>

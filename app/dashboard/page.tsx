@@ -114,7 +114,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
       <header className="bg-white/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">
