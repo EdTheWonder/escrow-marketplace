@@ -7,6 +7,8 @@ import { Product } from "@/types";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import PurchaseButton from "./purchase-button";
@@ -23,11 +25,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
           <Card className="overflow-hidden">
             {product.image_urls && product.image_urls[0] && (
               <div className="relative h-48 w-full">
-                <Image
+                <img
                   src={product.image_urls[0]}
                   alt={product.title}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             )}
@@ -44,18 +45,19 @@ export default function ProductGrid({ products }: ProductGridProps) {
             </div>
           </Card>
           <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{product.title}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
               {product.image_urls && product.image_urls[0] && (
                 <div className="relative h-64 w-full">
-                  <Image
+                  <img
                     src={product.image_urls[0]}
                     alt={product.title}
-                    fill
-                    className="object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
               )}
-              <h2 className="text-2xl font-bold">{product.title}</h2>
               <p className="text-muted-foreground">{product.description}</p>
               <div className="flex justify-between items-center">
                 <p className="text-xl font-bold">${product.price}</p>
