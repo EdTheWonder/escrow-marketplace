@@ -31,6 +31,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
                 className="object-cover"
                 onError={() => handleImageError(product.id, product.image_urls[0])}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                unoptimized // Add this to bypass image optimization for external URLs
               />
             )}
             {(!product.image_urls?.[0] || imageError[product.id]) && (

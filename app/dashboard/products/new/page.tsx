@@ -90,14 +90,15 @@ export default function NewProduct() {
           throw uploadError;
         }
 
-        // Get the full public URL including the base URL
-        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
 
         console.log('Generated public URL:', {
           url: publicUrl,
           fileName
         });
-        
+
         imageUrls.push(publicUrl);
       }
 

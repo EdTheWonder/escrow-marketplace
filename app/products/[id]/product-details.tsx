@@ -8,11 +8,29 @@ import ImageModal from "@/components/image-modal";
 import GradientBackground from "@/components/ui/gradient-background";
 
 interface ProductDetailsProps {
-  product: any;
+  product: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    image_urls: string | string[];
+    seller_id: string;  // Add this line
+    profiles: {
+      id: string;
+      email: string;
+    };
+  };
 }
 
 export default function ProductDetails({ product }: ProductDetailsProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Convert image_urls to array if it's not already
+  const imageUrls = Array.isArray(product.image_urls) 
+    ? product.image_urls 
+    : product.image_urls 
+      ? [product.image_urls]
+      : [];
 
   return (
     <GradientBackground>
@@ -20,7 +38,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         <Card className="p-6 bg-white/80 backdrop-blur-sm">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              {product.image_urls && product.image_urls.map((url: string, index: number) => (
+              {imageUrls.map((url: string, index: number) => (
                 <div 
                   key={index} 
                   className="relative aspect-video cursor-pointer"
@@ -32,6 +50,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                     fill
                     className="rounded-lg object-cover"
                     priority={index === 0}
+                    unoptimized
                   />
                 </div>
               ))}
@@ -58,4 +77,3 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
     </GradientBackground>
   );
 }
-
