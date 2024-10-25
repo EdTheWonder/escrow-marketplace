@@ -1,9 +1,26 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { Package } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabaseClient } from "@/lib/supabase";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        router.push('/feed');
+      }
+    }
+    checkAuth();
+  }, [router]);
+
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
       <header className="border-b">
@@ -72,4 +89,3 @@ export default function Home() {
     </main>
   );
 }
-
