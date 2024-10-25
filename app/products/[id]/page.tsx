@@ -1,5 +1,3 @@
-"use client";
-
 import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import ProductDetails from "./product-details";
