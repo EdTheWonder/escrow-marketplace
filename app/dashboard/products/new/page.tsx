@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import Image from 'next/image';  // Add this import at the top
 import BackButton from "@/components/back-button";
+import { uploadToR2 } from "@/lib/cloudflare-r2";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -50,66 +51,19 @@ export default function NewProduct() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Validate form data
       if (!formData.title || !formData.description || !formData.price || images.length === 0) {
         throw new Error("Please fill all required fields and add at least one image");
       }
 
-      // Upload images with detailed logging
+      // Upload images to R2
       const imageUrls = [];
       for (const image of images) {
-        console.log('Attempting to upload image:', {
-          name: image.name,
-          type: image.type,
-          size: image.size
-        });
-
-        const fileExt = image.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        
-        // Log pre-upload details
-        console.log('Upload attempt details:', {
-          fileName,
-          bucket: 'product-images',
-          contentType: image.type
-        });
-
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, image);
-
-        if (uploadError) {
-          console.error('Image upload error:', {
-            error: uploadError,
-            fileName,
-            imageDetails: {
-              type: image.type,
-              size: image.size
-            }
-          });
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
-
-        console.log('Generated public URL:', {
-          url: publicUrl,
-          fileName
-        });
-
+        const publicUrl = await uploadToR2(image);
         imageUrls.push(publicUrl);
       }
 
-      // Log final image URLs array
-      console.log('Final image URLs array:', {
-        count: imageUrls.length,
-        urls: imageUrls
-      });
-
-      // Create product with logged URLs
-      const { error: productError, data: productData } = await supabase
+      // Create product in Supabase with R2 URLs
+      const { error: productError } = await supabase
         .from('products')
         .insert({
           seller_id: user.id,
@@ -118,26 +72,9 @@ export default function NewProduct() {
           price: parseFloat(formData.price),
           image_urls: imageUrls,
           status: 'available'
-        })
-        .select()
-        .single();
-
-      if (productError) {
-        console.error('Product creation error:', {
-          error: productError,
-          imageUrls,
-          productData: {
-            title: formData.title,
-            imageCount: imageUrls.length
-          }
         });
-        throw productError;
-      }
 
-      console.log('Product created successfully:', {
-        product: productData,
-        imageUrls
-      });
+      if (productError) throw productError;
 
       toast.success("Product listed successfully!");
       router.push("/dashboard");
