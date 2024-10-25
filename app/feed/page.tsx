@@ -18,7 +18,7 @@ export default function FeedPage() {
         .from('products')
         .select(`
           *,
-          profiles:seller_id (
+          seller:seller_id (
             email
           )
         `)
