@@ -25,17 +25,16 @@ export default function FeedPage() {
         .from('products')
         .select(`
           *,
-          seller:profiles!seller_id (
+          profiles:seller_id (
             id,
-            email,
-            role
+            email
           )
         `)
         .eq('status', 'available')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      console.log('Fetched products:', data); // Add this for debugging
+      console.log('Fetched products:', data); // For debugging
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -72,9 +71,7 @@ export default function FeedPage() {
               <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              <ProductGrid products={products} />
-            </div>
+            <ProductGrid products={products} />
           )}
         </div>
       </GradientBackground>
