@@ -50,6 +50,26 @@ export default function NewProduct() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Check if user has a profile, create one if it doesn't exist
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        // Create a new profile if one doesn't exist
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            wallet_balance: 0
+          });
+
+        if (profileError) throw profileError;
+      }
+
       // Validate form data
       if (!formData.title || !formData.description || !formData.price || images.length === 0) {
         throw new Error("Please fill all required fields and add at least one image");
@@ -79,7 +99,7 @@ export default function NewProduct() {
         fileTypes: images.map(f => f.type)
       });
 
-      // Create product with logged URLs
+      // Create product without checking role
       const { error: productError } = await supabase
         .from('products')
         .insert({

@@ -1,21 +1,27 @@
+"use client";
+
 import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import PurchaseButton from "@/components/purchase-button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import GradientBackground from "@/components/ui/gradient-background";
+import { useState } from "react";
+import ImageModal from "@/components/image-modal";
 
 export default async function ProductPage({
   params: { id },
 }: {
   params: { id: string };
 }) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const supabase = createServerSupabase();
   const { data: product, error } = await supabase
     .from('products')
     .select(`
       *,
-      profiles:seller_id (
+      profiles (
+        id,
         email
       )
     `)
@@ -34,7 +40,11 @@ export default async function ProductPage({
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
               {product.image_urls && product.image_urls.map((url: string, index: number) => (
-                <div key={index} className="relative aspect-video">
+                <div 
+                  key={index} 
+                  className="relative aspect-video cursor-pointer"
+                  onClick={() => setSelectedImage(url)}
+                >
                   <Image
                     src={url}
                     alt={`${product.title} - Image ${index + 1}`}
@@ -55,6 +65,15 @@ export default async function ProductPage({
           </div>
         </Card>
       </div>
+      
+      {selectedImage && (
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={selectedImage}
+          alt={product.title}
+        />
+      )}
     </GradientBackground>
   );
 }

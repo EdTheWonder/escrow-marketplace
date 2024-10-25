@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import BackButton from "@/components/back-button";
+import { Plus } from "lucide-react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,21 +35,8 @@ export default function FeedPage() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        // Get public URL for each image
-        const productsWithUrls = await Promise.all(data.map(async (product) => {
-          const { data: { publicUrl } } = supabase
-            .storage
-            .from('product-images')
-            .getPublicUrl(product.image_urls[0]);
-          
-          return {
-            ...product,
-            image_urls: [publicUrl]
-          };
-        }));
-
-        console.log('Products with public URLs:', productsWithUrls); // Debug log
-        setProducts(productsWithUrls);
+        console.log('Products with URLs:', data); // Debug log
+        setProducts(data);
       }
     }
 
@@ -59,7 +48,15 @@ export default function FeedPage() {
       <div className="mb-6">
         <BackButton />
       </div>
-      <h1 className="text-3xl font-bold mb-8">Product Feed</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Product Feed</h1>
+        <Button asChild>
+          <Link href="/dashboard/products/new">
+            <Plus className="mr-2 h-5 w-5" />
+            Add Product
+          </Link>
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <Link key={product.id} href={`/products/${product.id}`}>
