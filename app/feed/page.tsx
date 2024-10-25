@@ -25,8 +25,14 @@ interface Product {
 
 export default function FeedPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    }
+    
     async function fetchProducts() {
       const { data, error } = await supabase
         .from('products')
@@ -35,27 +41,33 @@ export default function FeedPage() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        console.log('Products with URLs:', data); // Debug log
         setProducts(data);
       }
     }
 
+    checkAuth();
     fetchProducts();
   }, []);
 
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-6">
-        <BackButton />
+        <Link href={isAuthenticated ? "/dashboard" : "/"}>
+          <Button variant="ghost">
+            ← Back to {isAuthenticated ? "Dashboard" : "Home"}
+          </Button>
+        </Link>
       </div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Product Feed</h1>
-        <Button asChild>
-          <Link href="/dashboard/products/new">
-            <Plus className="mr-2 h-5 w-5" />
-            Add Product
-          </Link>
-        </Button>
+        {isAuthenticated && (
+          <Button asChild>
+            <Link href="/dashboard/products/new">
+              <Plus className="mr-2 h-5 w-5" />
+              Add Product
+            </Link>
+          </Button>
+        )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (

@@ -50,57 +50,71 @@ export default function NewProduct() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Check if user has a profile, create one if it doesn't exist
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile) {
-        // Create a new profile if one doesn't exist
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            wallet_balance: 0
-          });
-
-        if (profileError) throw profileError;
-      }
-
       // Validate form data
       if (!formData.title || !formData.description || !formData.price || images.length === 0) {
         throw new Error("Please fill all required fields and add at least one image");
       }
 
-      // Upload images
+      // Upload images with detailed logging
       const imageUrls = [];
       for (const image of images) {
+        console.log('Attempting to upload image:', {
+          name: image.name,
+          type: image.type,
+          size: image.size
+        });
+
         const fileExt = image.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        const { error: uploadError, data } = await supabase.storage
+        
+        // Log pre-upload details
+        console.log('Upload attempt details:', {
+          fileName,
+          bucket: 'product-images',
+          contentType: image.type
+        });
+
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('product-images')
           .upload(fileName, image);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Image upload error:', {
+            error: uploadError,
+            fileName,
+            imageDetails: {
+              type: image.type,
+              size: image.size
+            }
+          });
+          throw uploadError;
+        }
+
+        console.log('Upload successful:', {
+          uploadData,
+          fileName
+        });
+
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(fileName);
+
+        console.log('Generated public URL:', {
+          url: publicUrl,
+          fileName
+        });
         
         imageUrls.push(publicUrl);
       }
 
-      // Log the image URLs after upload
-      console.log('Uploaded image URLs:', {
-        urls: imageUrls,
-        bucketPath: `${user.id}/${new Date().toISOString()}`,
-        fileTypes: images.map(f => f.type)
+      // Log final image URLs array
+      console.log('Final image URLs array:', {
+        count: imageUrls.length,
+        urls: imageUrls
       });
 
-      // Create product without checking role
-      const { error: productError } = await supabase
+      // Create product with logged URLs
+      const { error: productError, data: productData } = await supabase
         .from('products')
         .insert({
           seller_id: user.id,
@@ -109,20 +123,31 @@ export default function NewProduct() {
           price: parseFloat(formData.price),
           image_urls: imageUrls,
           status: 'available'
+        })
+        .select()
+        .single();
+
+      if (productError) {
+        console.error('Product creation error:', {
+          error: productError,
+          imageUrls,
+          productData: {
+            title: formData.title,
+            imageCount: imageUrls.length
+          }
         });
+        throw productError;
+      }
 
-      if (productError) throw productError;
-
-      // Log the final product creation
-      console.log('Product created with images:', {
-        title: formData.title,
-        imageUrls,
-        timestamp: new Date().toISOString()
+      console.log('Product created successfully:', {
+        product: productData,
+        imageUrls
       });
 
       toast.success("Product listed successfully!");
       router.push("/dashboard");
     } catch (error: any) {
+      console.error('Product creation failed:', error);
       toast.error(error.message);
     } finally {
       setLoading(false);
