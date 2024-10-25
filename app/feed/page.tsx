@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import { useEffect, useState } from "react";
 import ProductGrid from "@/components/product-grid";
 import { createClient } from '@supabase/supabase-js';
@@ -9,6 +7,7 @@ import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 import { Product } from "@/types";
 
+// Create Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -21,20 +20,20 @@ export default function FeedPage() {
   async function fetchProducts() {
     try {
       setLoading(true);
+      console.log('Fetching products...'); // Debug log
+
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          profiles:seller_id (
-            id,
-            email
-          )
-        `)
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
+        .select('*, profiles:seller_id (email)')
+        .eq('status', 'available');
 
-      if (error) throw error;
-      console.log('Fetched products:', data); // For debugging
+      console.log('Query response:', { data, error }); // Debug log
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -71,7 +70,10 @@ export default function FeedPage() {
               <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <ProductGrid products={products} />
+            <div>
+              <p className="mb-4">Found {products.length} products</p>
+              <ProductGrid products={products} />
+            </div>
           )}
         </div>
       </GradientBackground>
