@@ -12,18 +12,18 @@ export const r2Client = new S3Client({
 
 export async function uploadToR2(file: File): Promise<string> {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${Math.random()}.${fileExt}`;
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
   await r2Client.send(
     new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: 'buyby', // Add the bucket name here
       Key: fileName,
       Body: Buffer.from(await file.arrayBuffer()),
       ContentType: file.type,
     })
   );
 
-  return `${process.env.R2_PUBLIC_URL}/${fileName}`;
+  return `https://pub-2127bf698dab4e5c8767c9f3a15d08d6.r2.dev/${fileName}`;
 }
 
 export async function deleteFromR2(url: string) {
@@ -32,9 +32,8 @@ export async function deleteFromR2(url: string) {
 
   await r2Client.send(
     new DeleteObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: 'buyby', // Add the bucket name here
       Key: fileName,
     })
   );
 }
-
