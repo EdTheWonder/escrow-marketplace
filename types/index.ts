@@ -15,3 +15,8 @@ export interface Product {
   };
 }
 
+export interface UserProfile {
+  role: 'buyer' | 'seller';
+  email?: string;
+  // Add any other user profile fields you're using
+}

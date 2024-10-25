@@ -12,69 +12,60 @@ import ProductGrid from "@/components/product-grid";
 import NavMenu from "@/components/nav-menu";
 import GradientBackground from "@/components/ui/gradient-background";
 import { getAvailableProducts } from "@/lib/products";
-
-interface UserProfile {
-  id: string;
-  email: string;
-  role: 'buyer' | 'seller';
-  wallet_balance: number;
-}
+import { Product, UserProfile } from "@/types";
 
 export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [purchases, setPurchases] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch user data and buyer data
-    getBuyerData();
+    fetchDashboardData();
   }, []);
 
-  async function getBuyerData() {
-    const { data: { user }, error } = await supabaseClient.auth.getUser();
+  async function fetchDashboardData() {
+    try {
+      // Get user data
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError) throw userError;
 
-    if (error) {
-      console.error('Error fetching user:', error);
-      return;
-    }
+      if (user) {
+        const userProfile = user.user_metadata as UserProfile;
+        setUser(userProfile);
 
-    if (user) {
-      const userProfile = user.user_metadata as UserProfile;
-      setUser(userProfile);
+        // Fetch available products
+        const { data: products, error: productsError } = await supabaseClient
+          .from('products')
+          .select(`
+            *,
+            profiles:seller_id (
+              email
+            )
+          `)
+          .eq('status', 'available')
+          .order('created_at', { ascending: false });
 
-      // Get all available products for the feed
-      const { data: feedProducts, error: productsError } = await supabaseClient
-        .from('products')
-        .select(`
-          *,
-          profiles:seller_id (
-            email
-          )
-        `)
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
+        if (productsError) throw productsError;
+        setProducts(products || []);
 
-      if (productsError) {
-        console.error('Error fetching products:', productsError);
-      } else {
-        setProducts(feedProducts || []);
+        // Get cart count
+        const { data: cartData, error: cartError } = await supabaseClient
+          .from('cart')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (cartError) {
+          console.error('Error fetching cart data:', cartError);
+        } else {
+          setCartCount(cartData?.length || 0);
+        }
       }
-
-      // Get cart count
-      const { data: cartData, error: cartError } = await supabaseClient
-        .from('cart')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      if (cartError) {
-        console.error('Error fetching cart data:', cartError);
-      } else {
-        setCartCount(cartData?.length || 0);
-      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     }
   }
 
