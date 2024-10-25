@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ProductGrid from "@/components/product-grid";
-import { supabaseClient } from "@/lib/supabase"; // Use the shared client
+import { supabaseClient } from "@/lib/supabase";
 import { RefreshCcw } from "lucide-react";
 import GradientBackground from "@/components/ui/gradient-background";
 import { Product } from "@/types";
@@ -18,8 +18,12 @@ export default function FeedPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_id (
-            email
+          products (
+            id,
+            title,
+            price,
+            image_urls,
+            seller_id
           )
         `)
         .eq('status', 'available')
