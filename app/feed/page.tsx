@@ -28,20 +28,26 @@ export default function FeedPage() {
     async function fetchProducts() {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          id,
-          title,
-          description,
-          price,
-          image_urls,
-          status
-        `)
+        .select('*')
         .eq('status', 'available')
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        console.log('Fetched products:', data); // Debug log
-        setProducts(data);
+        // Get public URL for each image
+        const productsWithUrls = await Promise.all(data.map(async (product) => {
+          const { data: { publicUrl } } = supabase
+            .storage
+            .from('product-images')
+            .getPublicUrl(product.image_urls[0]);
+          
+          return {
+            ...product,
+            image_urls: [publicUrl]
+          };
+        }));
+
+        console.log('Products with public URLs:', productsWithUrls); // Debug log
+        setProducts(productsWithUrls);
       }
     }
 
