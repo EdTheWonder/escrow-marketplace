@@ -26,7 +26,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
           <div className="relative aspect-square">
             {Array.isArray(product.image_urls) && product.image_urls[0] && !imageError[product.id] && (
               <Image
-                src={product.image_urls[0]}
+                src={typeof product.image_urls[0] === 'string' ? product.image_urls[0] : ''}
                 alt={product.title}
                 fill
                 className="object-cover"

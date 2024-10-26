@@ -41,7 +41,15 @@ export default function FeedPage() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        setProducts(data);
+        const processedData = data.map(product => ({
+          ...product,
+          image_urls: Array.isArray(product.image_urls) 
+            ? product.image_urls 
+            : typeof product.image_urls === 'string'
+            ? JSON.parse(product.image_urls)
+            : []
+        }));
+        setProducts(processedData);
       }
     }
 
@@ -74,13 +82,14 @@ export default function FeedPage() {
           <Link key={product.id} href={`/products/${product.id}`}>
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative aspect-square">
-                {product.image_urls?.[0] && (
+                {Array.isArray(product.image_urls) && product.image_urls[0] && (
                   <Image
-                    src={product.image_urls[0]}
+                    src={typeof product.image_urls[0] === 'string' ? product.image_urls[0] : ''}
                     alt={product.title}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                    unoptimized
                   />
                 )}
               </div>
