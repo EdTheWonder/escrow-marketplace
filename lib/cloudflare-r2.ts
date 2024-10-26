@@ -1,75 +1,62 @@
-import { S3Client } from '@aws-sdk/client-s3';
-import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { v2 as cloudinary } from 'cloudinary';
 
-// Initialize R2 client only if credentials are available
-const initR2Client = () => {
-  if (typeof window === 'undefined' && // Only check on server-side
-      process.env.R2_ACCESS_KEY_ID &&
-      process.env.R2_SECRET_ACCESS_KEY &&
-      process.env.R2_ENDPOINT) {
-    return new S3Client({
-      region: 'auto',
-      endpoint: process.env.R2_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-      },
-      forcePathStyle: true
-    });
-  }
-  return null;
-};
-
-const r2Client = initR2Client();
+cloudinary.config({
+  cloud_name: 'dnwxgyfrs',
+  api_key: '948513622955145',
+  api_secret: 'NUQa3HuBa57xw439stAf9bx8pjE',
+  secure: true
+});
 
 export async function uploadToR2(file: File): Promise<string> {
-  if (!r2Client) {
-    throw new Error('R2 client not properly configured');
-  }
-
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    // Convert File to base64
+    const base64Data = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        resolve(base64String.split(',')[1]);
+      };
+      reader.readAsDataURL(file);
+    });
 
-    await r2Client.send(
-      new PutObjectCommand({
-        Bucket: 'buyby',
-        Key: fileName,
-        Body: Buffer.from(await file.arrayBuffer()),
-        ContentType: file.type,
-      })
-    );
+    // Upload to Cloudinary
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader.upload(
+        `data:${file.type};base64,${base64Data}`,
+        {
+          folder: 'buyby',
+          resource_type: 'auto'
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+    });
 
-    // Make sure this environment variable is set in your .env.local
-    const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-    if (!publicUrl) {
-      throw new Error('R2 public URL not configured');
-    }
-
-    return `${publicUrl}/${fileName}`;
+    return result.secure_url;
   } catch (error) {
-    console.error('R2 upload error:', error);
-    throw new Error('Failed to upload file to R2');
+    console.error('Upload error:', error);
+    throw new Error('Failed to upload file');
   }
 }
 
 export async function deleteFromR2(url: string) {
-  if (!r2Client) {
-    throw new Error('R2 client not properly configured');
-  }
-
   try {
-    const fileName = url.split('/').pop();
-    if (!fileName) return;
-
-    await r2Client.send(
-      new DeleteObjectCommand({
-        Bucket: 'buyby',
-        Key: fileName,
-      })
-    );
+    // Extract public_id from URL
+    const publicId = url.split('/').slice(-2).join('/').split('.')[0];
+    
+    await new Promise<void>((resolve, reject) => {
+      cloudinary.uploader.destroy(
+        publicId,
+        (error, result) => {
+          if (error) reject(error);
+          else resolve();
+        }
+      );
+    });
   } catch (error) {
-    console.error('R2 delete error:', error);
-    throw new Error('Failed to delete file from R2');
+    console.error('Delete error:', error);
+    throw new Error('Failed to delete file');
   }
 }

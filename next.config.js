@@ -3,7 +3,7 @@ const nextConfig = {
   images: {
     domains: [
       'qzcrmwbdanlgwphuavnh.supabase.co',
-      'pub-2127bf698dab4e5c8767c9f3a15d08d6.r2.dev'
+      'res.cloudinary.com'
     ],
     unoptimized: true
   },
