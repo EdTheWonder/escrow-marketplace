@@ -13,6 +13,7 @@ import NavMenu from "@/components/nav-menu";
 import GradientBackground from "@/components/ui/gradient-background";
 import { getAvailableProducts } from "@/lib/products";
 import { Product, UserProfile } from "@/types";
+import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState<number>(0);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('feed');
 
   useEffect(() => {
     fetchDashboardData();
@@ -107,9 +109,52 @@ export default function DashboardPage() {
         </header>
 
         <main className="container mx-auto py-8 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <ProductGrid products={products} />
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <div className="flex gap-4">
+              <Button
+                variant={activeTab === 'feed' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('feed')}
+              >
+                Product Feed
+              </Button>
+              <Button
+                variant={activeTab === 'listings' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('listings')}
+              >
+                My Listings
+              </Button>
+            </div>
           </div>
+
+          {activeTab === 'feed' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <Link key={product.id} href={`/products/${product.id}`}>
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="relative aspect-square">
+                      {Array.isArray(product.image_urls) && product.image_urls[0] && (
+                        <Image
+                          src={product.image_urls[0]}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                          unoptimized
+                        />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h2 className="font-semibold truncate">{product.title}</h2>
+                      <p className="text-lg font-bold">${product.price}</p>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <ProductGrid products={products} />
+          )}
         </main>
       </GradientBackground>
     </div>

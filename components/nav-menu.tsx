@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { supabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { History } from "lucide-react";
 
 export default function NavMenu({ role }: { role: string }) {
   const router = useRouter();
@@ -34,6 +35,12 @@ export default function NavMenu({ role }: { role: string }) {
           >
             Sign Out
           </button>
+          <a
+            href="/dashboard/history"
+            className="block px-4 py-2 hover:bg-gray-100"
+          >
+            History
+          </a>
         </div>
       </div>
     </div>

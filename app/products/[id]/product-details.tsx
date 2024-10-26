@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PurchaseButton from "@/components/purchase-button";
 import ImageModal from "@/components/image-modal";
 import GradientBackground from "@/components/ui/gradient-background";
@@ -25,12 +25,21 @@ interface ProductDetailsProps {
 export default function ProductDetails({ product }: ProductDetailsProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Convert image_urls to array if it's not already
-  const imageUrls = Array.isArray(product.image_urls) 
-    ? product.image_urls 
-    : typeof product.image_urls === 'string' 
-      ? JSON.parse(product.image_urls)
-      : [];
+  // Safely parse image URLs
+  const imageUrls = useMemo(() => {
+    try {
+      if (Array.isArray(product.image_urls)) {
+        return product.image_urls;
+      }
+      if (typeof product.image_urls === 'string') {
+        return JSON.parse(product.image_urls);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing image URLs:', error);
+      return [];
+    }
+  }, [product.image_urls]);
 
   return (
     <GradientBackground>
