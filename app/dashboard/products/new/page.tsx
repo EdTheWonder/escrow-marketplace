@@ -59,10 +59,10 @@ export default function NewProduct() {
       const imageUrls = [];
       for (const image of images) {
         const publicUrl = await uploadToR2(image);
-        console.log('Received URL:', publicUrl); // Add this log
+        console.log('Received URL:', publicUrl);
         imageUrls.push(publicUrl);
       }
-      console.log('Final image URLs:', imageUrls); // Add this log
+      console.log('Final image URLs:', imageUrls);
 
       // Create product in Supabase with R2 URLs
       const { error: productError } = await supabase
@@ -72,7 +72,7 @@ export default function NewProduct() {
           title: formData.title,
           description: formData.description,
           price: parseFloat(formData.price),
-          image_urls: imageUrls,
+          image_urls: imageUrls, // Make sure this is an array, not a string
           status: 'available'
         });
 

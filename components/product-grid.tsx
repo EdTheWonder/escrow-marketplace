@@ -24,7 +24,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
       {products.map((product) => (
         <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
           <div className="relative aspect-square">
-            {product.image_urls?.[0] && !imageError[product.id] && (
+            {Array.isArray(product.image_urls) && product.image_urls[0] && !imageError[product.id] && (
               <Image
                 src={product.image_urls[0]}
                 alt={product.title}
@@ -32,7 +32,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
                 className="object-cover"
                 onError={() => handleImageError(product.id, product.image_urls[0])}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                unoptimized // Add this to bypass image optimization for external URLs
+                unoptimized
               />
             )}
             {(!product.image_urls?.[0] || imageError[product.id]) && (

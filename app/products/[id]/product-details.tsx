@@ -28,8 +28,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   // Convert image_urls to array if it's not already
   const imageUrls = Array.isArray(product.image_urls) 
     ? product.image_urls 
-    : product.image_urls 
-      ? [product.image_urls]
+    : typeof product.image_urls === 'string' 
+      ? JSON.parse(product.image_urls)
       : [];
 
   return (
