@@ -72,4 +72,3 @@ export default function ProductModal({ isOpen, onClose, product }: ProductModalP
     </Dialog>
   );
 }
-
