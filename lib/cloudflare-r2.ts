@@ -15,10 +15,13 @@ export async function uploadToR2(file: File): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error('Upload failed');
+      const errorData = await response.json();
+      console.error('Upload response:', errorData);
+      throw new Error('Upload failed: ' + errorData.error?.message || 'Unknown error');
     }
 
     const data = await response.json();
+    console.log('Upload successful:', data); // Add this log
     return data.secure_url;
   } catch (error) {
     console.error('Upload error:', error);

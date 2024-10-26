@@ -55,12 +55,14 @@ export default function NewProduct() {
         throw new Error("Please fill all required fields and add at least one image");
       }
 
-      // Upload images to R2
+      // Upload images to Cloudinary
       const imageUrls = [];
       for (const image of images) {
         const publicUrl = await uploadToR2(image);
+        console.log('Received URL:', publicUrl); // Add this log
         imageUrls.push(publicUrl);
       }
+      console.log('Final image URLs:', imageUrls); // Add this log
 
       // Create product in Supabase with R2 URLs
       const { error: productError } = await supabase

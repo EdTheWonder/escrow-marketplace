@@ -13,6 +13,7 @@ export default function ProductGrid({ products }: { products: Product[] }) {
     console.error('Image load failed:', {
       productId,
       url,
+      imageUrls: products.find(p => p.id === productId)?.image_urls,
       timestamp: new Date().toISOString()
     });
     setImageError(prev => ({ ...prev, [productId]: true }));
