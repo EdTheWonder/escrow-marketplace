@@ -48,11 +48,20 @@ export default function DashboardPage() {
               email
             )
           `)
-          .eq('status', 'available')
+          .eq('seller_id', user.id)  // Only show products owned by the user
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
-        setProducts(products || []);
+
+        // Process the image URLs before setting the products
+        const processedProducts = products?.map(product => ({
+          ...product,
+          image_urls: typeof product.image_urls === 'string' 
+            ? JSON.parse(product.image_urls) 
+            : product.image_urls
+        }));
+
+        setProducts(processedProducts || []);
 
         // Get cart count
         const { data: cartData, error: cartError } = await supabaseClient
@@ -130,7 +139,13 @@ export default function DashboardPage() {
           {activeTab === 'feed' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {products.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
+                <Link 
+                  key={product.id} 
+                  href={`/products/${product.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="relative aspect-square">
                       {Array.isArray(product.image_urls) && product.image_urls[0] && (

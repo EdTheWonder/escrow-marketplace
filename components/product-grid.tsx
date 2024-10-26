@@ -24,21 +24,19 @@ export default function ProductGrid({ products }: { products: Product[] }) {
       {products.map((product) => (
         <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
           <div className="relative aspect-square">
-            {Array.isArray(product.image_urls) && product.image_urls[0] && !imageError[product.id] && (
+            {product.image_urls && (
               <Image
-                src={typeof product.image_urls[0] === 'string' ? product.image_urls[0] : ''}
+                src={Array.isArray(product.image_urls) 
+                  ? product.image_urls[0] 
+                  : typeof product.image_urls === 'string'
+                  ? product.image_urls
+                  : ''}
                 alt={product.title}
                 fill
                 className="object-cover"
-                onError={() => handleImageError(product.id, product.image_urls[0])}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
                 unoptimized
               />
-            )}
-            {(!product.image_urls?.[0] || imageError[product.id]) && (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <span className="text-muted-foreground">No image available</span>
-              </div>
             )}
           </div>
           <div className="p-4">
