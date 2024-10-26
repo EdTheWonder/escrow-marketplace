@@ -54,7 +54,7 @@ export default function DashboardPage() {
         if (productsError) throw productsError;
 
         // Process the image URLs before setting the products
-        const processedProducts = products?.map(product => ({
+        const processedProducts = products?.map((product: Product) => ({
           ...product,
           image_urls: typeof product.image_urls === 'string' 
             ? JSON.parse(product.image_urls) 

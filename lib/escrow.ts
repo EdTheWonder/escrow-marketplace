@@ -6,10 +6,7 @@ const supabase = createClient(
 );
 
 export class EscrowService {
-  static createEscrowWallet(id: any) {
-    throw new Error('Method not implemented.');
-  }
-  static async holdEscrow(transactionId: string, amount: number) {
+  static async createEscrowWallet(transactionId: string) {
     const { data: transaction } = await supabase
       .from('transactions')
       .select('*')
@@ -19,6 +16,29 @@ export class EscrowService {
     if (!transaction) throw new Error('Transaction not found');
 
     // Create escrow wallet entry
+    const { error: escrowError } = await supabase
+      .from('escrow_wallets')
+      .insert({
+        transaction_id: transactionId,
+        amount: transaction.amount,
+        status: 'pending'
+      });
+
+    if (escrowError) throw escrowError;
+
+    return true;
+  }
+
+  static async holdEscrow(transactionId: string, amount: number) {
+    const { data: transaction } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('id', transactionId)
+      .single();
+
+    if (!transaction) throw new Error('Transaction not found');
+
+    // Create escrow hold
     const { error: escrowError } = await supabase
       .from('escrow_wallets')
       .insert({
@@ -34,6 +54,17 @@ export class EscrowService {
       .from('transactions')
       .update({ status: 'in_escrow' })
       .eq('id', transactionId);
+
+    // Create wallet transaction record
+    await supabase
+      .from('wallet_transactions')
+      .insert({
+        wallet_id: transaction.buyer_id,
+        transaction_id: transactionId,
+        type: 'escrow_hold',
+        amount: amount,
+        status: 'completed'
+      });
   }
 
   static async releaseToSeller(transactionId: string) {
@@ -45,8 +76,14 @@ export class EscrowService {
 
     if (!transaction) throw new Error('Transaction not found');
 
-    // Create wallet transaction
-    const { error: walletError } = await supabase
+    // Update seller's wallet balance
+    await supabase.rpc('update_wallet_balance', {
+      p_user_id: transaction.seller_id,
+      p_amount: transaction.amount
+    });
+
+    // Create wallet transaction for seller
+    await supabase
       .from('wallet_transactions')
       .insert({
         wallet_id: transaction.seller_id,
@@ -56,14 +93,8 @@ export class EscrowService {
         status: 'completed'
       });
 
-    if (walletError) throw walletError;
-
-    // Update balances and statuses
+    // Update statuses
     await Promise.all([
-      supabase.rpc('update_wallet_balance', {
-        p_user_id: transaction.seller_id,
-        p_amount: transaction.amount
-      }),
       supabase
         .from('transactions')
         .update({ status: 'completed' })
@@ -88,12 +119,22 @@ export class EscrowService {
 
     if (!transaction) throw new Error('Transaction not found');
 
-    // Refund to buyer
-    await supabase.rpc('transfer_escrow_to_buyer', {
-      p_transaction_id: transactionId,
-      p_buyer_id: transaction.buyer_id,
+    // Update buyer's wallet balance
+    await supabase.rpc('update_wallet_balance', {
+      p_user_id: transaction.buyer_id,
       p_amount: transaction.amount
     });
+
+    // Create refund transaction
+    await supabase
+      .from('wallet_transactions')
+      .insert({
+        wallet_id: transaction.buyer_id,
+        transaction_id: transactionId,
+        type: 'refund',
+        amount: transaction.amount,
+        status: 'completed'
+      });
 
     // Update statuses
     await Promise.all([
