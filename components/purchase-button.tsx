@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { EscrowService } from '@/lib/escrow';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -56,18 +57,23 @@ export default function PurchaseButton({ product }: { product: Product }) {
       if (!user) throw new Error("Not authenticated");
 
       // Create transaction record
-      const { error: transactionError } = await supabase
+      const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert({
           product_id: product.id,
           buyer_id: user.id,
           seller_id: product.seller_id,
           amount: product.price,
-          status: 'in_escrow',
+          status: 'pending',
           payment_reference: reference
-        });
+        })
+        .select()
+        .single();
 
       if (transactionError) throw transactionError;
+
+      // Initialize escrow process
+      await EscrowService.holdPayment(transaction.id, product.price);
 
       toast.success("Purchase successful! Check your dashboard for status.");
       router.push("/dashboard");

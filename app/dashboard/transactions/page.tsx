@@ -108,12 +108,18 @@ export default function TransactionsPage() {
                     </span>
                     {user.id === transaction.buyer_id && 
                      transaction.status === 'in_escrow' && (
-                      <Button
-                        onClick={() => handleConfirmDelivery(transaction.id)}
-                        size="sm"
-                      >
-                        Confirm Delivery
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          onClick={() => handleConfirmDelivery(transaction.id)}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          I have received and am satisfied with the product
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          Clicking this will release the payment to the seller
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

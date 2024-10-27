@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     // Get transaction details
     const { data: transaction } = await supabase
       .from('transactions')
-      .select('*, products(*)')
+      .select('*, products(*), sellers:seller_id(wallet_balance)')
       .eq('id', transactionId)
       .single();
 
@@ -22,14 +22,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // Release escrow to seller
-    await WalletManager.releaseEscrow(transactionId);
+    // Update seller's wallet balance
+    const newBalance = (transaction.sellers.wallet_balance || 0) + transaction.amount;
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ wallet_balance: newBalance })
+      .eq('id', transaction.seller_id);
 
-    // Update product status
-    await supabase
-      .from('products')
-      .update({ status: 'sold' })
-      .eq('id', transaction.product_id);
+    if (updateError) {
+      throw updateError;
+    }
+
+    // Update transaction and product status
+    await Promise.all([
+      supabase
+        .from('transactions')
+        .update({ status: 'completed' })
+        .eq('id', transactionId),
+      supabase
+        .from('products')
+        .update({ status: 'sold' })
+        .eq('id', transaction.product_id)
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -40,4 +54,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
