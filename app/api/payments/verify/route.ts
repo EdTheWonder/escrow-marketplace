@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         );
       }
 
-      await EscrowService.holdEscrow(transaction.id, transaction.amount);
+      await EscrowService.holdPayment(transaction.id, transaction.amount);
       return NextResponse.json({ success: true });
     }
 
