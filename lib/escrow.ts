@@ -6,6 +6,9 @@ const supabase = createClient(
 );
 
 export class EscrowService {
+  static releaseToSeller(transactionId: string) {
+    throw new Error('Method not implemented.');
+  }
   static async createEscrowWallet(transactionId: string, amount: number) {
     try {
       // Create escrow wallet entry
