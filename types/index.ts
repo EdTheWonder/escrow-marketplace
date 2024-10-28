@@ -1,4 +1,6 @@
 export interface Product {
+  max_price: ReactNode;
+  min_price: ReactNode;
   profiles: any;
   id: string;
   title: string;

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { EscrowService } from './escrow';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,3 +54,12 @@ export async function getTransactionHistory(userId: string) {
   return data;
 }
 
+export async function confirmDelivery(transactionId: string) {
+  try {
+    await EscrowService.releaseToSeller(transactionId);
+    return { success: true };
+  } catch (error) {
+    console.error('Delivery confirmation error:', error);
+    throw error;
+  }
+}
