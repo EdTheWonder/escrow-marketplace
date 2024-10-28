@@ -24,3 +24,13 @@ export interface UserProfile {
   email?: string;
   // Add any other user profile fields you're using
 }
+
+export interface SellOffer {
+  product_id: string;
+  seller_id: string;
+  min_price: number;
+  max_price: number;
+  payment_window: number; // in minutes, max 180
+  bank_account_id: string;
+  terms_accepted: boolean;
+}

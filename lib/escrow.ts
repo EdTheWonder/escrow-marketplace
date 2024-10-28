@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { WalletManager } from './wallet';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -6,9 +7,8 @@ const supabase = createClient(
 );
 
 export class EscrowService {
-  static releaseToSeller(transactionId: string) {
-    throw new Error('Method not implemented.');
-  }
+  
+
   static async createEscrowWallet(transactionId: string, amount: number) {
     try {
       // Create escrow wallet entry
@@ -112,6 +112,45 @@ export class EscrowService {
       ]);
     } catch (error: any) {
       throw new Error(`Failed to process refund: ${error.message}`);
+    }
+  }
+
+  static async releaseToSeller(transactionId: string) {
+    try {
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('*, escrow_wallets(*)')
+        .eq('id', transactionId)
+        .single();
+
+      if (!transaction) throw new Error('Transaction not found');
+      if (!transaction.escrow_wallets) throw new Error('No escrow wallet found');
+
+      // Check delivery deadline
+      const deliveryDeadline = new Date(transaction.escrow_wallets.delivery_deadline);
+      if (Date.now() > deliveryDeadline.getTime()) {
+        await this.processRefund(transactionId);
+        throw new Error('Delivery deadline exceeded, payment refunded');
+      }
+
+      // Release payment to seller
+      await WalletManager.releaseEscrow(transactionId);
+
+      // Update escrow and transaction status
+      await Promise.all([
+        supabase
+          .from('escrow_wallets')
+          .update({ status: 'released' })
+          .eq('transaction_id', transactionId),
+        supabase
+          .from('transactions')
+          .update({ status: 'completed' })
+          .eq('id', transactionId)
+      ]);
+
+      return true;
+    } catch (error: any) {
+      throw new Error(`Failed to release to seller: ${error.message}`);
     }
   }
 }

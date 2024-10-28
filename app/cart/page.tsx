@@ -9,11 +9,13 @@ import Image from 'next/image';  // Add this import at the top
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 import MonoPayment from "@/components/mono-payment";
+import { TransactionTimer } from "@/lib/transaction-timer";
 
 interface CartItem {
   id: string;
   quantity: number;
   products: {
+    payment_window: number;
     id: string;
     title: string;
     price: number;
@@ -90,22 +92,34 @@ export default function CartPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create transactions for each item
+      // Create transactions and escrow wallets for each item
       for (const item of items) {
+        const { data: escrow } = await supabase
+          .from('escrow_wallets')
+          .insert({
+            amount: item.products.price * item.quantity,
+            status: 'holding',
+            seller_id: item.products.seller_id,
+            buyer_id: user.id,
+            product_id: item.products.id,
+            payment_deadline: new Date(Date.now() + (item.products.payment_window * 60 * 1000)),
+            delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000))
+          })
+          .select()
+          .single();
+
         await supabase.from('transactions').insert({
           product_id: item.products.id,
           buyer_id: user.id,
           seller_id: item.products.seller_id,
           amount: item.products.price * item.quantity,
           status: 'in_escrow',
-          payment_reference: reference
+          payment_reference: reference,
+          escrow_id: escrow?.id
         });
 
-        // Update product status
-        await supabase
-          .from('products')
-          .update({ status: 'pending' })
-          .eq('id', item.products.id);
+        // Start timers
+        TransactionTimer.startDeliveryTimer(escrow?.id);
       }
 
       // Clear cart
