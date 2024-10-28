@@ -2,13 +2,14 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, ReactNode } from "react";
 import PurchaseButton from "@/components/purchase-button";
 import ImageModal from "@/components/image-modal";
 import GradientBackground from "@/components/ui/gradient-background";
 
 interface ProductDetailsProps {
   product: {
+    payment_window: ReactNode;
     id: string;
     title: string;
     description: string;
@@ -69,7 +70,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               <p className="text-2xl font-bold mb-4">${product.price}</p>
               <p className="text-muted-foreground mb-6">{product.description}</p>
               <p className="text-sm mb-6">Seller: {product.profiles.email}</p>
-              <PurchaseButton product={product} />
+              <p className="text-sm mb-6">Payment Window: {Number(product.payment_window)} hours</p>
+              <PurchaseButton product={{...product, payment_window: Number(product.payment_window)}} />
             </div>
           </div>
         </Card>
