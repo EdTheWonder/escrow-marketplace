@@ -4,6 +4,9 @@ import { supabaseClient as supabase } from './supabase';  // Add this import at 
 
 // lib/transaction-timer.ts
 export class TransactionTimer {
+  static startEscrowTimer(id: any) {
+    throw new Error("Method not implemented.");
+  }
   static async startPaymentTimer(transactionId: string) {
     const THREE_HOURS = 3 * 60 * 60 * 1000;
     
