@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import PaystackPayment from "@/components/paystack-payment";
 import { Checkbox } from "@radix-ui/react-checkbox";
 import { TransactionTimer } from "@/lib/transaction-timer";
+import EscrowChannel from "@/components/escrow-channel";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -25,6 +26,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
   const [showTerms, setShowTerms] = useState(false);
   const [escrowId, setEscrowId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
 
   async function handlePurchaseInit() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,8 +36,32 @@ export default function PurchaseButton({ product }: { product: Product }) {
       return;
     }
 
-    // Create escrow first
+    setShowTerms(true);
+  }
+
+  async function handleTermsAccepted() {
+    setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Create transaction in pending state
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          product_id: product.id,
+          buyer_id: user.id,
+          seller_id: product.seller_id,
+          amount: product.price,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+      setTransactionId(transaction.id);
+      
+      // Create escrow wallet
       const { data: escrow, error: escrowError } = await supabase
         .from('escrow_wallets')
         .insert({
@@ -51,17 +78,14 @@ export default function PurchaseButton({ product }: { product: Product }) {
 
       if (escrowError) throw escrowError;
       setEscrowId(escrow.id);
-      
-      // Show terms dialog
-      setShowTerms(true);
+
+      setShowTerms(false);
+      setShowChat(true);
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
-  }
-
-  async function handleTermsAccepted() {
-    setShowTerms(false);
-    setShowPayment(true);
   }
 
   async function handlePaymentSuccess(reference: string) {
@@ -122,6 +146,25 @@ export default function PurchaseButton({ product }: { product: Product }) {
               }}
             />
             <label htmlFor="terms">I accept the trade terms</label>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showChat} onOpenChange={setShowChat}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Chat with Seller</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-[400px]">
+            <EscrowChannel transactionId={transactionId!} />
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => {
+              setShowChat(false);
+              setShowPayment(true);
+            }}>
+              Proceed to Payment
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
