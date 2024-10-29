@@ -4,26 +4,19 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { EscrowService } from '@/lib/escrow';
-import { TransactionTimer } from '@/lib/transaction-timer';
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PaystackPayment from "@/components/paystack-payment";
 import { Checkbox } from "@radix-ui/react-checkbox";
+import { TransactionTimer } from "@/lib/transaction-timer";
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 interface Product {
   id: string;
   title: string;
   price: number;
   seller_id: string;
-  payment_window: number; // in minutes, max 180
+  payment_window: number;
 }
 
 export default function PurchaseButton({ product }: { product: Product }) {
@@ -40,22 +33,13 @@ export default function PurchaseButton({ product }: { product: Product }) {
       return;
     }
 
-    // Show terms dialog first
-    setShowTerms(true);
-  }
-
-  async function handleTermsAccepted() {
-    setLoading(true);
+    // Create escrow first
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Create escrow first without payment
       const { data: escrow, error: escrowError } = await supabase
         .from('escrow_wallets')
         .insert({
           amount: product.price,
-          status: 'awaiting_payment',
+          status: 'pending',
           seller_id: product.seller_id,
           buyer_id: user.id,
           product_id: product.id,
@@ -66,18 +50,18 @@ export default function PurchaseButton({ product }: { product: Product }) {
         .single();
 
       if (escrowError) throw escrowError;
-
       setEscrowId(escrow.id);
-      setShowTerms(false);
-      setShowPayment(true);
-
-      // Start escrow timer
-      TransactionTimer.startEscrowTimer(escrow.id);
+      
+      // Show terms dialog
+      setShowTerms(true);
     } catch (error: any) {
       toast.error(error.message);
-    } finally {
-      setLoading(false);
     }
+  }
+
+  async function handleTermsAccepted() {
+    setShowTerms(false);
+    setShowPayment(true);
   }
 
   async function handlePaymentSuccess(reference: string) {
@@ -85,7 +69,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
     
     setLoading(true);
     try {
-      // Update escrow status and create transaction
       await Promise.all([
         supabase
           .from('escrow_wallets')

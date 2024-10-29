@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createClient } from '@supabase/supabase-js';
 import DeliveryStatus from "@/components/delivery/DeliveryStatus";
+import EscrowChannel from "@/components/escrow-channel";
+import { Card } from "@/components/ui/card";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -30,13 +32,19 @@ export default function TransactionPage({ params }: { params: { id: string } }) 
   }, [params.id]);
 
   return (
-    <div>
+    <div className="container mx-auto py-8 space-y-6">
       {transaction && (
-        <DeliveryStatus 
-          transactionId={transaction.id}
-          status={transaction.status}
-          deliveredAt={transaction.delivered_at}
-        />
+        <>
+          <Card className="p-6">
+            <DeliveryStatus 
+              transactionId={transaction.id}
+              status={transaction.status}
+              deliveredAt={transaction.delivered_at}
+            />
+          </Card>
+
+          <EscrowChannel transactionId={transaction.id} />
+        </>
       )}
     </div>
   );
