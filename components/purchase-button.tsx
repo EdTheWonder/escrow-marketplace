@@ -9,6 +9,7 @@ import PaystackPayment from "@/components/paystack-payment";
 import { Checkbox } from "@radix-ui/react-checkbox";
 import { TransactionTimer } from "@/lib/transaction-timer";
 import EscrowChannel from "@/components/escrow-channel";
+import PaymentStatus from "@/components/payment-status";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -28,6 +29,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
   const [showPayment, setShowPayment] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [showPaymentStatus, setShowPaymentStatus] = useState(false);
+  const [paymentReference, setPaymentReference] = useState('');
 
   async function handlePurchaseInit() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,24 +103,20 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .eq('id', escrowId),
         supabase
           .from('transactions')
-          .insert({
-            escrow_id: escrowId,
-            product_id: product.id,
+          .update({ 
             payment_reference: reference,
-            status: 'in_escrow'
+            status: 'processing'
           })
+          .eq('id', transactionId)
       ]);
 
-      // Start delivery timer
-      TransactionTimer.startDeliveryTimer(escrowId);
-
-      toast.success("Payment successful! Awaiting delivery confirmation.");
-      router.push("/dashboard");
+      setShowPayment(false);
+      setShowPaymentStatus(true);
+      setPaymentReference(reference);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setLoading(false);
-      setShowPayment(false);
     }
   }
 
@@ -178,6 +177,19 @@ export default function PurchaseButton({ product }: { product: Product }) {
             amount={product.price}
             onSuccess={handlePaymentSuccess}
             onClose={() => setShowPayment(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentStatus} onOpenChange={setShowPaymentStatus}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Payment Status</DialogTitle>
+          </DialogHeader>
+          <PaymentStatus 
+            reference={paymentReference}
+            transactionId={transactionId!}
+            productId={product.id}
           />
         </DialogContent>
       </Dialog>
