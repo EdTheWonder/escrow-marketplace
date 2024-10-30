@@ -10,6 +10,7 @@ import { Checkbox } from "@radix-ui/react-checkbox";
 import { TransactionTimer } from "@/lib/transaction-timer";
 import EscrowChannel from "@/components/escrow-channel";
 import PaymentStatus from "@/components/payment-status";
+import DeliveryMethodSelector from "@/components/delivery/DeliveryMethodSelector";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -31,6 +32,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [showPaymentStatus, setShowPaymentStatus] = useState(false);
   const [paymentReference, setPaymentReference] = useState('');
+  const [showDelivery, setShowDelivery] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState('');
+  const [totalPrice, setTotalPrice] = useState(product.price);
 
   async function handlePurchaseInit() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -43,52 +47,17 @@ export default function PurchaseButton({ product }: { product: Product }) {
   }
 
   async function handleTermsAccepted() {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    setShowTerms(false);
+    setShowDelivery(true);
+  }
 
-      // Create transaction in pending state
-      const { data: transaction, error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          product_id: product.id,
-          buyer_id: user.id,
-          seller_id: product.seller_id,
-          amount: product.price,
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (transactionError) throw transactionError;
-      setTransactionId(transaction.id);
-      
-      // Create escrow wallet
-      const { data: escrow, error: escrowError } = await supabase
-        .from('escrow_wallets')
-        .insert({
-          amount: product.price,
-          status: 'pending',
-          seller_id: product.seller_id,
-          buyer_id: user.id,
-          product_id: product.id,
-          payment_deadline: new Date(Date.now() + (product.payment_window * 60 * 1000)),
-          delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000))
-        })
-        .select()
-        .single();
-
-      if (escrowError) throw escrowError;
-      setEscrowId(escrow.id);
-
-      setShowTerms(false);
-      setShowChat(true);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
+  async function handleDeliverySelected(method: string, total: number) {
+    setDeliveryMethod(method);
+    setTotalPrice(total);
+    setShowDelivery(false);
+    // Create transaction and escrow wallet
+    await createTransactionAndEscrow();
+    setShowPayment(true);
   }
 
   async function handlePaymentSuccess(reference: string) {
@@ -174,7 +143,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
             <DialogTitle>Complete Purchase</DialogTitle>
           </DialogHeader>
           <PaystackPayment
-            amount={product.price}
+            amount={totalPrice}
             onSuccess={handlePaymentSuccess}
             onClose={() => setShowPayment(false)}
           />
@@ -190,6 +159,18 @@ export default function PurchaseButton({ product }: { product: Product }) {
             reference={paymentReference}
             transactionId={transactionId!}
             productId={product.id}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDelivery} onOpenChange={setShowDelivery}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Delivery Method</DialogTitle>
+          </DialogHeader>
+          <DeliveryMethodSelector 
+            productPrice={product.price} 
+            onSelect={handleDeliverySelected}
           />
         </DialogContent>
       </Dialog>
