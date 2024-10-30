@@ -1,15 +1,28 @@
 // app/sell/page.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export default function SellPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [basePrice, setBasePrice] = useState<number>(0);
+  const [platformFee, setPlatformFee] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
   
+  useEffect(() => {
+    if (basePrice > 0) {
+      const fee = basePrice * 0.05; // 5% platform fee
+      setPlatformFee(fee);
+      setTotalPrice(basePrice + fee);
+    } else {
+      setPlatformFee(0);
+      setTotalPrice(0);
+    }
+  }, [basePrice]);
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       <h1 className="text-2xl font-semibold mb-8">Create Sell Offer</h1>
@@ -24,10 +37,28 @@ export default function SellPage() {
             rows={4}
             required
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input type="number" placeholder="Minimum Price" required />
-            <Input type="number" placeholder="Maximum Price" required />
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Product Price</label>
+            <Input
+              type="number"
+              placeholder="Base Price"
+              value={basePrice || ''}
+              onChange={(e) => setBasePrice(Number(e.target.value))}
+              required
+            />
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div className="flex justify-between">
+                <span>Platform Fee (5%):</span>
+                <span>${platformFee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-medium">
+                <span>Total Listing Price:</span>
+                <span>${totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
+
           <Input
             type="number"
             max={180}
