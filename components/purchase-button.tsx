@@ -36,6 +36,50 @@ export default function PurchaseButton({ product }: { product: Product }) {
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [totalPrice, setTotalPrice] = useState(product.price);
 
+  async function createTransactionAndEscrow() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      // Create transaction
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          product_id: product.id,
+          buyer_id: user.id,
+          seller_id: product.seller_id,
+          amount: totalPrice,
+          status: 'pending',
+          delivery_method: deliveryMethod
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // Create escrow wallet
+      const { error: escrowError } = await supabase
+        .from('escrow_wallets')
+        .insert({
+          transaction_id: transaction.id,
+          amount: totalPrice,
+          status: 'pending',
+          seller_id: product.seller_id,
+          buyer_id: user.id
+        })
+        .select()
+        .single();
+
+      if (escrowError) throw escrowError;
+
+      setTransactionId(transaction.id);
+      return transaction;
+    } catch (error: any) {
+      toast.error('Failed to create transaction');
+      throw error;
+    }
+  }
+
   async function handlePurchaseInit() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
