@@ -54,8 +54,10 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
   }, [reference, transactionId, productId, router]);
 
   useEffect(() => {
-    verifyPayment();
-  }, [verifyPayment]);
+    if (reference) {
+      verifyPayment();
+    }
+  }, [reference, verifyPayment]);
 
   return (
     <div className="text-center p-6">

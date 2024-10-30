@@ -58,12 +58,12 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
 
   useEffect(() => {
     fetchMessages();
-    const unsubscribe = subscribeToMessages();
+    const subscription = subscribeToMessages();
     getCurrentUser();
     return () => {
-      unsubscribe();
+      subscription();
     };
-  }, [fetchMessages, subscribeToMessages]);
+  }, [transactionId]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();

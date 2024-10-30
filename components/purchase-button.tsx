@@ -105,7 +105,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
   }
 
   async function handlePaymentSuccess(reference: string) {
-    if (!escrowId) return;
+    if (!transactionId) return;
     
     setLoading(true);
     try {
@@ -118,7 +118,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .from('transactions')
           .update({ 
             payment_reference: reference,
-            status: 'processing'
+            status: 'in_escrow'
           })
           .eq('id', transactionId)
       ]);
@@ -126,14 +126,18 @@ export default function PurchaseButton({ product }: { product: Product }) {
       setShowPayment(false);
       setShowPaymentStatus(true);
       setPaymentReference(reference);
+      
+      // Start escrow timer and open chat
+      TransactionTimer.startEscrowTimer(transactionId);
+      setTimeout(() => {
+        setShowPaymentStatus(false);
+        setShowChat(true);
+      }, 3000);
+
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setLoading(false);
-    }
-
-    if (transactionId) {
-      TransactionTimer.startEscrowTimer(transactionId);
     }
   }
 
