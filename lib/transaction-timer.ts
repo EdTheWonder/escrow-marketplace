@@ -1,12 +1,10 @@
 import { DisputeService } from "./dispute";
 import { EscrowService } from "./escrow";
 import { supabaseClient as supabase } from './supabase';  // Add this import at the top
+import { toast } from 'sonner';
 
 // lib/transaction-timer.ts
 export class TransactionTimer {
-  static startEscrowTimer(id: any) {
-    throw new Error("Method not implemented.");
-  }
   static async startPaymentTimer(transactionId: string) {
     const THREE_HOURS = 3 * 60 * 60 * 1000;
     
@@ -39,6 +37,23 @@ export class TransactionTimer {
         await DisputeService.createDispute(transactionId);
       }
     }, TWELVE_HOURS);
+  }
+
+  static async startEscrowTimer(transactionId: string) {
+    const ESCROW_TIMEOUT = 12 * 60 * 60 * 1000; // 12 hours
+    
+    setTimeout(async () => {
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('status')
+        .eq('id', transactionId)
+        .single();
+
+      if (transaction?.status === 'in_escrow') {
+        await EscrowService.processRefund(transactionId);
+        toast.info('Escrow period expired. Processing refund...');
+      }
+    }, ESCROW_TIMEOUT);
   }
 }
 

@@ -1,6 +1,9 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import ProductDetails from "./product-details";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default async function ProductPage({
   params: { id },
@@ -25,7 +28,21 @@ export default async function ProductPage({
     notFound();
   }
 
-  return <ProductDetails product={product} />;
+  const router = useRouter();
+
+  return (
+    <div className="container mx-auto py-8">
+      <Button 
+        onClick={() => router.back()} 
+        variant="ghost" 
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back to Products
+      </Button>
+      <ProductDetails product={product} />
+    </div>
+  );
 }
 
 export async function generateStaticParams() {

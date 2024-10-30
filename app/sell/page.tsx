@@ -23,6 +23,13 @@ export default function SellPage() {
     }
   }, [basePrice]);
 
+  const handlePriceChange = (value: number) => {
+    const base = Number(value) || 0;
+    const fee = base * 0.05;
+    setBasePrice(base);
+    setTotalPrice(base + fee);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       <h1 className="text-2xl font-semibold mb-8">Create Sell Offer</h1>
@@ -42,15 +49,16 @@ export default function SellPage() {
             <label className="text-sm font-medium">Product Price</label>
             <Input
               type="number"
-              placeholder="Base Price"
-              value={basePrice || ''}
-              onChange={(e) => setBasePrice(Number(e.target.value))}
+              min="0"
+              step="0.01"
+              value={basePrice}
+              onChange={(e) => handlePriceChange(Number(e.target.value))}
               required
             />
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="text-sm space-y-2">
               <div className="flex justify-between">
                 <span>Platform Fee (5%):</span>
-                <span>${platformFee.toFixed(2)}</span>
+                <span>${(basePrice * 0.05).toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-medium">
                 <span>Total Listing Price:</span>

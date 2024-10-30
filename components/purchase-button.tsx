@@ -131,6 +131,10 @@ export default function PurchaseButton({ product }: { product: Product }) {
     } finally {
       setLoading(false);
     }
+
+    if (transactionId) {
+      TransactionTimer.startEscrowTimer(transactionId);
+    }
   }
 
   return (
@@ -151,13 +155,13 @@ export default function PurchaseButton({ product }: { product: Product }) {
           <div className="space-y-4">
             <p>Payment window: {product.payment_window} minutes</p>
             <p>Delivery window: 12 hours</p>
-            <Checkbox 
-              id="terms" 
-              onCheckedChange={(checked) => {
-                if (checked) handleTermsAccepted();
-              }}
-            />
-            <label htmlFor="terms">I accept the trade terms</label>
+            <Button 
+              onClick={() => handleTermsAccepted()}
+              variant="outline"
+              className="w-full"
+            >
+              I Accept the Trade Terms
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

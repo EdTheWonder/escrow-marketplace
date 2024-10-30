@@ -12,27 +12,16 @@ interface DeliveryMethodProps {
 
 export default function DeliveryMethodSelector({ productPrice, onSelect }: DeliveryMethodProps) {
   const [method, setMethod] = useState<string>('');
-  const [deliveryPrice, setDeliveryPrice] = useState(0);
-  const [loading, setLoading] = useState(false);
 
   async function handleMethodChange(value: string) {
     setMethod(value);
-    setLoading(true);
-
+    
     if (value === 'sendbox') {
-      try {
-        const price = await calculateSendboxDelivery();
-        setDeliveryPrice(price);
-        onSelect(value, productPrice + price);
-      } catch (error) {
-        toast.error('Failed to calculate delivery price');
-      }
-    } else {
-      setDeliveryPrice(0);
-      onSelect(value, productPrice);
+      window.location.href = `https://checkout.sendbox.co/initialize?key=${process.env.NEXT_PUBLIC_SENDBOX_KEY}`;
+      return;
     }
-
-    setLoading(false);
+    
+    onSelect(value, productPrice);
   }
 
   return (
@@ -51,16 +40,6 @@ export default function DeliveryMethodSelector({ productPrice, onSelect }: Deliv
           <Label htmlFor="pickup">Pickup from Seller</Label>
         </div>
       </RadioGroup>
-
-      {method === 'sendbox' && deliveryPrice > 0 && (
-        <div className="text-sm space-y-2">
-          <p>Product Price: ${productPrice}</p>
-          <p>Delivery Fee: ${deliveryPrice}</p>
-          <p className="font-semibold">Total: ${productPrice + deliveryPrice}</p>
-        </div>
-      )}
-
-      {loading && <p className="text-sm text-muted-foreground">Calculating delivery price...</p>}
     </div>
   );
 }
