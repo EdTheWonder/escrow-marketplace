@@ -1,10 +1,7 @@
-"use client";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import ProductDetails from "./product-details";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import BackButton from "@/components/back-button";
 
 export default async function ProductPage({
   params: { id },
@@ -31,15 +28,7 @@ export default async function ProductPage({
 
   return (
     <div className="container mx-auto py-8">
-      <Link href="/products" passHref>
-        <Button 
-          variant="ghost" 
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Products
-        </Button>
-      </Link>
+      <BackButton />
       <ProductDetails product={product} />
     </div>
   );
