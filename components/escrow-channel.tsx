@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -24,18 +24,7 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  useEffect(() => {
-    fetchMessages();
-    subscribeToMessages();
-    getCurrentUser();
-  }, [transactionId]);
-
-  async function getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUser(user);
-  }
-
-  async function fetchMessages() {
+  const fetchMessages = useCallback(async () => {
     const { data } = await supabase
       .from('messages')
       .select('*')
@@ -43,9 +32,9 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
       .order('created_at', { ascending: true });
     
     if (data) setMessages(data);
-  }
+  }, [transactionId]);
 
-  function subscribeToMessages() {
+  const subscribeToMessages = useCallback(() => {
     const channel = supabase
       .channel(`messages:${transactionId}`)
       .on(
@@ -65,6 +54,20 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [transactionId]);
+
+  useEffect(() => {
+    fetchMessages();
+    const unsubscribe = subscribeToMessages();
+    getCurrentUser();
+    return () => {
+      unsubscribe();
+    };
+  }, [fetchMessages, subscribeToMessages]);
+
+  async function getCurrentUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUser(user);
   }
 
   async function sendMessage(e: React.FormEvent) {

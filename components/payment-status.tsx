@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from './ui/card';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -16,11 +16,7 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
   const [status, setStatus] = useState<'success' | 'failed' | 'processing'>('processing');
   const router = useRouter();
 
-  useEffect(() => {
-    verifyPayment();
-  }, [reference]);
-
-  async function verifyPayment() {
+  const verifyPayment = useCallback(async () => {
     try {
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -55,7 +51,11 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
     } catch (error) {
       setStatus('failed');
     }
-  }
+  }, [reference, transactionId, productId, router]);
+
+  useEffect(() => {
+    verifyPayment();
+  }, [verifyPayment]);
 
   return (
     <div className="text-center p-6">
