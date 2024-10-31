@@ -41,6 +41,11 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!user) return;
 
     try {
+      // Ensure delivery method is set
+      if (!deliveryMethod) {
+        throw new Error('Delivery method not selected');
+      }
+
       // Create transaction
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
@@ -50,7 +55,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
           seller_id: product.seller_id,
           amount: totalPrice,
           status: 'pending',
-          delivery_method: deliveryMethod
+          delivery_method: deliveryMethod,
+          delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0 // Example fee
         })
         .select()
         .single();
