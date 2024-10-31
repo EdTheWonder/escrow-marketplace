@@ -30,7 +30,7 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
         await Promise.all([
           supabase
             .from('products')
-            .update({ status: 'delivering' })
+            .update({ status: 'in_escrow' })
             .eq('id', productId),
           supabase
             .from('transactions')

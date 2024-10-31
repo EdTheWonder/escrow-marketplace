@@ -123,16 +123,17 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .eq('id', transactionId)
       ]);
 
+      // Start escrow timer
+      TransactionTimer.startEscrowTimer(transactionId);
+
       setShowPayment(false);
       setShowPaymentStatus(true);
       setPaymentReference(reference);
-      
-      // Start escrow timer and open chat
-      TransactionTimer.startEscrowTimer(transactionId);
+
+      // Redirect to transaction chat after a short delay
       setTimeout(() => {
-        setShowPaymentStatus(false);
-        setShowChat(true);
-      }, 3000);
+        router.push(`/transactions/${transactionId}`);
+      }, 2000);
 
     } catch (error: any) {
       toast.error(error.message);
