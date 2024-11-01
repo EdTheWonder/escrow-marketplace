@@ -21,6 +21,9 @@ interface Message {
   read: boolean;
   media_url?: string;
   media_type?: 'image' | 'video';
+  recipient_id: string;
+  read_at: string | null;
+  deleted_at: string | null;
 }
 
 export default function EscrowChannel({ 
@@ -35,29 +38,66 @@ export default function EscrowChannel({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
 
+  const markMessageAsRead = useCallback(async (messageId: string) => {
+    if (!currentUser) return;
+    
+    await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', messageId)
+      .eq('recipient_id', currentUser.id)
+      .is('read_at', null);
+  }, [currentUser]);
+
   const fetchMessages = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data } = await supabase
       .from('messages')
       .select('*')
       .eq('transaction_id', transactionId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: true });
     
-    if (data) setMessages(data);
-  }, [transactionId]);
+    if (data) {
+      setMessages(data);
+      // Mark received messages as read
+      data.forEach(msg => {
+        if (msg.recipient_id === user.id && !msg.read_at) {
+          markMessageAsRead(msg.id);
+        }
+      });
+    }
+  }, [transactionId, markMessageAsRead]);
 
   const subscribeToMessages = useCallback(() => {
+    if (!currentUser) return () => {};
+
     const channel = supabase
       .channel(`messages:${transactionId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all changes
           schema: 'public',
           table: 'messages',
           filter: `transaction_id=eq.${transactionId}`
         },
         (payload) => {
-          setMessages(current => [...current, payload.new as Message]);
+          if (payload.eventType === 'INSERT') {
+            setMessages(current => [...current, payload.new as Message]);
+            // Mark as read if we're the recipient
+            if (payload.new.recipient_id === currentUser.id) {
+              markMessageAsRead(payload.new.id);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages(current => 
+              current.map(msg => 
+                msg.id === payload.new.id ? payload.new as Message : msg
+              )
+            );
+          }
         }
       )
       .subscribe();
@@ -65,7 +105,7 @@ export default function EscrowChannel({
     return () => {
       channel.unsubscribe();
     };
-  }, [transactionId]);
+  }, [transactionId, currentUser, markMessageAsRead]);
 
   useEffect(() => {
     fetchMessages();
@@ -106,13 +146,27 @@ export default function EscrowChannel({
   ) {
     e.preventDefault();
     if (!newMessage.trim() && !mediaUrl) return;
+    if (!currentUser) return;
 
     try {
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('buyer_id, seller_id')
+        .eq('id', transactionId)
+        .single();
+
+      if (!transaction) throw new Error('Transaction not found');
+
+      const recipientId = currentUser.id === transaction.buyer_id 
+        ? transaction.seller_id 
+        : transaction.buyer_id;
+
       const { error } = await supabase
         .from('messages')
         .insert({
           transaction_id: transactionId,
-          sender_id: currentUser?.id,
+          sender_id: currentUser.id,
+          recipient_id: recipientId,
           content: newMessage.trim(),
           media_url: mediaUrl,
           media_type: mediaType
@@ -157,9 +211,16 @@ export default function EscrowChannel({
                   )
                 )}
                 <p>{message.content}</p>
-                <span className="text-xs opacity-70">
-                  {format(new Date(message.created_at), 'HH:mm')}
-                </span>
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span>{format(new Date(message.created_at), 'HH:mm')}</span>
+                  {message.sender_id === currentUser?.id && (
+                    message.read_at ? (
+                      <span className="text-blue-500">✓✓</span>
+                    ) : (
+                      <span>✓</span>
+                    )
+                  )}
+                </div>
               </div>
             </div>
           ))}
