@@ -63,3 +63,12 @@ export async function confirmDelivery(transactionId: string) {
     throw error;
   }
 }
+
+export async function updateTransactionToEscrow(transactionId: string) {
+  const { error } = await supabase
+    .from('transactions')
+    .update({ status: 'in_escrow' })
+    .eq('id', transactionId);
+
+  if (error) throw error;
+}

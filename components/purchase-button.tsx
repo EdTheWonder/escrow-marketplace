@@ -11,6 +11,7 @@ import { TransactionTimer } from "@/lib/transaction-timer";
 import EscrowChannel from "@/components/escrow-channel";
 import PaymentStatus from "@/components/payment-status";
 import DeliveryMethodSelector from "@/components/delivery/DeliveryMethodSelector";
+import { updateTransactionToEscrow } from "@/lib/transactions";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -139,6 +140,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .update({ status: 'in_escrow' })
           .eq('id', product.id)
       ]);
+
+      // After successful payment verification
+      await updateTransactionToEscrow(transactionId);
 
       // Close delivery dialog after successful payment
       setShowDelivery(false);

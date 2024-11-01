@@ -45,8 +45,9 @@ export default function TransactionsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUser(user);
+      console.log('Current user:', user.id);
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('transactions')
         .select(`
           *,
@@ -65,19 +66,16 @@ export default function TransactionsPage() {
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error('Supabase error:', error);
+        return;
+      }
+
+      console.log('Raw transactions data:', data);
+      console.log('Transactions query:', `buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+
       if (data) {
-        const validTransactions = data.filter(t => t.products && 
-          (t.buyers?.email || t.sellers?.email))
-          .map(t => ({
-            ...t,
-            products: {
-              ...t.products,
-              image_urls: Array.isArray(t.products.image_urls)
-                ? t.products.image_urls
-                : JSON.parse(t.products.image_urls || '[]')
-            }
-          }));
-        setTransactions(validTransactions);
+        setTransactions(data);
       }
     }
   }
