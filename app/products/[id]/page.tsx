@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import ProductDetails from "./product-details";
 import BackButton from "@/components/back-button";
 
+// Add this line to force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default async function ProductPage({
   params: { id },
 }: {
@@ -32,21 +35,5 @@ export default async function ProductPage({
       <ProductDetails product={product} />
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  const supabase = createServerSupabase();
-  const { data: products, error } = await supabase
-    .from('products')
-    .select('id');
-
-  if (error) {
-    console.error('Error fetching product IDs:', error);
-    return [];
-  }
-
-  return (products || []).map((product) => ({
-    id: product.id,
-  }));
 }
 
