@@ -10,9 +10,15 @@ interface PaymentStatusProps {
   reference: string;
   transactionId: string;
   productId: string;
+  onSuccess?: () => void;
 }
 
-export default function PaymentStatus({ reference, transactionId, productId }: PaymentStatusProps) {
+export default function PaymentStatus({ 
+  reference, 
+  transactionId, 
+  productId,
+  onSuccess 
+}: PaymentStatusProps) {
   const [status, setStatus] = useState<'success' | 'failed' | 'processing'>('processing');
   const router = useRouter();
 
@@ -39,11 +45,10 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
         ]);
         setStatus('success');
         
-        // Add delay before redirect
-        setTimeout(() => {
-          router.push(`/chat/${transactionId}`);
-          router.refresh();
-        }, 2000);
+        // Call success callback instead of handling redirect
+        if (onSuccess) {
+          setTimeout(onSuccess, 2000);
+        }
       } else {
         setStatus('failed');
         setTimeout(() => {
@@ -58,7 +63,7 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
         router.refresh();
       }, 2000);
     }
-  }, [reference, transactionId, productId, router]);
+  }, [reference, transactionId, productId, onSuccess, router]);
 
   useEffect(() => {
     if (reference) {

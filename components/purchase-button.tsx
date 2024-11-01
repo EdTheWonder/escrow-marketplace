@@ -229,6 +229,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
             reference={paymentReference}
             transactionId={transactionId!}
             productId={product.id}
+            onSuccess={() => handlePaymentSuccess(paymentReference)}
           />
         </DialogContent>
       </Dialog>
