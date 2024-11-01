@@ -53,24 +53,30 @@ export default function HistoryPage() {
       <BackButton />
       <h1 className="text-3xl font-bold mb-8">Transaction History</h1>
       <div className="space-y-4">
-        {transactions.map((transaction) => (
-          <Card key={transaction.id} className="p-4">
-            <div className="flex justify-between">
-              <div>
-                <h3 className="font-semibold">{transaction.products.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {transaction.buyer.email === transaction.seller.email 
-                    ? `You ${transaction.buyer_id === user.id ? 'bought from' : 'sold to'} ${transaction.buyer.email}`
-                    : `Transaction with ${transaction.buyer.email}`}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold">${transaction.amount}</p>
-                <p className="text-sm text-muted-foreground">{transaction.status}</p>
-              </div>
-            </div>
+        {transactions.length === 0 ? (
+          <Card className="p-8 text-center text-muted-foreground">
+            No transactions yet
           </Card>
-        ))}
+        ) : (
+          transactions.map((transaction) => (
+            <Card key={transaction.id} className="p-4">
+              <div className="flex justify-between">
+                <div>
+                  <h3 className="font-semibold">{transaction.products.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {transaction.buyer.email === transaction.seller.email 
+                      ? `You ${transaction.buyer_id === user.id ? 'bought from' : 'sold to'} ${transaction.buyer.email}`
+                      : `Transaction with ${transaction.buyer.email}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">${transaction.amount}</p>
+                  <p className="text-sm text-muted-foreground">{transaction.status}</p>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

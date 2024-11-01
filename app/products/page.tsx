@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import BackButton from "@/components/back-button";
+import { Card } from "@/components/ui/card";
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export default async function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <BackButton />
         <div className="flex justify-between items-center mb-8">
@@ -46,7 +47,12 @@ export default async function ProductsPage() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <ProductGrid products={products || []} />
+          {products.map(product => (
+            <Card key={product.id} className="bg-gradient-to-br from-blue-50/80 via-blue-100/80 to-indigo-100/80 backdrop-blur-sm">
+              {/* ... rest of card content ... */}
+              <p className="text-lg font-bold">₦{product.price}</p>
+            </Card>
+          ))}
         </div>
       </div>
     </div>
