@@ -10,6 +10,19 @@ export async function createProduct(data: {
   seller_id: string;
   image_urls: string[];
 }) {
+  // First, ensure the profile exists
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .upsert({ 
+      id: data.seller_id,
+      updated_at: new Date().toISOString()
+    }, { 
+      onConflict: 'id' 
+    });
+
+  if (profileError) throw profileError;
+
+  // Then create the product
   const { error } = await supabase
     .from('products')
     .insert({
