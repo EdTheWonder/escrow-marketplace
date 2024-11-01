@@ -26,7 +26,7 @@ export default function NavMenu({ role }: { role: string }) {
       </Link>
       {role === 'seller' && (
         <Link href="/products" className="text-sm font-medium">
-          Your Products
+          ""
         </Link>
       )}
       <div className="relative group">
