@@ -38,21 +38,23 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
       // Create event listener before opening window
       const handleMessage = async (event: MessageEvent) => {
         if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
+          window.removeEventListener('message', handleMessage);
+          
           if (event.data.status === 'success') {
             try {
               await onSuccess(event.data.reference);
-              window.removeEventListener('message', handleMessage);
               onClose(); // Close the payment dialog
               
-              // Redirect after successful payment
-              window.location.href = `/transactions/${transactionId}`;
+              // Small delay before redirect to ensure state updates are complete
+              setTimeout(() => {
+                window.location.href = `/transactions/${transactionId}`;
+              }, 100);
             } catch (error) {
               console.error('Payment success handler error:', error);
               toast.error("Error processing payment success");
             }
           } else {
             toast.error("Payment failed. Please try again.");
-            window.removeEventListener('message', handleMessage);
             onClose();
           }
         }

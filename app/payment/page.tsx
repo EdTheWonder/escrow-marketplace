@@ -42,18 +42,18 @@ export default function PaymentPage() {
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'failed'
           }, '*');
+          window.close();
         }
-        window.close();
       },
-      onSuccess: async function(response: { reference: string }) {
+      onSuccess: function(response: { reference: string }) {
         if (window.opener) {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
             reference: response.reference
           }, '*');
+          window.close();
         }
-        setTimeout(() => window.close(), 1000); // Add delay before closing
       },
     });
     
