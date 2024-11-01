@@ -21,7 +21,7 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference })
+        body: JSON.stringify({ reference, transactionId, productId })
       });
 
       const data = await response.json();
@@ -38,18 +38,25 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
             .eq('id', transactionId)
         ]);
         setStatus('success');
+        
+        // Add delay before redirect
+        setTimeout(() => {
+          router.push(`/transactions/${transactionId}`);
+          router.refresh(); // Force a refresh of the page data
+        }, 2000);
       } else {
         setStatus('failed');
+        setTimeout(() => {
+          router.push('/dashboard');
+          router.refresh();
+        }, 2000);
       }
-
-      setTimeout(() => {
-        router.push(data.status === 'success' 
-          ? `/transactions/${transactionId}` 
-          : '/dashboard'
-        );
-      }, 3000);
     } catch (error) {
       setStatus('failed');
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 2000);
     }
   }, [reference, transactionId, productId, router]);
 
