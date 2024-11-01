@@ -20,6 +20,7 @@ export interface Product {
 }
 
 export interface UserProfile {
+  id: string | undefined;
   role: 'buyer' | 'seller';
   email?: string;
   // Add any other user profile fields you're using

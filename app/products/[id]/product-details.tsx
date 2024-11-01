@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useState, useMemo, ReactNode } from "react";
 import PurchaseButton from "@/components/purchase-button";
 import ImageModal from "@/components/image-modal";
-import GradientBackground from "@/components/ui/gradient-background";
 
 interface ProductDetailsProps {
   product: {
@@ -43,9 +42,9 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   }, [product.image_urls]);
 
   return (
-    <GradientBackground>
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-4xl p-4">
-        <Card className="p-6 bg-white/80 backdrop-blur-sm">
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border border-white/20">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-4">
               {imageUrls.map((url: string, index: number) => (
@@ -85,6 +84,6 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           alt={product.title}
         />
       )}
-    </GradientBackground>
+    </div>
   );
 }

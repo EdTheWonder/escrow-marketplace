@@ -140,12 +140,9 @@ export default function DashboardPage() {
             {products.map((product) => (
               <Link 
                 key={product.id} 
-                href={`/products/${product.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+                href={`/dashboard/products/${product.id}/edit`}
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
                   <div className="relative aspect-square">
                     {Array.isArray(product.image_urls) && product.image_urls[0] && (
                       <Image
@@ -157,17 +154,26 @@ export default function DashboardPage() {
                         unoptimized
                       />
                     )}
+                    <div className="absolute top-2 right-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
+                        product.status === 'available' ? 'bg-green-500' :
+                        product.status === 'in_escrow' ? 'bg-yellow-500' :
+                        'bg-gray-500'
+                      }`}>
+                        {product.status}
+                      </span>
+                    </div>
                   </div>
                   <div className="p-4">
                     <h2 className="font-semibold truncate">{product.title}</h2>
-                    <p className="text-lg font-bold">${product.price}</p>
+                    <p className="text-lg font-bold">₦{product.price}</p>
                   </div>
                 </Card>
               </Link>
             ))}
           </div>
         ) : (
-          <ProductGrid products={products} />
+          <ProductGrid products={products} currentUserId={user?.id} />
         )}
       </main>
     </div>
