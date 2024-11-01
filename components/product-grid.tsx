@@ -45,23 +45,10 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
       {products.map((product) => {
         const isOwner = currentUserId === product.seller_id;
         
-        // Determine the link destination based on product status and ownership
-        let href = `/products/${product.id}`;
-        
-        if (isOwner) {
-          if (product.status === 'in_escrow') {
-            // For products in escrow, link to the transaction page
-            href = `/transactions/${product.transactions?.[0]?.id}`;
-          } else {
-            // For other products owned by the user, link to edit page
-            href = `/dashboard/products/${product.id}/edit`;
-          }
-        }
-
         return (
           <Link 
             key={product.id} 
-            href={href}
+            href={isOwner ? `/dashboard/products/${product.id}/edit` : `/products/${product.id}`}
             className={isOwner ? 'cursor-pointer' : ''}
           >
             <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">

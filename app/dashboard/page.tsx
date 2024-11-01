@@ -29,7 +29,6 @@ export default function DashboardPage() {
 
   async function fetchDashboardData() {
     try {
-      // Get user data
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       if (userError) throw userError;
 
@@ -37,7 +36,7 @@ export default function DashboardPage() {
         const userProfile = user.user_metadata as UserProfile;
         setUser(userProfile);
 
-        // Fetch available products
+        // Fetch all products owned by the user, regardless of status
         const { data: products, error: productsError } = await supabaseClient
           .from('products')
           .select(`
@@ -50,19 +49,23 @@ export default function DashboardPage() {
               status
             )
           `)
-          .eq('seller_id', user.id)  // Only show products owned by the user
+          .eq('seller_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (productsError) throw productsError;
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+          throw productsError;
+        }
 
         // Process the image URLs before setting the products
-        const processedProducts = products?.map((product: Product) => ({
+        const processedProducts = products?.map((product) => ({
           ...product,
-          image_urls: typeof product.image_urls === 'string' 
-            ? JSON.parse(product.image_urls) 
-            : product.image_urls
+          image_urls: Array.isArray(product.image_urls) 
+            ? product.image_urls 
+            : JSON.parse(product.image_urls || '[]')
         }));
 
+        console.log('Fetched products:', processedProducts);
         setProducts(processedProducts || []);
 
         // Get cart count
@@ -79,6 +82,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
     }
   }
 
@@ -153,7 +157,7 @@ export default function DashboardPage() {
 
         {activeTab === 'feed' ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.length === 0 ? (
+            {products?.length === 0 ? (
               <Card className="col-span-full p-8 text-center bg-white/80 backdrop-blur-sm border border-white/20">
                 <h3 className="text-lg font-medium mb-4">No listings yet</h3>
                 <Button asChild>
@@ -167,7 +171,10 @@ export default function DashboardPage() {
               products.map((product) => (
                 <Link 
                   key={product.id} 
-                  href={`/dashboard/products/${product.id}/edit`}
+                  href={product.status === 'in_escrow' 
+                    ? `/transactions/${product.transactions?.[0]?.id}`
+                    : `/dashboard/products/${product.id}/edit`
+                  }
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
                     <div className="relative aspect-square">
