@@ -5,61 +5,69 @@ import { createClient } from '@supabase/supabase-js';
 import { Card } from '@/components/ui/card';
 import EscrowChannel from '@/components/escrow-channel';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface Chat {
-  transaction_id: string;
-  last_message: string;
-  last_message_time: string;
+interface Trade {
+  id: string;
+  status: string;
+  amount: number;
+  created_at: string;
   product: {
+    id: string;
     title: string;
-    price: number;
+    image_urls: string[];
   };
-  other_party: {
+  counterparty: {
+    id: string;
     email: string;
   };
 }
 
 export default function MessagesPage() {
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [selectedTrade, setSelectedTrade] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    async function fetchChats() {
+    async function fetchTrades() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUser(user);
 
-      const { data: transactions } = await supabase
+      const { data } = await supabase
         .from('transactions')
         .select(`
           id,
-          products (title, price),
-          buyers:buyer_id (email),
-          sellers:seller_id (email),
-          messages (content, created_at)
+          status,
+          amount,
+          created_at,
+          products (
+            id,
+            title,
+            image_urls
+          ),
+          buyers:buyer_id (id, email),
+          sellers:seller_id (id, email)
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .eq('status', 'in_escrow');
+        .order('created_at', { ascending: false });
 
-      if (transactions) {
-        const formattedChats = transactions.map(t => ({
-          transaction_id: t.id,
-          last_message: t.messages?.[t.messages.length - 1]?.content || 'No messages yet',
-          last_message_time: t.messages?.[t.messages.length - 1]?.created_at,
-          product: t.products[0], // Get first product since interface expects single product
-          other_party: user.id === t.id ? t.sellers[0] : t.buyers[0] // Access first buyer/seller and use t.id
+      if (data) {
+        const formattedTrades = data.map(t => ({
+          ...t,
+          counterparty: user.id === t.buyers[0].id ? t.sellers[0] : t.buyers[0],
+          product: t.products[0]
         }));
-        setChats(formattedChats);
+        setTrades(formattedTrades);
       }
     }
 
-    fetchChats();
+    fetchTrades();
   }, []);
 
   return (
@@ -67,39 +75,31 @@ export default function MessagesPage() {
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-4">
-          {chats.map((chat) => (
-            <Card
-              key={chat.transaction_id}
-              className={`p-4 cursor-pointer hover:bg-muted transition-colors ${
-                selectedChat === chat.transaction_id ? 'bg-muted' : ''
-              }`}
-              onClick={() => setSelectedChat(chat.transaction_id)}
-            >
-              <h3 className="font-semibold">{chat.product.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {chat.other_party.email}
-              </p>
-              <p className="text-sm truncate">{chat.last_message}</p>
-              {chat.last_message_time && (
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(chat.last_message_time), 'MMM d, HH:mm')}
-                </p>
-              )}
-            </Card>
+          {trades.map((trade) => (
+            <Link href={`/transactions/${trade.id}`} key={trade.id}>
+              <Card className="p-4 cursor-pointer hover:bg-muted transition-colors">
+                <div className="flex gap-4">
+                  {trade.product.image_urls?.[0] && (
+                    <img
+                      src={trade.product.image_urls[0]}
+                      alt={trade.product.title}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  )}
+                  <div>
+                    <h3 className="font-semibold">{trade.product.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {trade.counterparty.email}
+                    </p>
+                    <p className="text-sm">Amount: ₦{trade.amount}</p>
+                    <span className="text-xs px-2 py-1 rounded bg-muted">
+                      {trade.status}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Link>
           ))}
-        </div>
-        
-        <div className="col-span-2">
-          {selectedChat ? (
-            <EscrowChannel 
-              transactionId={selectedChat}
-              allowMediaUpload={true}
-            />
-          ) : (
-            <Card className="p-8 text-center text-muted-foreground">
-              Select a chat to view messages
-            </Card>
-          )}
         </div>
       </div>
     </div>

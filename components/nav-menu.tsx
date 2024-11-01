@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient, useSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { MessageSquare } from "lucide-react";
 
 export default function NavMenu({ role }: { role: string }) {
   const router = useRouter();
@@ -41,6 +42,15 @@ export default function NavMenu({ role }: { role: string }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard/transactions">Transactions</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link 
+            href="/messages" 
+            className="flex items-center gap-2 px-4 py-2 hover:bg-muted rounded-lg"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Messages</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="text-red-600" onClick={handleSignOut}>
           Sign Out
