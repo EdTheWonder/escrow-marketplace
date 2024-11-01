@@ -202,8 +202,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           <PaystackPayment
             amount={totalPrice}
             onSuccess={handlePaymentSuccess}
-            onClose={() => setShowPayment(false)}
-          />
+            onClose={() => setShowPayment(false)} transactionId={""} productId={""}          />
         </DialogContent>
       </Dialog>
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import Script from 'next/script';
 import { createClient } from '@supabase/supabase-js';
 import { toast } from "sonner";
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
@@ -13,9 +12,11 @@ interface PaystackPaymentProps {
   amount: number;
   onSuccess: (reference: string) => void;
   onClose: () => void;
+  transactionId: string;
+  productId: string;
 }
 
-export default function PaystackPayment({ amount, onSuccess, onClose }: PaystackPaymentProps) {
+export default function PaystackPayment({ amount, onSuccess, onClose, transactionId, productId }: PaystackPaymentProps) {
   const [loading, setLoading] = useState(false);
 
   async function handlePayment() {
@@ -34,46 +35,45 @@ export default function PaystackPayment({ amount, onSuccess, onClose }: Paystack
         return;
       }
 
-      const handler = (window as any).PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY,
-        email: user.email,
-        amount: amount * 100,
-        currency: 'NGN',
-        onClose: () => {
-          setLoading(false);
-          onClose();
-        },
-        onSuccess: (response: { reference: string }) => {
-          onSuccess(response.reference);
-        },
-      });
+      // Open payment in new window
+      const paymentWindow = window.open(
+        `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}`,
+        'PaystackPayment',
+        'width=500,height=600'
+      );
 
-      handler.openIframe();
+      // Listen for payment completion message
+      window.addEventListener('message', async (event) => {
+        if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
+          if (event.data.status === 'success') {
+            onSuccess(event.data.reference);
+          } else {
+            toast.error("Payment failed");
+            onClose();
+          }
+          paymentWindow?.close();
+        }
+      });
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <>
-      <Script 
-        src="https://js.paystack.co/v1/inline.js"
-        strategy="lazyOnload"
-      />
-      <div className="p-4">
-        <p className="text-lg font-semibold mb-4">
-          Amount to Pay: ₦{amount}
-        </p>
-        <Button 
-          onClick={handlePayment} 
-          className="w-full"
-          disabled={loading}
-        >
-          {loading ? "Processing..." : "Pay with Paystack"}
-        </Button>
-      </div>
-    </>
+    <div className="p-4">
+      <p className="text-lg font-semibold mb-4">
+        Amount to Pay: ₦{amount}
+      </p>
+      <Button 
+        onClick={handlePayment} 
+        className="w-full"
+        disabled={loading}
+      >
+        {loading ? "Processing..." : "Pay with Paystack"}
+      </Button>
+    </div>
   );
 }
 
