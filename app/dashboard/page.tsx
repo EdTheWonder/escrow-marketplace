@@ -33,67 +33,37 @@ export default function DashboardPage() {
       if (userError) throw userError;
 
       if (user) {
-        const userProfile = user.user_metadata as UserProfile;
-        setUser(userProfile);
+        // Fetch transactions for the user (both as buyer and seller)
+        const { data: transactions } = await supabaseClient
+          .from('transactions')
+          .select(`
+            *,
+            products (*),
+            buyers:buyer_id (email),
+            sellers:seller_id (email),
+            escrow_wallets!left (
+              status,
+              delivery_deadline
+            )
+          `)
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
+        if (transactions) {
+          setPurchases(transactions);
+        }
 
-        // Fetch all products owned by the user, regardless of status
+        // Keep existing products fetch for listings
         const { data: products, error: productsError } = await supabaseClient
           .from('products')
           .select(`
             *,
-            profiles:seller_id (
-              email
-            )
+            profiles:seller_id (email)
           `)
           .eq('seller_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (productsError) {
-          console.error('Error fetching products:', productsError);
-          throw productsError;
-        }
-
-        // After getting products, fetch their transactions separately if needed
-        if (products) {
-          const productsWithTransactions = await Promise.all(
-            products.map(async (product) => {
-              const { data: transactions } = await supabaseClient
-                .from('transactions')
-                .select('id, status')
-                .eq('product_id', product.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-              
-              return {
-                ...product,
-                transactions: transactions ? [transactions] : []
-              };
-            })
-          );
-
-          // Process the image URLs and set the products
-          const processedProducts = productsWithTransactions.map((product) => ({
-            ...product,
-            image_urls: Array.isArray(product.image_urls) 
-              ? product.image_urls 
-              : JSON.parse(product.image_urls || '[]')
-          }));
-
-          setProducts(processedProducts || []);
-        }
-
-        // Get cart count
-        const { data: cartData, error: cartError } = await supabaseClient
-          .from('cart')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (cartError) {
-          console.error('Error fetching cart data:', cartError);
-        } else {
-          setCartCount(cartData?.length || 0);
-        }
+        if (productsError) throw productsError;
+        setProducts(products || []);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
