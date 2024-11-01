@@ -34,33 +34,25 @@ export default function PaymentPage() {
           productId: searchParams.get('productId')
         },
         onClose: () => {
-          setPaymentStatus('failed');
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'failed'
           }, '*');
-          setTimeout(() => window.close(), 1000);
+          window.close();
         },
         onSuccess: (response: { reference: string }) => {
-          setPaymentStatus('success');
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
             reference: response.reference
           }, '*');
-          setTimeout(() => window.close(), 1000);
+          window.close();
         },
       });
-
+      
       handler.openIframe();
     }
   }, [scriptLoaded, searchParams]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      {paymentStatus === 'initializing' && <p className="text-lg">Initializing payment...</p>}
-      {paymentStatus === 'success' && <p className="text-lg text-green-600">Payment successful! Redirecting...</p>}
-      {paymentStatus === 'failed' && <p className="text-lg text-red-600">Payment failed! Closing window...</p>}
-    </div>
-  );
+  return null;
 } 
