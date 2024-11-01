@@ -102,7 +102,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
   }
 
   async function handleDeliverySelected(method: string, total: number) {
-    setLoading(true);
     try {
       setDeliveryMethod(method);
       setTotalPrice(total);
@@ -111,15 +110,12 @@ export default function PurchaseButton({ product }: { product: Product }) {
       const transaction = await createTransactionAndEscrow();
       
       if (transaction) {
-        setShowDelivery(false);
         setShowPayment(true);
+        // Only close delivery dialog after successful payment
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to process delivery selection');
-      setLoading(false);
-      return;
     }
-    setLoading(false);
   }
 
   async function handlePaymentSuccess(reference: string) {
@@ -144,6 +140,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .eq('id', product.id)
       ]);
 
+      // Close delivery dialog after successful payment
+      setShowDelivery(false);
+      
       // Start escrow timer
       TransactionTimer.startEscrowTimer(transactionId);
 
