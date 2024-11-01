@@ -67,7 +67,16 @@ export default function TransactionsPage() {
 
       if (data) {
         const validTransactions = data.filter(t => t.products && 
-          (t.buyers?.email || t.sellers?.email));
+          (t.buyers?.email || t.sellers?.email))
+          .map(t => ({
+            ...t,
+            products: {
+              ...t.products,
+              image_urls: Array.isArray(t.products.image_urls)
+                ? t.products.image_urls
+                : JSON.parse(t.products.image_urls || '[]')
+            }
+          }));
         setTransactions(validTransactions);
       }
     }
