@@ -102,12 +102,26 @@ export default function PurchaseButton({ product }: { product: Product }) {
   }
 
   async function handleDeliverySelected(method: string, total: number) {
-    setDeliveryMethod(method);
-    setTotalPrice(total);
-    setShowDelivery(false);
-    // Create transaction and escrow wallet
-    await createTransactionAndEscrow();
-    setShowPayment(true);
+    setLoading(true);
+    try {
+      setDeliveryMethod(method);
+      setTotalPrice(total);
+      
+      // Create transaction first
+      const transaction = await createTransactionAndEscrow();
+      
+      if (transaction) {
+        setShowDelivery(false);
+        setShowPayment(true);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to process delivery selection');
+      // Keep the delivery dialog open if there's an error
+      setDeliveryMethod('');
+      setTotalPrice(product.price);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handlePaymentSuccess(reference: string) {
