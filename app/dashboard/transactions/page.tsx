@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import BackButton from "@/components/back-button";
+import { format } from 'date-fns';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -15,6 +16,10 @@ interface Transaction {
   seller_id: string;
   amount: number;
   status: string;
+  escrow_wallets?: {
+    status: string;
+    delivery_deadline: string;
+  };
   products: {
     title: string;
   };
@@ -43,11 +48,13 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          products:product_id (title),
+          products:product_id (*),
           buyers:buyer_id (email),
-          sellers:seller_id (email)
+          sellers:seller_id (email),
+          escrow_wallets (*)
         `)
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
 
       if (data) setTransactions(data);
     }
@@ -99,6 +106,16 @@ export default function TransactionsPage() {
                           ? `Seller: ${transaction.sellers.email}`
                           : `Buyer: ${transaction.buyers.email}`}
                       </p>
+                      {transaction.escrow_wallets && (
+                        <p className="text-sm text-muted-foreground">
+                          Escrow Status: {transaction.escrow_wallets.status}
+                          {transaction.escrow_wallets.delivery_deadline && (
+                            <span className="ml-2">
+                              (Deadline: {format(new Date(transaction.escrow_wallets.delivery_deadline), 'PPp')})
+                            </span>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <span className="inline-block px-2 py-1 rounded text-sm mb-2"
