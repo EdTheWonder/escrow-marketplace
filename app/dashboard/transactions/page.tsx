@@ -51,13 +51,13 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          products:product_id (
-            title,
-            image_urls,
-            status
+          products:product_id (*),
+          buyer:buyer_id (
+            email
           ),
-          buyers:buyer_id (email),
-          sellers:seller_id (email),
+          seller:seller_id (
+            email
+          ),
           escrow_wallets!left (
             status,
             delivery_deadline
