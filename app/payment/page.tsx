@@ -4,19 +4,10 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
 
-declare global {
-  interface Window {
-    PaystackPop: any;
-  }
-}
-
 export default function PaymentPage() {
   const searchParams = useSearchParams();
-  const amount = searchParams.get('amount');
-  const email = searchParams.get('email');
-  const transactionId = searchParams.get('transactionId');
-  const productId = searchParams.get('productId');
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'initializing' | 'processing' | 'success' | 'failed'>('initializing');
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -31,37 +22,41 @@ export default function PaymentPage() {
   }, []);
 
   useEffect(() => {
-    if (scriptLoaded && amount && email) {
-      const handler = window.PaystackPop.setup({
+    if (scriptLoaded && searchParams.get('amount') && searchParams.get('email')) {
+      const handler = (window as any).PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
-        email: email,
-        amount: Math.round(Number(amount) * 100),
+        email: searchParams.get('email')!,
+        amount: Math.round(Number(searchParams.get('amount')!) * 100),
         currency: 'NGN',
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
         onClose: () => {
+          setPaymentStatus('failed');
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'failed'
           }, '*');
-          window.close();
+          setTimeout(() => window.close(), 1500);
         },
         onSuccess: (response: { reference: string }) => {
+          setPaymentStatus('success');
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
             reference: response.reference
           }, '*');
-          window.close();
+          setTimeout(() => window.close(), 1500);
         },
       });
 
       handler.openIframe();
     }
-  }, [scriptLoaded, amount, email]);
+  }, [scriptLoaded, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-lg">Initializing payment...</p>
+      {paymentStatus === 'initializing' && <p className="text-lg">Initializing payment...</p>}
+      {paymentStatus === 'success' && <p className="text-lg text-green-600">Payment successful! Redirecting...</p>}
+      {paymentStatus === 'failed' && <p className="text-lg text-red-600">Payment failed! Closing window...</p>}
     </div>
   );
 } 

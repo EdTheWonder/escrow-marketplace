@@ -46,12 +46,12 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
       window.addEventListener('message', async (event) => {
         if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
           if (event.data.status === 'success') {
+            toast.success("Payment successful!");
             onSuccess(event.data.reference);
           } else {
-            toast.error("Payment failed");
+            toast.error("Payment failed. Please try again.");
             onClose();
           }
-          paymentWindow?.close();
         }
       });
     } catch (error: any) {
