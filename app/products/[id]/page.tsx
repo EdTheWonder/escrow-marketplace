@@ -1,41 +1,18 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { Suspense } from 'react';
 import { createServerSupabase } from "@/lib/supabase-server";
-import { notFound } from "next/navigation";
 import ProductDetails from "./product-details";
 import BackButton from "@/components/back-button";
+import ProductStatusCheck from './product-status-check';
+import { notFound } from 'next/navigation';
 
-// Add this line to force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
+  const supabase = createServerSupabase();
   
-  useEffect(() => {
-    async function checkProductStatus() {
-      const { data: product } = await supabase
-        .from('products')
-        .select('status, transactions(id)')
-        .eq('id', params.id)
-        .single();
-
-      if (product?.status === 'in_escrow' && product.transactions?.[0]) {
-        router.push(`/transactions/${product.transactions[0].id}`);
-      }
-    }
-
-    checkProductStatus();
-  }, [params.id, router]);
-
-  const { data: product, error } = await createServerSupabase()
+  const { data: product, error } = await supabase
     .from('products')
     .select(`
       *,
@@ -55,7 +32,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
   return (
     <div className="container mx-auto py-8">
       <BackButton />
-      <ProductDetails product={product} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ProductStatusCheck productId={params.id} />
+        <ProductDetails product={product} />
+      </Suspense>
     </div>
   );
 }
