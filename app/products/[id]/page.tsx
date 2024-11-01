@@ -1,7 +1,6 @@
-"use client";
-
 import { Suspense } from 'react';
-import { createServerSupabase } from "@/lib/supabase-server";
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import ProductDetails from "./product-details";
 import BackButton from "@/components/back-button";
 import ProductStatusCheck from './product-status-check';
@@ -10,7 +9,7 @@ import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabase();
+  const supabase = createServerComponentClient({ cookies });
   
   const { data: product, error } = await supabase
     .from('products')

@@ -13,7 +13,7 @@ export default function ProductStatusCheck({ productId }: { productId: string })
   const router = useRouter();
   
   useEffect(() => {
-    async function checkProductStatus() {
+    async function checkStatus() {
       const { data: product } = await supabase
         .from('products')
         .select('status, transactions(id)')
@@ -25,7 +25,7 @@ export default function ProductStatusCheck({ productId }: { productId: string })
       }
     }
 
-    checkProductStatus();
+    checkStatus();
   }, [productId, router]);
 
   return null;
