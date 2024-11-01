@@ -1,17 +1,27 @@
-import { Menu } from "lucide-react";
+"use client";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { supabaseClient } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { History } from "lucide-react";
+import { User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabaseClient, useSupabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function NavMenu({ role }: { role: string }) {
   const router = useRouter();
-
+    
   async function handleSignOut() {
     const { error } = await supabaseClient.auth.signOut();
     if (error) {
+      console.error('Error signing out:', error);
       toast.error("Error signing out");
     } else {
       toast.success("Logged out successfully");
@@ -20,34 +30,25 @@ export default function NavMenu({ role }: { role: string }) {
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <Link href="/feed" className="text-sm font-medium">
-        Browse Products
-      </Link>
-      {role === 'seller' && (
-        <Link href="/products" className="text-sm font-medium">
-          ""
-        </Link>
-      )}
-      <div className="relative group">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Menu className="w-6 h-6" />
+          <User className="h-5 w-5" />
         </Button>
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-          <div className="py-1">
-            <a href="/dashboard/history" className="block px-4 py-2 hover:bg-gray-100">
-              <History className="w-4 h-4 inline mr-2" />
-              History
-            </a>
-            <button
-              onClick={handleSignOut}
-              className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard">Dashboard</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/transactions">Transactions</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
