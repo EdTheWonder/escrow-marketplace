@@ -125,7 +125,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
   async function handlePaymentSuccess(reference: string) {
     if (!transactionId) return;
     
-    setLoading(true);
     try {
       await Promise.all([
         supabase
@@ -138,20 +137,20 @@ export default function PurchaseButton({ product }: { product: Product }) {
             payment_reference: reference,
             status: 'in_escrow'
           })
-          .eq('id', transactionId)
+          .eq('id', transactionId),
+        supabase
+          .from('products')
+          .update({ status: 'in_escrow' })
+          .eq('id', product.id)
       ]);
 
       // Start escrow timer
       TransactionTimer.startEscrowTimer(transactionId);
 
-      setShowPayment(false);
-      setShowPaymentStatus(false);
-      setPaymentReference(reference);
-      setShowChat(true);
+      // Redirect to transaction chat
+      router.push(`/transactions/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
-    } finally {
-      setLoading(false);
     }
   }
 
