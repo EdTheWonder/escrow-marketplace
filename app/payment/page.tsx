@@ -23,19 +23,23 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (scriptLoaded && searchParams.get('amount') && searchParams.get('email')) {
-      const handler = (window as any).PaystackPop.setup({
+      const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: searchParams.get('email')!,
         amount: Math.round(Number(searchParams.get('amount')!) * 100),
         currency: 'NGN',
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
+        metadata: {
+          transactionId: searchParams.get('transactionId'),
+          productId: searchParams.get('productId')
+        },
         onClose: () => {
           setPaymentStatus('failed');
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'failed'
           }, '*');
-          setTimeout(() => window.close(), 1500);
+          setTimeout(() => window.close(), 1000);
         },
         onSuccess: (response: { reference: string }) => {
           setPaymentStatus('success');
@@ -44,7 +48,7 @@ export default function PaymentPage() {
             status: 'success',
             reference: response.reference
           }, '*');
-          setTimeout(() => window.close(), 1500);
+          setTimeout(() => window.close(), 1000);
         },
       });
 

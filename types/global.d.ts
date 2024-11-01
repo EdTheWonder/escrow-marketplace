@@ -1,4 +1,4 @@
 interface Window {
-  MonoPay: any;
+  PaystackPop: any;
 }
 

@@ -40,19 +40,21 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
         if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
           if (event.data.status === 'success') {
             toast.success("Payment successful!");
-            await onSuccess(event.data.reference);
+            // Set a small delay before calling onSuccess
+            setTimeout(async () => {
+              await onSuccess(event.data.reference);
+            }, 1000);
           } else {
             toast.error("Payment failed. Please try again.");
             onClose();
           }
-          // Remove event listener after handling
           window.removeEventListener('message', handleMessage);
         }
       };
 
       window.addEventListener('message', handleMessage);
 
-      // Open payment in new window
+      // Open payment in new window with transaction ID
       const paymentWindow = window.open(
         `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}`,
         'PaystackPayment',
