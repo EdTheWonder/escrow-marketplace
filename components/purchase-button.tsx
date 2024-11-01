@@ -147,11 +147,14 @@ export default function PurchaseButton({ product }: { product: Product }) {
       setShowPayment(false);
       setShowPaymentStatus(true);
       setPaymentReference(reference);
+      
+      // Show chat immediately
+      setShowChat(true);
 
-      // Redirect to transaction chat after a short delay
-      setTimeout(() => {
-        router.push(`/transactions/${transactionId}`);
-      }, 2000);
+      // Remove the automatic redirect
+      // setTimeout(() => {
+      //   router.push(`/transactions/${transactionId}`);
+      // }, 2000);
 
     } catch (error: any) {
       toast.error(error.message);
