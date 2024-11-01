@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Script from 'next/script';
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
+
+declare global {
+  interface Window {
+    PaystackPop: any;
+  }
+}
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -11,12 +16,23 @@ export default function PaymentPage() {
   const email = searchParams.get('email');
   const transactionId = searchParams.get('transactionId');
   const productId = searchParams.get('productId');
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
-    const initializePayment = () => {
-      if (!(window as any).PaystackPop || !amount || !email) return;
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
 
-      const handler = (window as any).PaystackPop.setup({
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scriptLoaded && amount && email) {
+      const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: email,
         amount: Math.round(Number(amount) * 100),
@@ -29,7 +45,7 @@ export default function PaymentPage() {
           }, '*');
           window.close();
         },
-        onSuccess: (response: { reference: any; }) => {
+        onSuccess: (response: { reference: string }) => {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
@@ -40,23 +56,12 @@ export default function PaymentPage() {
       });
 
       handler.openIframe();
-    };
-    const timer = setTimeout(() => {
-      if ((window as any).PaystackPop) {
-        initializePayment();
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [amount, email]);
+    }
+  }, [scriptLoaded, amount, email]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <Script 
-        src="https://js.paystack.co/v1/inline.js"
-        strategy="beforeInteractive"
-      />
-      <p>Initializing payment...</p>
+      <p className="text-lg">Initializing payment...</p>
     </div>
   );
 } 
