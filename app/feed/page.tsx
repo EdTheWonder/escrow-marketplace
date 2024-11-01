@@ -18,6 +18,7 @@ const supabase = createClient(
 );
 
 interface Product {
+  created_at: string | number | Date;
   id: string;
   title: string;
   description: string;
@@ -62,11 +63,37 @@ export default function FeedPage() {
     fetchProducts();
   }, []);
 
-  const handleSearch = (query: string) => {
-    const filtered = products.filter(product => 
-      product.title.toLowerCase().includes(query.toLowerCase()) ||
-      product.description.toLowerCase().includes(query.toLowerCase())
-    );
+  const handleSearch = (query: string, filter: string, sort: string) => {
+    let filtered = [...products];
+
+    // Apply search query
+    if (query) {
+      filtered = filtered.filter(p => 
+        p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.description.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (filter === 'available') {
+      filtered = filtered.filter(p => p.status === 'available');
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case 'price_high':
+          return b.price - a.price;
+        case 'price_low':
+          return a.price - b.price;
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
     setFilteredProducts(filtered);
   };
 
@@ -121,7 +148,8 @@ export default function FeedPage() {
     </div>
   );
 }
-function handleSearch(query: string): void {
+
+function handleSearch(query: string, filter: string, sort: string): void {
   throw new Error("Function not implemented.");
 }
 

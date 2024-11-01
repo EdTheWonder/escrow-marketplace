@@ -1,17 +1,47 @@
 "use client";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Input } from "./ui/input";
+import { Select, SelectItem } from "./ui/select";
+import { Button } from "./ui/button";
+import { useState } from "react";
 
-export default function ProductSearch({ onSearch }: { onSearch: (query: string) => void }) {
+interface ProductSearchProps {
+  onSearch: (query: string, filter: string, sort: string) => void;
+}
+
+export default function ProductSearch({ onSearch }: ProductSearchProps) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+
+  const handleSearch = () => {
+    onSearch(query, filter, sort);
+  };
+
   return (
-    <div className="relative mb-6">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+    <div className="flex gap-4 mb-6">
       <Input
-        type="search"
         placeholder="Search products..."
-        className="pl-10 w-full max-w-md"
-        onChange={(e) => onSearch(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="max-w-sm"
       />
+      <Select
+        value={filter}
+        onValueChange={setFilter}
+      >
+        <SelectItem value="all">All Products</SelectItem>
+        <SelectItem value="available">Available Only</SelectItem>
+      </Select>
+      <Select
+        value={sort}
+        onValueChange={setSort}
+      >
+        <SelectItem value="newest">Newest First</SelectItem>
+        <SelectItem value="oldest">Oldest First</SelectItem>
+        <SelectItem value="price_high">Price: High to Low</SelectItem>
+        <SelectItem value="price_low">Price: Low to High</SelectItem>
+      </Select>
+      <Button onClick={handleSearch}>Search</Button>
     </div>
   );
 }

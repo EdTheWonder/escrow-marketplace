@@ -27,6 +27,19 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
     );
   }
 
+  const getStatusColor = (status: Product['status']) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-500';
+      case 'in_escrow':
+        return 'bg-yellow-500';
+      case 'sold':
+        return 'bg-gray-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {products.map((product) => {
@@ -35,11 +48,8 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
         return (
           <Link 
             key={product.id} 
-            href={`/products/${product.id}`}
-            className={isOwner ? 'cursor-not-allowed' : ''}
-            onClick={(e) => {
-              if (isOwner) e.preventDefault();
-            }}
+            href={isOwner ? `/dashboard/products/${product.id}/edit` : `/products/${product.id}`}
+            className={isOwner ? 'cursor-pointer' : ''}
           >
             <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
               <div className="relative aspect-square">
@@ -54,11 +64,7 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
                   />
                 )}
                 <div className="absolute top-2 right-2">
-                  <span className={`
-                    px-2 py-1 rounded-full text-xs font-medium
-                    ${product.status === 'available' ? 'bg-green-500 text-white' : ''}
-                    ${product.status === 'sold' ? 'bg-gray-500 text-white' : ''}
-                  `}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(product.status)}`}>
                     {product.status}
                   </span>
                 </div>

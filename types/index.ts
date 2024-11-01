@@ -9,7 +9,7 @@ export interface Product {
   description: string;
   price: number;
   image_urls: string[];
-  status: 'available' | 'sold';
+  status: 'available' | 'in_escrow' | 'sold';
   seller_id: string;
   created_at: string;
   seller: {
