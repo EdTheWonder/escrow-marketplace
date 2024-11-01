@@ -21,7 +21,7 @@ export default function SignUpPage() {
       toast.error("Signup failed");
     } else {
       toast.success("Check your email to confirm your account");
-      router.push("/auth/login");
+      router.push("/dashboard");
     }
   }
 
