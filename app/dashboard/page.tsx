@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Package, ShoppingBag, Wallet, LogOut, Plus, ShoppingCart } from "lucide-react";
+import { Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import ProductGrid from "@/components/product-grid";
 import NavMenu from "@/components/nav-menu";
-import GradientBackground from "@/components/ui/gradient-background";
-import { getAvailableProducts } from "@/lib/products";
 import { Product, UserProfile } from "@/types";
 import Image from "next/image";
 
@@ -98,7 +96,7 @@ export default function DashboardPage() {
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">
-            {user.role === 'buyer' ? 'Marketplace' : 'Your Products'}
+            {user.role === 'buyer' ? 'Marketplace' : ''}
           </h1>
           <div className="flex items-center gap-4">
             {user.role === 'buyer' && (
