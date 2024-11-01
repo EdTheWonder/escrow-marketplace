@@ -7,7 +7,6 @@ import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
 export default function PaymentPage() {
   const searchParams = useSearchParams();
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'initializing' | 'processing' | 'success' | 'failed'>('initializing');
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -34,14 +33,14 @@ export default function PaymentPage() {
           productId: searchParams.get('productId')
         },
         onClose: () => {
-          window.opener.postMessage({
+          window.opener?.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'failed'
           }, '*');
           window.close();
         },
         onSuccess: (response: { reference: string }) => {
-          window.opener.postMessage({
+          window.opener?.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
             reference: response.reference

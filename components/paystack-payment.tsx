@@ -40,10 +40,8 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
         if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
           if (event.data.status === 'success') {
             toast.success("Payment successful!");
-            // Set a small delay before calling onSuccess
-            setTimeout(async () => {
-              await onSuccess(event.data.reference);
-            }, 1000);
+            await onSuccess(event.data.reference);
+            onClose(); // Close the payment dialog
           } else {
             toast.error("Payment failed. Please try again.");
             onClose();
@@ -54,12 +52,16 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
 
       window.addEventListener('message', handleMessage);
 
-      // Open payment in new window with transaction ID
+      // Open payment in new window
       const paymentWindow = window.open(
         `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}`,
         'PaystackPayment',
         'width=500,height=600'
       );
+
+      if (!paymentWindow) {
+        toast.error("Popup blocked. Please allow popups and try again.");
+      }
 
     } catch (error: any) {
       toast.error(error.message);
