@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, ShoppingCart } from "lucide-react";
+import { Plus, ShoppingCart, Package } from "lucide-react";
 import Link from "next/link";
 import ProductGrid from "@/components/product-grid";
 import NavMenu from "@/components/nav-menu";
@@ -118,7 +118,12 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Listings</h1>
           <div className="flex gap-4">
-            
+            <Button asChild>
+              <Link href="/feed">
+                <Package className="mr-2 h-5 w-5" />
+                Browse Products
+              </Link>
+            </Button>
             <Button asChild>
               <Link href="/dashboard/products/new">
                 <Plus className="mr-2 h-5 w-5" />
