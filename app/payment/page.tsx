@@ -37,16 +37,14 @@ export default function PaymentPage() {
         productId: searchParams.get('productId')
       },
       onClose: function() {
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'PAYSTACK_PAYMENT_COMPLETE',
-            status: 'failed'
-          }, '*');
-          window.close();
-        }
+        window.opener.postMessage({
+          type: 'PAYSTACK_PAYMENT_COMPLETE',
+          status: 'failed'
+        }, '*');
+        window.close();
       },
-      onSuccess: function(response: { reference: string }) {
-        if (window.opener) {
+      callback: function(response: { reference: string, status: string }) {
+        if (response.status === 'success') {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
@@ -54,7 +52,7 @@ export default function PaymentPage() {
           }, '*');
           window.close();
         }
-      },
+      }
     });
     
     handler.openIframe();

@@ -43,12 +43,8 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
           if (event.data.status === 'success') {
             try {
               await onSuccess(event.data.reference);
-              onClose(); // Close the payment dialog
-              
-              // Small delay before redirect to ensure state updates are complete
-              setTimeout(() => {
-                window.location.href = `/transactions/${transactionId}`;
-              }, 100);
+              onClose();
+              window.location.href = `/transactions/${transactionId}`;
             } catch (error) {
               console.error('Payment success handler error:', error);
               toast.error("Error processing payment success");
