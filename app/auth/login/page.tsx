@@ -38,6 +38,8 @@ export default function LoginPage() {
                 <Input
                   type="email"
                   placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full"
                 />
@@ -46,6 +48,8 @@ export default function LoginPage() {
                 <Input
                   type="password"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full"
                 />
@@ -55,7 +59,7 @@ export default function LoginPage() {
               </Button>
             </form>
             <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/auth/signup" className="text-blue-600 hover:underline">
                 Sign up
               </Link>

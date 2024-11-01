@@ -52,18 +52,18 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, [transactionId]);
 
   useEffect(() => {
     fetchMessages();
-    const subscription = subscribeToMessages();
-    getCurrentUser();
+    const unsubscribe = subscribeToMessages();
+    
     return () => {
-      subscription();
+      unsubscribe();
     };
-  }, [transactionId]);
+  }, [transactionId, fetchMessages, subscribeToMessages]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
