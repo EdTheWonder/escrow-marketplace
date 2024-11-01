@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { Image, Video, Upload } from 'lucide-react';
+import { uploadToR2 } from '@/lib/cloudflare-r2';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,12 +19,21 @@ interface Message {
   sender_id: string;
   created_at: string;
   read: boolean;
+  media_url?: string;
+  media_type?: 'image' | 'video';
 }
 
-export default function EscrowChannel({ transactionId }: { transactionId: string }) {
+export default function EscrowChannel({ 
+  transactionId, 
+  allowMediaUpload = false 
+}: { 
+  transactionId: string;
+  allowMediaUpload?: boolean;
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchMessages = useCallback(async () => {
     const { data } = await supabase
@@ -70,9 +81,31 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
     setCurrentUser(user);
   }
 
-  async function sendMessage(e: React.FormEvent) {
+  async function handleMediaUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files?.length) return;
+    
+    const file = e.target.files[0];
+    setUploading(true);
+
+    try {
+      const mediaUrl = await uploadToR2(file);
+      const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
+
+      await sendMessage(e, mediaUrl, mediaType);
+    } catch (error) {
+      toast.error('Failed to upload media');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function sendMessage(
+    e: React.FormEvent, 
+    mediaUrl?: string, 
+    mediaType?: 'image' | 'video'
+  ) {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !mediaUrl) return;
 
     try {
       const { error } = await supabase
@@ -80,7 +113,9 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
         .insert({
           transaction_id: transactionId,
           sender_id: currentUser?.id,
-          content: newMessage.trim()
+          content: newMessage.trim(),
+          media_url: mediaUrl,
+          media_type: mediaType
         });
 
       if (error) throw error;
@@ -106,6 +141,21 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
                     : 'bg-muted'
                 }`}
               >
+                {message.media_url && (
+                  message.media_type === 'image' ? (
+                    <img 
+                      src={message.media_url} 
+                      alt="Shared image"
+                      className="max-w-full rounded-lg mb-2"
+                    />
+                  ) : (
+                    <video 
+                      src={message.media_url}
+                      controls
+                      className="max-w-full rounded-lg mb-2"
+                    />
+                  )
+                )}
                 <p>{message.content}</p>
                 <span className="text-xs opacity-70">
                   {format(new Date(message.created_at), 'HH:mm')}
@@ -115,7 +165,7 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
           ))}
         </div>
         
-        <form onSubmit={sendMessage} className="flex gap-2">
+        <form onSubmit={(e) => sendMessage(e)} className="flex gap-2">
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -123,7 +173,43 @@ export default function EscrowChannel({ transactionId }: { transactionId: string
             className="flex-1"
             rows={1}
           />
-          <Button type="submit">Send</Button>
+          {allowMediaUpload && (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={uploading}
+              >
+                <label className="cursor-pointer">
+                  <Image className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleMediaUpload}
+                  />
+                </label>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={uploading}
+              >
+                <label className="cursor-pointer">
+                  <Video className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={handleMediaUpload}
+                  />
+                </label>
+              </Button>
+            </div>
+          )}
+          <Button type="submit" disabled={uploading}>Send</Button>
         </form>
       </div>
     </Card>
