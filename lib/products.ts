@@ -11,11 +11,15 @@ export async function createProduct(data: {
   image_urls: string[];
 }) {
   // First, ensure the profile exists
+  const { data: { user } } = await supabase.auth.getUser();
+  
   const { error: profileError } = await supabase
     .from('profiles')
     .upsert({ 
       id: data.seller_id,
-      updated_at: new Date().toISOString()
+      email: user?.email,
+      role: 'user',
+      wallet_balance: '0'
     }, { 
       onConflict: 'id' 
     });
