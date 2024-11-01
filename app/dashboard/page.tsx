@@ -125,9 +125,13 @@ export default function DashboardPage() {
                 variant={activeTab === 'feed' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('feed')}
               >
-            
-            
                 My Listings
+              </Button>
+              <Button asChild>
+                <Link href="/dashboard/products/new">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Sell Now
+                </Link>
               </Button>
             </div>
           </div>

@@ -91,7 +91,7 @@ export default function NewProduct() {
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
-      <Card className="max-w-2xl mx-auto p-6">
+      <Card className="max-w-2xl mx-auto p-6 bg-white/80 backdrop-blur-sm border border-white/20">
         <h1 className="text-2xl font-bold mb-6">Create New Listing</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

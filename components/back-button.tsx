@@ -1,14 +1,20 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
 
 export default function BackButton() {
+  const router = useRouter();
+
   return (
-    <Button variant="ghost" size="sm" asChild className="mb-4">
-      <Link href="/dashboard" className="flex items-center gap-2">
-        <ChevronLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Link>
+    <Button 
+      variant="ghost" 
+      onClick={() => router.back()}
+      className="mb-6"
+    >
+      <ChevronLeft className="mr-2 h-4 w-4" />
+      Back
     </Button>
   );
 }

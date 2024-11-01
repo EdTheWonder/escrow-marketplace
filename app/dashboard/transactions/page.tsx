@@ -81,7 +81,7 @@ export default function TransactionsPage() {
           <h1 className="text-2xl font-bold mb-6">Transactions</h1>
           <div className="space-y-4">
             {transactions.map((transaction) => (
-              <Card key={transaction.id} className="p-4">
+              <Card key={transaction.id} className="p-4 bg-white/80 backdrop-blur-sm border border-white/20">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold">{transaction.products.title}</h3>
