@@ -44,6 +44,10 @@ export default function DashboardPage() {
             *,
             profiles:seller_id (
               email
+            ),
+            transactions (
+              id,
+              status
             )
           `)
           .eq('seller_id', user.id)  // Only show products owned by the user

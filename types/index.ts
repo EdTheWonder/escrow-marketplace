@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 export interface Product {
+  transactions: any;
   max_price: ReactNode;
   min_price: ReactNode;
   profiles: any;
