@@ -79,53 +79,60 @@ export default function TransactionsPage() {
       <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-4xl">
           <h1 className="text-2xl font-bold mb-6">Transactions</h1>
-          <div className="space-y-4">
-            {transactions.map((transaction) => (
-              <Card key={transaction.id} className="p-4 bg-white/80 backdrop-blur-sm border border-white/20">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold">{transaction.products.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Amount: ${transaction.amount}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.id === transaction.buyer_id
-                        ? `Seller: ${transaction.sellers.email}`
-                        : `Buyer: ${transaction.buyers.email}`}
-                    </p>
+          {transactions.length === 0 ? (
+            <Card className="p-8 text-center bg-white/80 backdrop-blur-sm border border-white/20">
+              <h3 className="text-lg font-medium mb-2">No transactions yet</h3>
+              <p className="text-muted-foreground">Your transaction history will appear here</p>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {transactions.map((transaction) => (
+                <Card key={transaction.id} className="p-4 bg-white/80 backdrop-blur-sm border border-white/20">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold">{transaction.products.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Amount: ₦{transaction.amount}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.id === transaction.buyer_id
+                          ? `Seller: ${transaction.sellers.email}`
+                          : `Buyer: ${transaction.buyers.email}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-block px-2 py-1 rounded text-sm mb-2"
+                        style={{
+                          backgroundColor: 
+                            transaction.status === 'completed' ? 'var(--success)' :
+                            transaction.status === 'in_escrow' ? 'var(--warning)' :
+                            'var(--muted)',
+                          color: 'white'
+                        }}
+                      >
+                        {transaction.status}
+                      </span>
+                      {user.id === transaction.buyer_id && 
+                       transaction.status === 'in_escrow' && (
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            onClick={() => handleConfirmDelivery(transaction.id)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            I have received and am satisfied with the product
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Clicking this will release the payment to the seller
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="inline-block px-2 py-1 rounded text-sm mb-2"
-                      style={{
-                        backgroundColor: 
-                          transaction.status === 'completed' ? 'var(--success)' :
-                          transaction.status === 'in_escrow' ? 'var(--warning)' :
-                          'var(--muted)',
-                        color: 'white'
-                      }}
-                    >
-                      {transaction.status}
-                    </span>
-                    {user.id === transaction.buyer_id && 
-                     transaction.status === 'in_escrow' && (
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          onClick={() => handleConfirmDelivery(transaction.id)}
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          I have received and am satisfied with the product
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          Clicking this will release the payment to the seller
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

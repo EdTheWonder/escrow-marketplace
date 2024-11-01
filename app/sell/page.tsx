@@ -58,7 +58,7 @@ export default function SellPage() {
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
                 <span>Platform Fee (5%):</span>
-                <span>${(basePrice * 0.05).toFixed(2)}</span>
+                <span>₦{(basePrice * 0.05).toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-medium">
                 <span>Total Listing Price:</span>

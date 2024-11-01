@@ -31,7 +31,7 @@ export default function SellerDashboard({ products, earnings }: SellerDashboardP
             <DollarSign className="w-8 h-8 text-primary" />
             <div>
               <p className="text-sm text-muted-foreground">Total Earnings</p>
-              <p className="text-2xl font-bold">${earnings}</p>
+              <p className="text-2xl font-bold">₦{earnings}</p>
             </div>
           </div>
         </Card>
