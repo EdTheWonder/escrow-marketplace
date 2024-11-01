@@ -40,12 +40,9 @@ export default function NavMenu({ role }: { role: string }) {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard">Dashboard</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/dashboard/transactions">Transactions</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut}>
+        <DropdownMenuItem className="text-red-600" onClick={handleSignOut}>
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>

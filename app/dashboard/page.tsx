@@ -117,7 +117,21 @@ export default function DashboardPage() {
       <main className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Listings</h1>
-          <div className="flex gap-4">
+          <div className="hidden md:flex gap-4">
+            <Button asChild>
+              <Link href="/feed">
+                <Package className="mr-2 h-5 w-5" />
+                Browse Products
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/dashboard/products/new">
+                <Plus className="mr-2 h-5 w-5" />
+                Sell Now
+              </Link>
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2 md:hidden w-full mt-4">
             <Button asChild>
               <Link href="/feed">
                 <Package className="mr-2 h-5 w-5" />
@@ -135,40 +149,52 @@ export default function DashboardPage() {
 
         {activeTab === 'feed' ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <Link 
-                key={product.id} 
-                href={`/dashboard/products/${product.id}/edit`}
-              >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
-                  <div className="relative aspect-square">
-                    {Array.isArray(product.image_urls) && product.image_urls[0] && (
-                      <Image
-                        src={product.image_urls[0]}
-                        alt={product.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                        unoptimized
-                      />
-                    )}
-                    <div className="absolute top-2 right-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
-                        product.status === 'available' ? 'bg-green-500' :
-                        product.status === 'in_escrow' ? 'bg-yellow-500' :
-                        'bg-gray-500'
-                      }`}>
-                        {product.status}
-                      </span>
+            {products.length === 0 ? (
+              <Card className="col-span-full p-8 text-center bg-white/80 backdrop-blur-sm border border-white/20">
+                <h3 className="text-lg font-medium mb-4">No listings yet</h3>
+                <Button asChild>
+                  <Link href="/dashboard/products/new">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Create Your First Listing
+                  </Link>
+                </Button>
+              </Card>
+            ) : (
+              products.map((product) => (
+                <Link 
+                  key={product.id} 
+                  href={`/dashboard/products/${product.id}/edit`}
+                >
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
+                    <div className="relative aspect-square">
+                      {Array.isArray(product.image_urls) && product.image_urls[0] && (
+                        <Image
+                          src={product.image_urls[0]}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                          unoptimized
+                        />
+                      )}
+                      <div className="absolute top-2 right-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
+                          product.status === 'available' ? 'bg-green-500' :
+                          product.status === 'in_escrow' ? 'bg-yellow-500' :
+                          'bg-gray-500'
+                        }`}>
+                          {product.status}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h2 className="font-semibold truncate">{product.title}</h2>
-                    <p className="text-lg font-bold">₦{product.price}</p>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                    <div className="p-4">
+                      <h2 className="font-semibold truncate">{product.title}</h2>
+                      <p className="text-lg font-bold">₦{product.price}</p>
+                    </div>
+                  </Card>
+                </Link>
+              ))
+            )}
           </div>
         ) : (
           <ProductGrid products={products} currentUserId={user?.id} />
