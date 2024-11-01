@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import BackButton from "@/components/back-button";
 import { Plus } from "lucide-react";
+import ProductSearch from "@/components/product-search";
+
+<ProductSearch onSearch={handleSearch} />
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +28,7 @@ interface Product {
 
 export default function FeedPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -50,12 +54,21 @@ export default function FeedPage() {
             : []
         }));
         setProducts(processedData);
+        setFilteredProducts(processedData);
       }
     }
 
     checkAuth();
     fetchProducts();
   }, []);
+
+  const handleSearch = (query: string) => {
+    const filtered = products.filter(product => 
+      product.title.toLowerCase().includes(query.toLowerCase()) ||
+      product.description.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -77,8 +90,9 @@ export default function FeedPage() {
           </Button>
         )}
       </div>
+      <ProductSearch onSearch={handleSearch} />
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <Link key={product.id} href={`/products/${product.id}`}>
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative aspect-square">
@@ -107,3 +121,7 @@ export default function FeedPage() {
     </div>
   );
 }
+function handleSearch(query: string): void {
+  throw new Error("Function not implemented.");
+}
+

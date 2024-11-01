@@ -9,6 +9,7 @@ import { useState } from "react";
 import { supabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import GradientBackground from "@/components/ui/gradient-background";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,36 +28,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6">Login</h2>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-          </div>
-          <Button onClick={handleLogin}>Login</Button>
+    <GradientBackground>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md px-4">
+          <Card className="p-6 space-y-4 backdrop-blur-sm bg-white/80">
+            <h1 className="text-2xl font-semibold text-center">Welcome Back</h1>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  required
+                  className="w-full"
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Sign In
+              </Button>
+            </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/auth/signup" className="text-blue-600 hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </Card>
         </div>
-        <p className="mt-4 text-sm">
-          Don&apos;t have an account? <Link href="/auth/signup" className="text-primary">Register</Link>
-        </p>
-      </Card>
-    </div>
+      </div>
+    </GradientBackground>
   );
 }
