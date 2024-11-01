@@ -15,7 +15,7 @@ export default function BuyerDashboard({ purchases, walletBalance }: BuyerDashbo
     p.status === 'available' || p.status === 'in_escrow'
   );
   const completedPurchases = purchases.filter(p => 
-    p.status === 'in_escrow'
+    p.status === 'sold'
   );
 
   return (
