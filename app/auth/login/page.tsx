@@ -8,7 +8,6 @@ import { useState } from "react";
 import { supabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Package } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,12 +32,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-4">
-        <Link href="/" className="inline-flex items-center text-2xl font-bold">
-          <Package className="mr-2 h-6 w-6" />
+        <Link href="/" className="text-2xl font-bold">
           EscrowMarket
         </Link>
       </div>
-      <div className="flex items-center justify-center px-4 py-12">
+      <div className="min-h-[calc(100vh-88px)] flex items-center justify-center px-4">
         <Card className="w-full max-w-md p-6 space-y-4 bg-gradient-to-br from-blue-50/80 via-blue-100/80 to-indigo-100/80 backdrop-blur-sm">
           <h1 className="text-2xl font-semibold text-center">Welcome Back</h1>
           <form onSubmit={handleSubmit} className="space-y-4">

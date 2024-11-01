@@ -125,12 +125,8 @@ export default function DashboardPage() {
                 variant={activeTab === 'feed' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('feed')}
               >
-                Product Feed
-              </Button>
-              <Button
-                variant={activeTab === 'listings' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('listings')}
-              >
+            
+            
                 My Listings
               </Button>
             </div>
