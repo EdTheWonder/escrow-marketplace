@@ -22,6 +22,8 @@ interface Transaction {
   };
   products: {
     title: string;
+    image_urls: string[];
+    status: string;
   };
   buyers: {
     email: string;
@@ -48,7 +50,11 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          products:product_id (*),
+          products:product_id (
+            title,
+            image_urls,
+            status
+          ),
           buyers:buyer_id (email),
           sellers:seller_id (email),
           escrow_wallets!left (
