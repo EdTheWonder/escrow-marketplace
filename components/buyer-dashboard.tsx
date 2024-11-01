@@ -11,8 +11,12 @@ interface BuyerDashboardProps {
 }
 
 export default function BuyerDashboard({ purchases, walletBalance }: BuyerDashboardProps) {
-  const activePurchases = purchases.filter(p => p.status === 'available');
-  const completedPurchases = purchases.filter(p => p.status === 'sold');
+  const activePurchases = purchases.filter(p => 
+    p.status === 'available' || p.status === 'in_escrow'
+  );
+  const completedPurchases = purchases.filter(p => 
+    p.status === 'in_escrow'
+  );
 
   return (
     <div className="space-y-6 p-6 rounded-lg">
@@ -31,7 +35,7 @@ export default function BuyerDashboard({ purchases, walletBalance }: BuyerDashbo
             <Wallet className="w-8 h-8 text-primary" />
             <div>
               <p className="text-sm text-muted-foreground">Wallet Balance</p>
-              <p className="text-2xl font-bold">${walletBalance}</p>
+              <p className="text-2xl font-bold">₦{walletBalance}</p>
             </div>
           </div>
         </Card>

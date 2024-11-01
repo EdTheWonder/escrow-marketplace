@@ -51,12 +51,19 @@ export default function TransactionsPage() {
           products:product_id (*),
           buyers:buyer_id (email),
           sellers:seller_id (email),
-          escrow_wallets (*)
+          escrow_wallets!left (
+            status,
+            delivery_deadline
+          )
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
-      if (data) setTransactions(data);
+      if (data) {
+        const validTransactions = data.filter(t => t.products && 
+          (t.buyers?.email || t.sellers?.email));
+        setTransactions(validTransactions);
+      }
     }
   }
 
