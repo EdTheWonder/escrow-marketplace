@@ -145,17 +145,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
       TransactionTimer.startEscrowTimer(transactionId);
 
       setShowPayment(false);
-      setShowPaymentStatus(true);
+      setShowPaymentStatus(false);
       setPaymentReference(reference);
-      
-      // Show chat immediately
       setShowChat(true);
-
-      // Remove the automatic redirect
-      // setTimeout(() => {
-      //   router.push(`/transactions/${transactionId}`);
-      // }, 2000);
-
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -192,22 +184,15 @@ export default function PurchaseButton({ product }: { product: Product }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showChat} onOpenChange={setShowChat}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={showDelivery} onOpenChange={setShowDelivery}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chat with Seller</DialogTitle>
+            <DialogTitle>Select Delivery Method</DialogTitle>
           </DialogHeader>
-          <div className="min-h-[400px]">
-            <EscrowChannel transactionId={transactionId!} />
-          </div>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => {
-              setShowChat(false);
-              setShowPayment(true);
-            }}>
-              Proceed to Payment
-            </Button>
-          </div>
+          <DeliveryMethodSelector 
+            productPrice={product.price} 
+            onSelect={handleDeliverySelected}
+          />
         </DialogContent>
       </Dialog>
 
@@ -224,6 +209,17 @@ export default function PurchaseButton({ product }: { product: Product }) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={showChat} onOpenChange={setShowChat}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Escrow Chat</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-[400px]">
+            <EscrowChannel transactionId={transactionId!} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showPaymentStatus} onOpenChange={setShowPaymentStatus}>
         <DialogContent>
           <DialogHeader>
@@ -233,18 +229,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
             reference={paymentReference}
             transactionId={transactionId!}
             productId={product.id}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showDelivery} onOpenChange={setShowDelivery}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Select Delivery Method</DialogTitle>
-          </DialogHeader>
-          <DeliveryMethodSelector 
-            productPrice={product.price} 
-            onSelect={handleDeliverySelected}
           />
         </DialogContent>
       </Dialog>
