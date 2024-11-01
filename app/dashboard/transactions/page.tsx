@@ -25,10 +25,10 @@ interface Transaction {
     image_urls: string[];
     status: string;
   };
-  buyers: {
+  buyer: {
     email: string;
   };
-  sellers: {
+  seller: {
     email: string;
   };
 }
@@ -45,7 +45,6 @@ export default function TransactionsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUser(user);
-      console.log('Current user:', user.id);
 
       const { data, error } = await supabase
         .from('transactions')
@@ -71,11 +70,14 @@ export default function TransactionsPage() {
         return;
       }
 
-      console.log('Raw transactions data:', data);
-      console.log('Transactions query:', `buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
-
       if (data) {
-        setTransactions(data);
+        const processedTransactions = data.map(t => ({
+          ...t,
+          buyers: { email: t.buyer.email },
+          sellers: { email: t.seller.email }
+        }));
+        console.log('Processed transactions:', processedTransactions);
+        setTransactions(processedTransactions);
       }
     }
   }
@@ -123,8 +125,8 @@ export default function TransactionsPage() {
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {user.id === transaction.buyer_id
-                          ? `Seller: ${transaction.sellers.email}`
-                          : `Buyer: ${transaction.buyers.email}`}
+                          ? `Seller: ${transaction.seller.email}`
+                          : `Buyer: ${transaction.buyer.email}`}
                       </p>
                       {transaction.escrow_wallets && (
                         <p className="text-sm text-muted-foreground">
