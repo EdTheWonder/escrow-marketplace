@@ -29,7 +29,7 @@ export default function ProductStatusCheck({ productId }: { productId: string })
         .single();
 
       if (product?.status === 'in_escrow' && product.transactions?.[0]) {
-        router.push(`/transactions/${product.transactions[0].id}`);
+        router.push(`/chat/${product.transactions[0].id}`);
       }
     }
 

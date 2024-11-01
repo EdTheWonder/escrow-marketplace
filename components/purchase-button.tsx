@@ -146,8 +146,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
       // Start escrow timer
       TransactionTimer.startEscrowTimer(transactionId);
 
-      // Redirect to transaction chat
-      router.push(`/transactions/${transactionId}`);
+      // Redirect to chat
+      router.push(`/chat/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
     }

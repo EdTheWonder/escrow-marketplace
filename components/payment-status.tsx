@@ -41,8 +41,8 @@ export default function PaymentStatus({ reference, transactionId, productId }: P
         
         // Add delay before redirect
         setTimeout(() => {
-          router.push(`/transactions/${transactionId}`);
-          router.refresh(); // Force a refresh of the page data
+          router.push(`/chat/${transactionId}`);
+          router.refresh();
         }, 2000);
       } else {
         setStatus('failed');

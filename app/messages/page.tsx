@@ -79,7 +79,7 @@ export default function MessagesPage() {
       
       <div className="grid gap-4">
         {trades.map((trade) => (
-          <Link href={`/transactions/${trade.id}`} key={trade.id}>
+          <Link href={`/chat/${trade.id}`} key={trade.id}>
             <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
               <div className="flex gap-4">
                 {trade.product.image_urls?.[0] && (
