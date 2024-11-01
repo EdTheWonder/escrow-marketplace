@@ -23,7 +23,7 @@ export default function DeliveryMethodSelector({
       </Button>
 
       <Button
-        onClick={() => onSelect('meet_up', productPrice)}
+        onClick={() => onSelect('meetup', productPrice)}
         disabled={loading}
         className="w-full justify-between"
       >
