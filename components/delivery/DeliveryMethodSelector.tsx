@@ -1,9 +1,4 @@
-import { useState } from 'react';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { calculateSendboxDelivery } from '@/lib/sendbox';
-import { toast } from 'sonner';
 
 interface DeliveryMethodSelectorProps {
   productPrice: number;
