@@ -13,6 +13,7 @@ import { ImagePlus, X } from "lucide-react";
 import Image from 'next/image';  // Add this import at the top
 import BackButton from "@/components/back-button";
 import { uploadToR2 } from "@/lib/cloudflare-r2";
+import { createProduct } from '@/lib/products';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -55,28 +56,21 @@ export default function NewProduct() {
         throw new Error("Please fill all required fields and add at least one image");
       }
 
-      // Upload images to Cloudinary
+      // Upload images to R2
       const imageUrls = [];
       for (const image of images) {
         const publicUrl = await uploadToR2(image);
-        console.log('Received URL:', publicUrl);
         imageUrls.push(publicUrl);
       }
-      console.log('Final image URLs:', imageUrls);
 
-      // Create product in Supabase with R2 URLs
-      const { error: productError } = await supabase
-        .from('products')
-        .insert({
-          seller_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          image_urls: imageUrls, // Make sure this is an array, not a string
-          status: 'available'
-        });
-
-      if (productError) throw productError;
+      // Use the createProduct function instead of direct insert
+      await createProduct({
+        seller_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        image_urls: imageUrls,
+      });
 
       toast.success("Product listed successfully!");
       router.push("/dashboard");
