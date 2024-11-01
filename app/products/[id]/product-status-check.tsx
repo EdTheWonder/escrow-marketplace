@@ -16,8 +16,16 @@ export default function ProductStatusCheck({ productId }: { productId: string })
     async function checkStatus() {
       const { data: product } = await supabase
         .from('products')
-        .select('status, transactions(id)')
+        .select(`
+          status,
+          transactions (
+            id,
+            status
+          )
+        `)
         .eq('id', productId)
+        .order('transactions.created_at', { ascending: false })
+        .limit(1)
         .single();
 
       if (product?.status === 'in_escrow' && product.transactions?.[0]) {
