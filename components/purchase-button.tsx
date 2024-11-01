@@ -41,11 +41,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!user) return;
 
     try {
-      // Ensure delivery method is set
-      if (!deliveryMethod) {
-        throw new Error('Delivery method not selected');
-      }
-
       // Create transaction
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
@@ -56,7 +51,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           amount: totalPrice,
           status: 'pending',
           delivery_method: deliveryMethod,
-          delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0 // Example fee
+          delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0
         })
         .select()
         .single();
@@ -64,7 +59,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
       if (transactionError) throw transactionError;
 
       // Create escrow wallet
-      const { error: escrowError } = await supabase
+      const { data: escrow, error: escrowError } = await supabase
         .from('escrow_wallets')
         .insert({
           transaction_id: transaction.id,
@@ -79,9 +74,11 @@ export default function PurchaseButton({ product }: { product: Product }) {
       if (escrowError) throw escrowError;
 
       setTransactionId(transaction.id);
+      setEscrowId(escrow.id);
       return transaction;
     } catch (error: any) {
-      toast.error('Failed to create transaction');
+      console.error('Transaction creation failed:', error);
+      toast.error(error.message || 'Failed to create transaction');
       throw error;
     }
   }
@@ -116,12 +113,10 @@ export default function PurchaseButton({ product }: { product: Product }) {
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to process delivery selection');
-      // Keep the delivery dialog open if there's an error
-      setDeliveryMethod('');
-      setTotalPrice(product.price);
-    } finally {
       setLoading(false);
+      return;
     }
+    setLoading(false);
   }
 
   async function handlePaymentSuccess(reference: string) {
