@@ -14,11 +14,14 @@ export default function PaymentPage() {
 
   useEffect(() => {
     const initializePayment = () => {
+      if (!(window as any).PaystackPop || !amount || !email) return;
+
       const handler = (window as any).PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: email,
-        amount: Number(amount) * 100,
+        amount: Math.round(Number(amount) * 100),
         currency: 'NGN',
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
         onClose: () => {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
@@ -26,7 +29,7 @@ export default function PaymentPage() {
           }, '*');
           window.close();
         },
-        onSuccess: (response: { reference: string }) => {
+        onSuccess: (response: { reference: any; }) => {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
@@ -38,20 +41,20 @@ export default function PaymentPage() {
 
       handler.openIframe();
     };
+    const timer = setTimeout(() => {
+      if ((window as any).PaystackPop) {
+        initializePayment();
+      }
+    }, 1000);
 
-    if ((window as any).PaystackPop) {
-      initializePayment();
-    }
+    return () => clearTimeout(timer);
   }, [amount, email]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Script 
         src="https://js.paystack.co/v1/inline.js"
-        onLoad={() => {
-          const initializePayment = (window as any).initializePayment;
-          if (initializePayment) initializePayment();
-        }}
+        strategy="beforeInteractive"
       />
       <p>Initializing payment...</p>
     </div>
