@@ -33,7 +33,6 @@ export default async function ProductsPage() {
         <BackButton />
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Your Products</h1>
             <p className="text-muted-foreground">
               Manage your product listings
             </p>
