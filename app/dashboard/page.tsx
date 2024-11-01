@@ -43,10 +43,6 @@ export default function DashboardPage() {
             *,
             profiles:seller_id (
               email
-            ),
-            transactions (
-              id,
-              status
             )
           `)
           .eq('seller_id', user.id)
@@ -57,16 +53,35 @@ export default function DashboardPage() {
           throw productsError;
         }
 
-        // Process the image URLs before setting the products
-        const processedProducts = products?.map((product) => ({
-          ...product,
-          image_urls: Array.isArray(product.image_urls) 
-            ? product.image_urls 
-            : JSON.parse(product.image_urls || '[]')
-        }));
+        // After getting products, fetch their transactions separately if needed
+        if (products) {
+          const productsWithTransactions = await Promise.all(
+            products.map(async (product) => {
+              const { data: transactions } = await supabaseClient
+                .from('transactions')
+                .select('id, status')
+                .eq('product_id', product.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+              
+              return {
+                ...product,
+                transactions: transactions ? [transactions] : []
+              };
+            })
+          );
 
-        console.log('Fetched products:', processedProducts);
-        setProducts(processedProducts || []);
+          // Process the image URLs and set the products
+          const processedProducts = productsWithTransactions.map((product) => ({
+            ...product,
+            image_urls: Array.isArray(product.image_urls) 
+              ? product.image_urls 
+              : JSON.parse(product.image_urls || '[]')
+          }));
+
+          setProducts(processedProducts || []);
+        }
 
         // Get cart count
         const { data: cartData, error: cartError } = await supabaseClient

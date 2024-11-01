@@ -181,49 +181,58 @@ export default function EscrowChannel({
 
   return (
     <Card className="p-4">
-      <div className="h-[400px] flex flex-col">
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
-            >
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Escrow Chat</h2>
+        
+        <div className="h-[400px] overflow-y-auto space-y-4 mb-4">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+              <p className="text-lg font-medium">No messages yet</p>
+              <p className="text-sm">Start the conversation with the other party</p>
+            </div>
+          ) : (
+            messages.map((message) => (
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
-                  message.sender_id === currentUser?.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
+                key={message.id}
+                className={`flex ${message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
               >
-                {message.media_url && (
-                  message.media_type === 'image' ? (
-                    <img 
-                      src={message.media_url} 
-                      alt="Shared image"
-                      className="max-w-full rounded-lg mb-2"
-                    />
-                  ) : (
-                    <video 
-                      src={message.media_url}
-                      controls
-                      className="max-w-full rounded-lg mb-2"
-                    />
-                  )
-                )}
-                <p>{message.content}</p>
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span>{format(new Date(message.created_at), 'HH:mm')}</span>
-                  {message.sender_id === currentUser?.id && (
-                    message.read_at ? (
-                      <span className="text-blue-500">✓✓</span>
+                <div
+                  className={`max-w-[70%] rounded-lg p-3 ${
+                    message.sender_id === currentUser?.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  {message.media_url && (
+                    message.media_type === 'image' ? (
+                      <img 
+                        src={message.media_url} 
+                        alt="Shared image"
+                        className="max-w-full rounded-lg mb-2"
+                      />
                     ) : (
-                      <span>✓</span>
+                      <video 
+                        src={message.media_url}
+                        controls
+                        className="max-w-full rounded-lg mb-2"
+                      />
                     )
                   )}
+                  <p>{message.content}</p>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span>{format(new Date(message.created_at), 'HH:mm')}</span>
+                    {message.sender_id === currentUser?.id && (
+                      message.read_at ? (
+                        <span className="text-blue-500">✓✓</span>
+                      ) : (
+                        <span>✓</span>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
         
         <form onSubmit={(e) => sendMessage(e)} className="flex gap-2">
