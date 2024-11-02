@@ -136,7 +136,7 @@ export class EscrowService {
       // Release payment to seller
       await WalletManager.releaseEscrow(transactionId);
 
-      // Update escrow and transaction status
+      // Update escrow, transaction, and product status
       await Promise.all([
         supabase
           .from('escrow_wallets')
@@ -145,7 +145,11 @@ export class EscrowService {
         supabase
           .from('transactions')
           .update({ status: 'completed' })
-          .eq('id', transactionId)
+          .eq('id', transactionId),
+        supabase
+          .from('products')
+          .update({ status: 'sold' })
+          .eq('id', transaction.product_id)
       ]);
 
       return true;

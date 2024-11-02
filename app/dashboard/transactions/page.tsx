@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import BackButton from "@/components/back-button";
 import { format } from 'date-fns';
+import TransactionCountdown from "@/components/transaction-countdown";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -92,6 +93,26 @@ export default function TransactionsPage() {
     }
   }
 
+  async function handleCreateDispute(transactionId: string) {
+    try {
+      const response = await fetch('/api/transactions/dispute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create dispute');
+      }
+
+      toast.success("Dispute created! Our team will review the transaction.");
+      getTransactions();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
@@ -156,8 +177,28 @@ export default function TransactionsPage() {
                           </p>
                         </div>
                       )}
+                      {user.id === transaction.seller_id && 
+                       transaction.status === 'in_escrow' && 
+                       transaction.escrow_wallets?.delivery_deadline && 
+                       new Date(transaction.escrow_wallets.delivery_deadline) < new Date() && (
+                        <Button
+                          onClick={() => handleCreateDispute(transaction.id)}
+                          size="sm"
+                          variant="destructive"
+                        >
+                          Open Dispute
+                        </Button>
+                      )}
                     </div>
                   </div>
+                  {transaction.escrow_wallets && transaction.status === 'in_escrow' && (
+                    <div className="mt-2">
+                      <TransactionCountdown 
+                        deadline={transaction.escrow_wallets.delivery_deadline}
+                        onExpire={() => getTransactions()}
+                      />
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
