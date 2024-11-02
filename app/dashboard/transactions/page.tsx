@@ -50,7 +50,7 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          products:product_id (*),
+          product:product_id (*),
           buyer:buyer_id (
             email
           ),
@@ -73,8 +73,7 @@ export default function TransactionsPage() {
       if (data) {
         const processedTransactions = data.map(t => ({
           ...t,
-          buyers: { email: t.buyer.email },
-          sellers: { email: t.seller.email }
+          products: t.product
         }));
         console.log('Processed transactions:', processedTransactions);
         setTransactions(processedTransactions);
