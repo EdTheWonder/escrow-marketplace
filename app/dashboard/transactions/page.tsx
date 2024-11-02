@@ -50,13 +50,9 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          product:product_id (*),
-          buyer:buyer_id (
-            email
-          ),
-          seller:seller_id (
-            email
-          ),
+          products (*),
+          buyer:buyer_id (email),
+          seller:seller_id (email),
           escrow_wallets!left (
             status,
             delivery_deadline
@@ -71,12 +67,7 @@ export default function TransactionsPage() {
       }
 
       if (data) {
-        const processedTransactions = data.map(t => ({
-          ...t,
-          products: t.product
-        }));
-        console.log('Processed transactions:', processedTransactions);
-        setTransactions(processedTransactions);
+        setTransactions(data);
       }
     }
   }
