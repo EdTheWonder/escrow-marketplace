@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import BackButton from "@/components/back-button";
 import { format } from 'date-fns';
 import TransactionCountdown from "@/components/transaction-countdown";
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -37,6 +38,7 @@ interface Transaction {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     getTransactions();
@@ -75,7 +77,7 @@ export default function TransactionsPage() {
 
   async function handleConfirmDelivery(transactionId: string) {
     try {
-      const response = await fetch('/api/transactions/confirm', {
+      const response = await fetch('/api/delivery/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionId })
@@ -87,7 +89,7 @@ export default function TransactionsPage() {
       }
 
       toast.success("Delivery confirmed! Payment released to seller.");
-      getTransactions();
+      router.push('/products');
     } catch (error: any) {
       toast.error(error.message);
     }
