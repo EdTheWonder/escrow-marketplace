@@ -114,7 +114,7 @@ export default function NewProduct() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price">Price ($)</Label>
+            <Label htmlFor="price">Price (in Naira)</Label>
             <Input
               id="price"
               name="price"
