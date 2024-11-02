@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { MessageSquare } from 'lucide-react';
+import BackButton from "@/components/back-button";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,6 +73,7 @@ export default function MessagesPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <BackButton />
       <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
         <MessageSquare className="w-6 h-6" />
         Messages
