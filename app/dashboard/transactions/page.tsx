@@ -70,7 +70,10 @@ export default function TransactionsPage() {
       }
 
       if (data) {
-        setTransactions(data);
+        const userTransactions = data.filter(transaction => 
+          transaction.buyer_id === user.id || transaction.seller_id === user.id
+        );
+        setTransactions(userTransactions);
       }
     }
   }
