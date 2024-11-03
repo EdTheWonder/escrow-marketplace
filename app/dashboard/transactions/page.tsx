@@ -59,8 +59,7 @@ export default function TransactionsPage() {
           seller:seller_id (email),
           escrow_wallets!left (
             status,
-            delivery_deadline,
-            completed_at
+            delivery_deadline
           )
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
