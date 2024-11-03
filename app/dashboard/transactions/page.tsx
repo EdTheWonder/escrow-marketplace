@@ -162,9 +162,7 @@ export default function TransactionsPage() {
                         )}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Delivery Status: {transaction.status === 'sold' ? 'Delivered' : 
-                                          transaction.status === 'in_escrow' ? 'In Transit' : 
-                                          'Pending'}
+                        Delivery Status: {transaction.delivery_status}
                       </p>
                     </div>
                     <div className="text-right">

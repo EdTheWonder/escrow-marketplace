@@ -11,7 +11,7 @@ import { TransactionTimer } from "@/lib/transaction-timer";
 import EscrowChannel from "@/components/escrow-channel";
 import PaymentStatus from "@/components/payment-status";
 import DeliveryMethodSelector from "@/components/delivery/DeliveryMethodSelector";
-import { updateTransactionToEscrow } from "@/lib/transactions";
+import { DeliveryMethod, updateTransactionToEscrow } from "@/lib/transactions";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -66,7 +66,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           seller_id: product.seller_id,
           amount: totalPrice,
           status: 'pending',
-          delivery_method: deliveryMethod,
+          delivery_method: deliveryMethod as DeliveryMethod,
           delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0,
           delivery_status: 'pending'
         })
@@ -115,7 +115,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
     setShowDelivery(true);
   }
 
-  async function handleDeliverySelected(method: string, total: number) {
+  async function handleDeliverySelected(method: DeliveryMethod, total: number) {
     try {
       setDeliveryMethod(method);
       setTotalPrice(total);
@@ -127,16 +127,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
       const transaction = await createTransactionAndEscrow();
       
       if (transaction) {
-        // Update transaction with delivery details
-        await supabase
-          .from('transactions')
-          .update({ 
-            delivery_method: method,
-            delivery_fee: deliveryFee,
-            amount: total // Update total amount to include delivery fee
-          })
-          .eq('id', transaction.id);
-
         setShowPayment(true);
       }
     } catch (error: any) {

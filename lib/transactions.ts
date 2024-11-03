@@ -6,18 +6,25 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export type DeliveryMethod = 'meetup' | 'sendbox';
+export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered';
+export type TransactionStatus = 'pending' | 'in_escrow' | 'sold' | 'refunded' | 'disputed';
+
 export async function createTransaction(data: {
   product_id: string;
   buyer_id: string;
   seller_id: string;
   amount: number;
   payment_reference: string;
+  delivery_method: DeliveryMethod;
+  delivery_fee: number;
 }) {
   const { error } = await supabase
     .from('transactions')
     .insert({
       ...data,
-      status: 'pending'
+      status: 'pending',
+      delivery_status: 'pending'
     });
 
   if (error) throw error;

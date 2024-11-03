@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { DeliveryMethod } from "@/lib/transactions";
 
 interface DeliveryMethodSelectorProps {
   productPrice: number;
-  onSelect: (method: string, total: number) => Promise<void>;
+  onSelect: (method: DeliveryMethod, total: number) => Promise<void>;
   loading?: boolean;
 }
 
