@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import BackButton from "@/components/back-button";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,6 +50,10 @@ export default function MessagesPage() {
             created_at,
             read_at,
             recipient_id
+          ),
+          escrow_wallets (
+            status,
+            delivery_deadline
           )
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
@@ -84,7 +89,7 @@ export default function MessagesPage() {
     fetchChats();
     
     // Subscribe to new messages
-    const channel = supabase
+    const messageChannel = supabase
       .channel('messages_changes')
       .on('postgres_changes', { 
         event: '*', 
@@ -95,13 +100,27 @@ export default function MessagesPage() {
       })
       .subscribe();
 
+    // Subscribe to escrow changes
+    const escrowChannel = supabase
+      .channel('escrow_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'escrow_wallets'
+      }, () => {
+        fetchChats();
+      })
+      .subscribe();
+
     return () => {
-      channel.unsubscribe();
+      messageChannel.unsubscribe();
+      escrowChannel.unsubscribe();
     };
   }, [router]);
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <BackButton />
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
       <div className="space-y-4">
         {chats.map((chat) => (
