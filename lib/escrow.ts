@@ -152,7 +152,10 @@ export class EscrowService {
         // Update escrow wallet status
         supabase
           .from('escrow_wallets')
-          .update({ status: 'released' })
+          .update({ 
+            status: 'sold',
+            completed_at: new Date().toISOString()
+          })
           .eq('transaction_id', transactionId),
 
         // Update delivery status
@@ -163,15 +166,6 @@ export class EscrowService {
       ]);
 
       // Handle wallet balance update
-      const { data: wallet } = await supabase
-        .from('wallets')
-        .upsert({
-          user_id: transaction.seller.id,
-          balance: 0
-        })
-        .select()
-        .single();
-
       await supabase.rpc('update_wallet_balance', {
         p_user_id: transaction.seller.id,
         p_amount: transaction.amount

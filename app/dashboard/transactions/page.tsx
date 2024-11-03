@@ -21,6 +21,7 @@ interface Transaction {
   escrow_wallets?: {
     status: string;
     delivery_deadline: string;
+    completed_at?: string;
   };
   products: {
     title: string;
@@ -58,7 +59,8 @@ export default function TransactionsPage() {
           seller:seller_id (email),
           escrow_wallets!left (
             status,
-            delivery_deadline
+            delivery_deadline,
+            completed_at
           )
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
