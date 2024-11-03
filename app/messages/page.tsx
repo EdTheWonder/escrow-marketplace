@@ -70,7 +70,7 @@ export default function MessagesPage() {
           ...transaction,
           buyer: transaction.buyer?.[0] || {},
           seller: transaction.seller?.[0] || {},
-          products: transaction.products || [],
+          products: Array.isArray(transaction.products) ? transaction.products : [transaction.products],
           messages: transaction.messages || []
         })));
       }
