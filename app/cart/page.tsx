@@ -94,20 +94,6 @@ export default function CartPage() {
 
       // Create transactions and escrow wallets for each item
       for (const item of items) {
-        const { data: escrow } = await supabase
-          .from('escrow_wallets')
-          .insert({
-            amount: item.products.price * item.quantity,
-            status: 'holding',
-            seller_id: item.products.seller_id,
-            buyer_id: user.id,
-            product_id: item.products.id,
-            payment_deadline: new Date(Date.now() + (item.products.payment_window * 60 * 1000)),
-            delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000))
-          })
-          .select()
-          .single();
-
         await supabase.from('transactions').insert({
           product_id: item.products.id,
           buyer_id: user.id,
@@ -115,11 +101,13 @@ export default function CartPage() {
           amount: item.products.price * item.quantity,
           status: 'in_escrow',
           payment_reference: reference,
-          escrow_id: escrow?.id
+          payment_deadline: new Date(Date.now() + (item.products.payment_window * 60 * 1000)),
+          delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000)),
+          escrow_status: 'holding'
         });
 
         // Start timers
-        TransactionTimer.startDeliveryTimer(escrow?.id);
+        TransactionTimer.startDeliveryTimer(item.products.id);
       }
 
       // Clear cart

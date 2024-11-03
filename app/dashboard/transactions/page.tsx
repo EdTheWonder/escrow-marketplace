@@ -12,17 +12,19 @@ import { useRouter } from 'next/navigation';
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 interface Transaction {
+  transactions: any;
   id: string;
   product_id: string;
   buyer_id: string;
   seller_id: string;
   amount: number;
   status: string;
-  escrow_wallets?: {
-    status: string;
-    delivery_deadline: string;
-    completed_at?: string;
-  };
+  delivery_method: string;
+  delivery_fee: number;
+  delivery_status: string;
+  created_at: string;
+  completed_at?: string;
+  delivery_deadline?: string;
   products: {
     title: string;
     image_urls: string[];
@@ -151,16 +153,17 @@ export default function TransactionsPage() {
                           ? `Seller: ${transaction.seller.email}`
                           : `Buyer: ${transaction.buyer.email}`}
                       </p>
-                      {transaction.escrow_wallets && (
-                        <p className="text-sm text-muted-foreground">
-                          Escrow Status: {transaction.escrow_wallets.status}
-                          {transaction.escrow_wallets.delivery_deadline && (
-                            <span className="ml-2">
-                              (Deadline: {format(new Date(transaction.escrow_wallets.delivery_deadline), 'PPp')})
-                            </span>
-                          )}
-                        </p>
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Delivery Method: {transaction.delivery_method}
+                        {transaction.delivery_fee > 0 && (
+                          <span className="ml-2">
+                            (Fee: ₦{transaction.delivery_fee})
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Delivery Status: {transaction.delivery_status}
+                      </p>
                     </div>
                     <div className="text-right">
                       <span className="inline-block px-2 py-1 rounded text-sm mb-2"
@@ -188,8 +191,8 @@ export default function TransactionsPage() {
                       )}
                       {user.id === transaction.seller_id && 
                        transaction.status === 'in_escrow' && 
-                       transaction.escrow_wallets?.delivery_deadline && 
-                       new Date(transaction.escrow_wallets.delivery_deadline) < new Date() && (
+                       transaction.delivery_deadline && 
+                       new Date(transaction.delivery_deadline) < new Date() && (
                         <Button
                           onClick={() => handleCreateDispute(transaction.id)}
                           size="sm"
@@ -200,14 +203,16 @@ export default function TransactionsPage() {
                       )}
                     </div>
                   </div>
-                  {transaction.escrow_wallets && 
+                  {transaction.status && 
                    transaction.status === 'in_escrow' && 
                    user.id === transaction.seller_id && (
                     <div className="mt-2">
-                      <TransactionCountdown 
-                        deadline={transaction.escrow_wallets.delivery_deadline}
-                        onExpire={() => getTransactions()}
-                      />
+                      {transaction.delivery_deadline && (
+                        <TransactionCountdown 
+                          deadline={transaction.delivery_deadline}
+                          onExpire={() => getTransactions()}
+                        />
+                      )}
                     </div>
                   )}
                 </Card>

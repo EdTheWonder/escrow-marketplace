@@ -126,7 +126,7 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
         .from('transactions')
         .select(`
           *,
-          escrow_wallets (delivery_deadline)
+          delivery_deadline
         `)
         .eq('id', transactionId)
         .single();
@@ -142,8 +142,8 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
 
   const canOpenDispute = isSeller && 
     transaction?.status === 'in_escrow' && 
-    transaction?.escrow_wallets?.delivery_deadline && 
-    new Date(transaction.escrow_wallets.delivery_deadline) < new Date();
+    transaction?.delivery_deadline && 
+    new Date(transaction.delivery_deadline) < new Date();
 
   async function getCurrentUser() {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -243,9 +243,9 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Escrow Chat</h2>
-          {isSeller && transaction?.escrow_wallets?.delivery_deadline && (
+          {isSeller && transaction?.delivery_deadline && (
             <TransactionCountdown 
-              deadline={transaction.escrow_wallets.delivery_deadline}
+              deadline={transaction.delivery_deadline}
             />
           )}
         </div>
