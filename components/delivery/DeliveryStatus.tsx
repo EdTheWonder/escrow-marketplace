@@ -43,7 +43,9 @@ export default function DeliveryStatus({ transactionId, status, deliveredAt }: P
         )}
         <div>
           <h3 className="font-semibold">
-            {isDelivered ? 'Delivered' : 'In Transit'}
+            {status === 'sold' ? 'Delivered' : 
+             status === 'in_escrow' ? 'In Transit' : 
+             'Pending'}
           </h3>
           {deliveredAt && (
             <p className="text-sm text-gray-600">

@@ -72,14 +72,6 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="font-medium">
-                  {transaction.completed_at 
-                    ? format(new Date(transaction.completed_at), 'PPp')
-                    : 'Not completed'}
-                </p>
-              </div>
-              <div>
                 <p className="text-sm text-muted-foreground">Delivery Method</p>
                 <p className="font-medium capitalize">{transaction.delivery_method}</p>
               </div>
@@ -89,7 +81,11 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Delivery Status</p>
-                <p className="font-medium capitalize">{transaction.delivery_status}</p>
+                <p className="font-medium capitalize">
+                  {transaction.status === 'sold' ? 'Delivered' : 
+                   transaction.status === 'in_escrow' ? 'In Transit' : 
+                   'Pending'}
+                </p>
               </div>
             </div>
           </div>
