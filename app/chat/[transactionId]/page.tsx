@@ -45,15 +45,28 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         .select(`
           id,
           status,
-          products (title),
-          buyers:buyer_id (email),
-          sellers:seller_id (email)
+          products:product_id (title),
+          buyer:buyer_id (email),
+          seller:seller_id (email)
         `)
         .eq('id', params.transactionId)
         .single();
       
       if (data) {
-        setTransaction(data);
+        const processedData = {
+          ...data,
+          products: Array.isArray(data.products) ? data.products : [data.products],
+          buyer: data.buyer?.[0] || {},
+          seller: data.seller?.[0] || {}
+        };
+        const transactionData: Transaction = {
+          id: processedData.id,
+          status: processedData.status,
+          products: processedData.products,
+          buyers: [processedData.buyer],
+          sellers: [processedData.seller]
+        };
+        setTransaction(transactionData);
       }
     }
 
@@ -69,8 +82,8 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         <div className="mb-6">
           <h2 className="text-xl font-semibold">{transaction.products[0].title}</h2>
           <p className="text-sm text-muted-foreground">
-            Chat with {currentUser?.email === transaction.buyers[0].email 
-              ? transaction.sellers[0].email 
+            Chat with {currentUser?.email === transaction.buyers[0].email
+              ? transaction.sellers[0].email
               : transaction.buyers[0].email}
           </p>
         </div>
