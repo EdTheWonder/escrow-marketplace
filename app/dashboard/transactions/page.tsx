@@ -193,7 +193,9 @@ export default function TransactionsPage() {
                       )}
                     </div>
                   </div>
-                  {transaction.escrow_wallets && transaction.status === 'in_escrow' && (
+                  {transaction.escrow_wallets && 
+                   transaction.status === 'in_escrow' && 
+                   user.id === transaction.seller_id && (
                     <div className="mt-2">
                       <TransactionCountdown 
                         deadline={transaction.escrow_wallets.delivery_deadline}
