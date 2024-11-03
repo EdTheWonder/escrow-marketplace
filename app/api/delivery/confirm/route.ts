@@ -8,10 +8,15 @@ export async function POST(request: Request) {
     const { transactionId } = await request.json();
     const supabase = createRouteHandlerClient({ cookies });
 
-    // Get transaction details
+    // Get transaction details with escrow wallet
     const { data: transaction } = await supabase
       .from('transactions')
-      .select('*, products(*), sellers:seller_id(wallet_balance)')
+      .select(`
+        *,
+        products(*),
+        sellers:seller_id(wallet_balance),
+        escrow_wallets!left(*)
+      `)
       .eq('id', transactionId)
       .single();
 
@@ -22,8 +27,14 @@ export async function POST(request: Request) {
       );
     }
 
-    await confirmDelivery(transactionId);
+    if (!transaction.escrow_wallets) {
+      return NextResponse.json(
+        { error: 'No escrow wallet found for this transaction' },
+        { status: 400 }
+      );
+    }
 
+    await confirmDelivery(transactionId);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Delivery confirmation error:', error);
