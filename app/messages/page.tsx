@@ -13,150 +13,113 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface ChatPreview {
-  transactionId: string;
-  productTitle: string;
-  otherPartyEmail: string;
-  lastMessage: string | null;
-  lastMessageTime: string;
-  unreadCount: number;
+interface Transaction {
+  id: string;
   status: string;
+  products: {
+    title: string;
+  }[];
+  buyers: {
+    email: string;
+  }[];
+  sellers: {
+    email: string;
+  }[];
+  messages: {
+    content: string;
+    created_at: string;
+    read_at: string | null;
+    recipient_id: string;
+  }[];
 }
 
 export default function MessagesPage() {
-  const [chats, setChats] = useState<ChatPreview[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchChats() {
+    async function fetchTransactions() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/auth/login');
         return;
       }
+      setCurrentUser(user);
 
-      // Get all transactions regardless of message existence
-      const { data: transactions } = await supabase
+      const { data } = await supabase
         .from('transactions')
         .select(`
           id,
           status,
-          created_at,
           products (title),
-          buyer:buyer_id (id, email),
-          seller:seller_id (id, email),
+          buyers:buyer_id (email),
+          sellers:seller_id (email),
           messages (
             content,
             created_at,
             read_at,
             recipient_id
-          ),
-          escrow_wallets (
-            status,
-            delivery_deadline
           )
         `)
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .eq('status', 'in_escrow')
         .order('created_at', { ascending: false });
 
-      if (!transactions) return;
-
-      const chatPreviews = transactions.map(transaction => {
-        const messages = transaction.messages || [];
-        const lastMessage = messages[messages.length - 1];
-        const otherPartyEmail = user.id === transaction.buyer[0].id
-          ? transaction.seller[0].email
-          : transaction.buyer[0].email;
-
-        const unreadCount = messages.filter(
-          msg => msg.recipient_id === user.id && !msg.read_at
-        ).length;
-
-        return {
-          transactionId: transaction.id,
-          productTitle: transaction.products[0].title,
-          otherPartyEmail,
-          lastMessage: lastMessage?.content || null,
-          lastMessageTime: lastMessage?.created_at || transaction.created_at,
-          unreadCount,
-          status: transaction.status
-        };
-      });
-
-      setChats(chatPreviews);
+      if (data) {
+        setTransactions(data);
+      }
     }
 
-    fetchChats();
-    
-    // Subscribe to new messages
-    const messageChannel = supabase
-      .channel('messages_changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'messages' 
-      }, () => {
-        fetchChats();
-      })
-      .subscribe();
-
-    // Subscribe to escrow changes
-    const escrowChannel = supabase
-      .channel('escrow_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'escrow_wallets'
-      }, () => {
-        fetchChats();
-      })
-      .subscribe();
-
-    return () => {
-      messageChannel.unsubscribe();
-      escrowChannel.unsubscribe();
-    };
+    fetchTransactions();
   }, [router]);
 
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
-      <h1 className="text-2xl font-bold mb-6">Messages</h1>
+      <h1 className="text-2xl font-bold mb-6">Escrow Chats</h1>
       <div className="space-y-4">
-        {chats.map((chat) => (
-          <Link href={`/chat/${chat.transactionId}`} key={chat.transactionId}>
-            <Card className="p-4 hover:bg-accent transition-colors">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">{chat.productTitle}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {chat.otherPartyEmail}
-                  </p>
-                  <p className="text-sm mt-1">
-                    {chat.lastMessage || 'No messages yet'}
-                  </p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    chat.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    chat.status === 'in_escrow' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {chat.status}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(chat.lastMessageTime), 'MMM d, HH:mm')}
-                  </p>
-                  {chat.unreadCount > 0 && (
-                    <span className="inline-block bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs mt-1">
-                      {chat.unreadCount}
+        {transactions.map((transaction) => {
+          const lastMessage = transaction.messages?.[transaction.messages.length - 1];
+          const unreadCount = transaction.messages?.filter(
+            msg => msg.recipient_id === currentUser?.id && !msg.read_at
+          ).length || 0;
+          const otherPartyEmail = currentUser?.email === transaction.buyers[0].email 
+            ? transaction.sellers[0].email 
+            : transaction.buyers[0].email;
+
+          return (
+            <Link href={`/chat/${transaction.id}`} key={transaction.id}>
+              <Card className="p-4 hover:bg-accent transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium">{transaction.products[0].title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {otherPartyEmail}
+                    </p>
+                    <p className="text-sm mt-1">
+                      {lastMessage?.content || 'No messages yet'}
+                    </p>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                      {transaction.status}
                     </span>
-                  )}
+                  </div>
+                  <div className="text-right">
+                    {lastMessage && (
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(lastMessage.created_at), 'MMM d, HH:mm')}
+                      </p>
+                    )}
+                    {unreadCount > 0 && (
+                      <span className="inline-block bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs mt-1">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
