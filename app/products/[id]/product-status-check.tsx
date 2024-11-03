@@ -18,16 +18,17 @@ export default function ProductStatusCheck({ productId }: { productId: string })
         .from('products')
         .select(`
           status,
-          transactions!inner (
+          transactions (
             id,
             status,
             buyer_id
           )
         `)
         .eq('id', productId)
+        .order('created_at', { ascending: false })
         .single();
 
-      if (product?.transactions) {
+      if (product?.status === 'in_escrow' || product?.status === 'sold') {
         router.push(`/dashboard/transactions`);
       }
     }
