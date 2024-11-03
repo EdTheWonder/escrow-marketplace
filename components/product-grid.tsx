@@ -51,7 +51,7 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
             href={
               isOwner && product.status === 'available' 
                 ? `/dashboard/products/${product.id}/edit`
-                : product.status === 'sold' 
+                : product.status === 'in_escrow' || product.status === 'sold'
                   ? `/dashboard/transactions/${product.transactions?.[0]?.id}`
                   : `/products/${product.id}`
             }
