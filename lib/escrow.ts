@@ -117,11 +117,21 @@ export class EscrowService {
 
   static async releaseToSeller(transactionId: string) {
     try {
-      const { data: transaction } = await supabase
-        .from('user_transactions')
-        .select('*, escrow_wallets(*)')
+      const { data: transaction, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          escrow_wallets!left(*),
+          products(id),
+          sellers:seller_id(id, wallet_id)
+        `)
         .eq('id', transactionId)
         .single();
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw new Error('Failed to fetch transaction details');
+      }
 
       if (!transaction) throw new Error('Transaction not found');
       if (!transaction.escrow_wallets) throw new Error('No escrow wallet found');
@@ -136,7 +146,7 @@ export class EscrowService {
       // Release payment to seller
       await WalletManager.releaseEscrow(transactionId);
 
-      // Update escrow, transaction, and product status
+      // Update statuses
       await Promise.all([
         supabase
           .from('escrow_wallets')
@@ -154,6 +164,7 @@ export class EscrowService {
 
       return true;
     } catch (error: any) {
+      console.error('Release to seller error:', error);
       throw new Error(`Failed to release to seller: ${error.message}`);
     }
   }

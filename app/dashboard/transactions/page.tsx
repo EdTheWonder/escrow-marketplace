@@ -50,7 +50,7 @@ export default function TransactionsPage() {
       setUser(user);
 
       const { data, error } = await supabase
-        .from('user_transactions')
+        .from('transactions')
         .select(`
           *,
           products (*),
