@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Image, Video, Upload } from 'lucide-react';
 import { uploadToR2 } from '@/lib/cloudflare-r2';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,31 +74,23 @@ export default function EscrowChannel({
   }, [transactionId, markMessageAsRead]);
 
   const subscribeToMessages = useCallback(() => {
-    if (!currentUser) return () => {};
-
     const channel = supabase
       .channel(`messages:${transactionId}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all changes
+          event: '*',
           schema: 'public',
           table: 'messages',
           filter: `transaction_id=eq.${transactionId}`
         },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === 'INSERT') {
-            setMessages(current => [...current, payload.new as Message]);
-            // Mark as read if we're the recipient
-            if (payload.new.recipient_id === currentUser.id) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && payload.new.recipient_id === user.id) {
               markMessageAsRead(payload.new.id);
             }
-          } else if (payload.eventType === 'UPDATE') {
-            setMessages(current => 
-              current.map(msg => 
-                msg.id === payload.new.id ? payload.new as Message : msg
-              )
-            );
+            setMessages(current => [...current, payload.new as Message]);
           }
         }
       )
@@ -107,21 +99,25 @@ export default function EscrowChannel({
     return () => {
       channel.unsubscribe();
     };
-  }, [transactionId, currentUser, markMessageAsRead]);
+  }, [transactionId, markMessageAsRead]);
 
   useEffect(() => {
     getCurrentUser();
     fetchMessages();
     const unsubscribe = subscribeToMessages();
     
+    const interval = setInterval(fetchMessages, 5000); // Refresh messages every 5 seconds
+    
     return () => {
       unsubscribe();
+      clearInterval(interval);
     };
-  }, [transactionId, fetchMessages, subscribeToMessages]);
+  }, [fetchMessages, subscribeToMessages]);
 
   async function getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+      toast.error('Authentication error');
       router.push('/auth/login');
       return;
     }
