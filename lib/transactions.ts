@@ -54,15 +54,6 @@ export async function getTransactionHistory(userId: string) {
   return data;
 }
 
-export async function confirmDelivery(transactionId: string) {
-  try {
-    await EscrowService.releaseToSeller(transactionId);
-    return { success: true };
-  } catch (error) {
-    console.error('Delivery confirmation error:', error);
-    throw error;
-  }
-}
 
 export async function updateTransactionToEscrow(transactionId: string) {
   const { error } = await supabase

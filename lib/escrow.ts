@@ -121,51 +121,41 @@ export class EscrowService {
         .from('transactions')
         .select(`
           *,
-          escrow_wallets!left(*),
+          escrow_wallets(*),
           products(id),
-          sellers:seller_id(id, wallet_id)
+          seller:seller_id(id)
         `)
         .eq('id', transactionId)
         .single();
 
-      if (error) {
-        console.error('Supabase query error:', error);
-        throw new Error('Failed to fetch transaction details');
-      }
-
+      if (error) throw new Error('Failed to fetch transaction');
       if (!transaction) throw new Error('Transaction not found');
       if (!transaction.escrow_wallets) throw new Error('No escrow wallet found');
 
-      // Check delivery deadline
-      const deliveryDeadline = new Date(transaction.escrow_wallets.delivery_deadline);
-      if (Date.now() > deliveryDeadline.getTime()) {
-        await this.processRefund(transactionId);
-        throw new Error('Delivery deadline exceeded, payment refunded');
-      }
+      // Create wallet if doesn't exist
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .upsert({
+          user_id: transaction.seller.id,
+          balance: 0
+        })
+        .select()
+        .single();
 
-      // Release payment to seller
-      await WalletManager.releaseEscrow(transactionId);
+      // Update all statuses in a transaction
+      const { error: updateError } = await supabase.rpc('complete_transaction', {
+        p_transaction_id: transactionId,
+        p_product_id: transaction.products.id,
+        p_wallet_id: wallet.id,
+        p_amount: transaction.amount
+      });
 
-      // Update statuses
-      await Promise.all([
-        supabase
-          .from('escrow_wallets')
-          .update({ status: 'released' })
-          .eq('transaction_id', transactionId),
-        supabase
-          .from('transactions')
-          .update({ status: 'completed' })
-          .eq('id', transactionId),
-        supabase
-          .from('products')
-          .update({ status: 'sold' })
-          .eq('id', transaction.product_id)
-      ]);
+      if (updateError) throw updateError;
 
       return true;
     } catch (error: any) {
       console.error('Release to seller error:', error);
-      throw new Error(`Failed to release to seller: ${error.message}`);
+      throw error;
     }
   }
 }
