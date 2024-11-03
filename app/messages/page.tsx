@@ -68,8 +68,10 @@ export default function MessagesPage() {
       if (data) {
         setTransactions(data.map(transaction => ({
           ...transaction,
-          buyer: transaction.buyer[0], // Convert array to single object
-          seller: transaction.seller[0] // Convert array to single object
+          buyer: transaction.buyer?.[0] || {},
+          seller: transaction.seller?.[0] || {},
+          products: transaction.products || [],
+          messages: transaction.messages || []
         })));
       }
     }
@@ -87,9 +89,9 @@ export default function MessagesPage() {
           const unreadCount = transaction.messages?.filter(
             msg => msg.recipient_id === currentUser?.id && !msg.read_at
           ).length || 0;
-          const otherPartyEmail = currentUser?.email === transaction.buyer.email 
-            ? transaction.seller.email 
-            : transaction.buyer.email;
+          const otherPartyEmail = currentUser?.email === transaction.buyer?.email 
+            ? transaction.seller?.email 
+            : transaction.buyer?.email;
 
           return (
             <Link href={`/chat/${transaction.id}`} key={transaction.id}>
