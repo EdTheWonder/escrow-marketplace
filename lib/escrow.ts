@@ -119,60 +119,37 @@ export class EscrowService {
     try {
       const { data: transaction, error } = await supabase
         .from('transactions')
-        .select(`
-          *,
-          escrow_wallets(*),
-          products(id),
-          seller:seller_id(id)
-        `)
+        .select('*')
         .eq('id', transactionId)
         .single();
 
       if (error) throw new Error('Failed to fetch transaction');
       if (!transaction) throw new Error('Transaction not found');
-      if (!transaction.escrow_wallets) throw new Error('No escrow wallet found');
 
       // Update all statuses in a transaction
       await Promise.all([
-        // Update transaction status
         supabase
           .from('transactions')
-          .update({ 
-            status: 'completed',
-            delivered_at: new Date().toISOString()
-          })
-          .eq('id', transactionId),
-        
-        // Update product status
-        supabase
-          .from('products')
-          .update({ status: 'sold' })
-          .eq('id', transaction.products.id),
-        
-        // Update escrow wallet status
-        supabase
-          .from('escrow_wallets')
           .update({ 
             status: 'sold',
             completed_at: new Date().toISOString()
           })
-          .eq('transaction_id', transactionId),
-
-        // Update delivery status
+          .eq('id', transactionId),
+        
         supabase
-          .from('transactions')
-          .update({ delivery_status: 'delivered' })
-          .eq('id', transactionId)
+          .from('products')
+          .update({ status: 'sold' })
+          .eq('id', transaction.product_id)
       ]);
 
       // Handle wallet balance update
       await supabase.rpc('update_wallet_balance', {
-        p_user_id: transaction.seller.id,
+        p_user_id: transaction.seller_id,
         p_amount: transaction.amount
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Release to seller error:', error);
       throw error;
     }

@@ -56,11 +56,7 @@ export default function TransactionsPage() {
           *,
           products (*),
           buyer:buyer_id (email),
-          seller:seller_id (email),
-          escrow_wallets!left (
-            status,
-            delivery_deadline
-          )
+          seller:seller_id (email)
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
@@ -116,6 +112,19 @@ export default function TransactionsPage() {
     }
   }
 
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'available':
+        return { text: 'Available', color: 'var(--success)' };
+      case 'in_escrow':
+        return { text: 'In Escrow', color: 'var(--warning)' };
+      case 'sold':
+        return { text: 'Trade Completed', color: 'var(--muted)' };
+      default:
+        return { text: status, color: 'var(--muted)' };
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
@@ -156,10 +165,7 @@ export default function TransactionsPage() {
                     <div className="text-right">
                       <span className="inline-block px-2 py-1 rounded text-sm mb-2"
                         style={{
-                          backgroundColor: 
-                            transaction.status === 'completed' ? 'var(--success)' :
-                            transaction.status === 'in_escrow' ? 'var(--warning)' :
-                            'var(--muted)',
+                          backgroundColor: getStatusDisplay(transaction.status).color,
                           color: 'white'
                         }}
                       >
