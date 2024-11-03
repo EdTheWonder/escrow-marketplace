@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PaystackPayment from "@/components/paystack-payment";
@@ -16,6 +16,7 @@ import { updateTransactionToEscrow } from "@/lib/transactions";
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 interface Product {
+  status: string;
   id: string;
   title: string;
   price: number;
@@ -36,6 +37,20 @@ export default function PurchaseButton({ product }: { product: Product }) {
   const [showDelivery, setShowDelivery] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [totalPrice, setTotalPrice] = useState(product.price);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    }
+    getUser();
+  }, []);
+
+  // Don't show button if product is sold or user is the buyer
+  if (product.status === 'sold' || product.status === 'in_escrow') {
+    return null;
+  }
 
   async function createTransactionAndEscrow() {
     const { data: { user } } = await supabase.auth.getUser();

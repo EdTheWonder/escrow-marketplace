@@ -89,7 +89,7 @@ export default function TransactionsPage() {
       }
 
       toast.success("Delivery confirmed! Payment released to seller.");
-      router.push('/products');
+      router.push('/dashboard/transactions');
     } catch (error: any) {
       toast.error(error.message);
     }
