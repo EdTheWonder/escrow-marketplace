@@ -62,7 +62,6 @@ export default function MessagesPage() {
             recipient_id
           )
         `)
-        .eq('status', 'in_escrow')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
       if (data) {

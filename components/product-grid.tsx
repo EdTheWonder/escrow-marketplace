@@ -48,7 +48,13 @@ export default function ProductGrid({ products, currentUserId }: ProductGridProp
         return (
           <Link 
             key={product.id} 
-            href={isOwner ? `/dashboard/products/${product.id}/edit` : `/products/${product.id}`}
+            href={
+              isOwner && product.status === 'available' 
+                ? `/dashboard/products/${product.id}/edit`
+                : product.status === 'sold' 
+                  ? `/dashboard/transactions/${product.transactions?.[0]?.id}`
+                  : `/products/${product.id}`
+            }
             className={isOwner ? 'cursor-pointer' : ''}
           >
             <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
