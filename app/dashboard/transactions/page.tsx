@@ -50,7 +50,7 @@ export default function TransactionsPage() {
       setUser(user);
 
       const { data, error } = await supabase
-        .from('transactions')
+        .from('user_transactions')
         .select(`
           *,
           products (*),
@@ -70,10 +70,7 @@ export default function TransactionsPage() {
       }
 
       if (data) {
-        const userTransactions = data.filter(transaction => 
-          transaction.buyer_id === user.id || transaction.seller_id === user.id
-        );
-        setTransactions(userTransactions);
+        setTransactions(data);
       }
     }
   }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, Truck, Clock } from "lucide-react";
+import { CheckCircle, Truck } from "lucide-react";
 import ConfirmDeliveryButton from "./ConfirmDeliveryButton";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface Props {
   transactionId: string;
@@ -12,6 +13,25 @@ interface Props {
 
 export default function DeliveryStatus({ transactionId, status, deliveredAt }: Props) {
   const [isDelivered, setIsDelivered] = useState(status === 'delivered');
+  const [isBuyer, setIsBuyer] = useState(false);
+
+  useEffect(() => {
+    async function checkUser() {
+      const supabase = createClientComponentClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('buyer_id')
+        .eq('id', transactionId)
+        .single();
+        
+      setIsBuyer(transaction?.buyer_id === user.id);
+    }
+    
+    checkUser();
+  }, [transactionId]);
 
   return (
     <div className="bg-white/30 backdrop-blur-md rounded-lg p-6">
@@ -33,7 +53,7 @@ export default function DeliveryStatus({ transactionId, status, deliveredAt }: P
         </div>
       </div>
 
-      {!isDelivered && (
+      {!isDelivered && isBuyer && (
         <ConfirmDeliveryButton 
           transactionId={transactionId} 
           onSuccess={() => setIsDelivered(true)}

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Image, Video, Upload } from 'lucide-react';
 import { uploadToR2 } from '@/lib/cloudflare-r2';
+import { useRouter } from 'next/router';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,6 +38,7 @@ export default function EscrowChannel({
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const router = useRouter();
 
   const markMessageAsRead = useCallback(async (messageId: string) => {
     if (!currentUser) return;
@@ -108,6 +110,7 @@ export default function EscrowChannel({
   }, [transactionId, currentUser, markMessageAsRead]);
 
   useEffect(() => {
+    getCurrentUser();
     fetchMessages();
     const unsubscribe = subscribeToMessages();
     
@@ -118,6 +121,10 @@ export default function EscrowChannel({
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
     setCurrentUser(user);
   }
 
@@ -146,7 +153,10 @@ export default function EscrowChannel({
   ) {
     e.preventDefault();
     if (!newMessage.trim() && !mediaUrl) return;
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error('Please login to send messages');
+      return;
+    }
 
     try {
       const { data: transaction } = await supabase
@@ -155,7 +165,10 @@ export default function EscrowChannel({
         .eq('id', transactionId)
         .single();
 
-      if (!transaction) throw new Error('Transaction not found');
+      if (!transaction) {
+        toast.error('Transaction not found');
+        return;
+      }
 
       const recipientId = currentUser.id === transaction.buyer_id 
         ? transaction.seller_id 
@@ -175,7 +188,7 @@ export default function EscrowChannel({
       if (error) throw error;
       setNewMessage('');
     } catch (error: any) {
-      toast.error('Failed to send message');
+      toast.error('Failed to send message: ' + error.message);
     }
   }
 
