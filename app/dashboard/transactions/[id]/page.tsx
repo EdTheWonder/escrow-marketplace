@@ -74,10 +74,11 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
               <div>
                 <p className="text-sm text-muted-foreground">Delivery Method</p>
                 <p className="font-medium capitalize">{transaction.delivery_method}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Delivery Fee</p>
-                <p className="font-medium">₦{transaction.delivery_fee}</p>
+                {transaction.delivery_fee > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Delivery Fee: ₦{transaction.delivery_fee}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Delivery Status</p>

@@ -120,12 +120,24 @@ export default function PurchaseButton({ product }: { product: Product }) {
       setDeliveryMethod(method);
       setTotalPrice(total);
       
-      // Create transaction first
+      // Calculate delivery fee
+      const deliveryFee = method === 'sendbox' ? 1000 : 0;
+      
+      // Create transaction with delivery details
       const transaction = await createTransactionAndEscrow();
       
       if (transaction) {
+        // Update transaction with delivery details
+        await supabase
+          .from('transactions')
+          .update({ 
+            delivery_method: method,
+            delivery_fee: deliveryFee,
+            amount: total // Update total amount to include delivery fee
+          })
+          .eq('id', transaction.id);
+
         setShowPayment(true);
-        // Only close delivery dialog after successful payment
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to process delivery selection');
