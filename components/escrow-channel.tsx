@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { Image, Video, Upload } from 'lucide-react';
 import { uploadToR2 } from '@/lib/cloudflare-r2';
 import { useRouter } from 'next/navigation';
+import TransactionCountdown from './transaction-countdown';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,16 +28,17 @@ interface Message {
   deleted_at: string | null;
 }
 
-export default function EscrowChannel({ 
-  transactionId, 
-  allowMediaUpload = false 
-}: { 
+interface EscrowChannelProps { 
   transactionId: string;
   allowMediaUpload?: boolean;
-}) {
+}
+
+export default function EscrowChannel({ transactionId, allowMediaUpload = false }: EscrowChannelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [transaction, setTransaction] = useState<any>(null);
+  const [isSeller, setIsSeller] = useState(false);
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
@@ -114,6 +116,35 @@ export default function EscrowChannel({
     };
   }, [fetchMessages, subscribeToMessages]);
 
+  useEffect(() => {
+    async function fetchTransaction() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setCurrentUser(user);
+
+      const { data } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          escrow_wallets (delivery_deadline)
+        `)
+        .eq('id', transactionId)
+        .single();
+
+      if (data) {
+        setTransaction(data);
+        setIsSeller(data.seller_id === user.id);
+      }
+    }
+
+    fetchTransaction();
+  }, [transactionId]);
+
+  const canOpenDispute = isSeller && 
+    transaction?.status === 'in_escrow' && 
+    transaction?.escrow_wallets?.delivery_deadline && 
+    new Date(transaction.escrow_wallets.delivery_deadline) < new Date();
+
   async function getCurrentUser() {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
@@ -188,11 +219,53 @@ export default function EscrowChannel({
     }
   }
 
+  async function handleCreateDispute(transactionId: string) {
+    try {
+      const response = await fetch('/api/transactions/dispute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create dispute');
+      }
+
+      toast.success("Dispute created! Our team will review the transaction.");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
+
   return (
     <Card className="p-4">
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Escrow Chat</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Escrow Chat</h2>
+          {isSeller && transaction?.escrow_wallets?.delivery_deadline && (
+            <TransactionCountdown 
+              deadline={transaction.escrow_wallets.delivery_deadline}
+            />
+          )}
+        </div>
         
+        {canOpenDispute && (
+          <div className="bg-red-50 p-4 rounded-lg">
+            <p className="text-red-700 text-sm">
+              Delivery deadline has passed. You can now open a dispute.
+            </p>
+            <Button
+              onClick={() => handleCreateDispute(transactionId)}
+              variant="destructive"
+              size="sm"
+              className="mt-2"
+            >
+              Open Dispute
+            </Button>
+          </div>
+        )}
+
         <div className="h-[400px] overflow-y-auto space-y-4 mb-4">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
