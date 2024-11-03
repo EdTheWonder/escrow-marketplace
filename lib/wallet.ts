@@ -73,17 +73,23 @@ export class WalletManager {
   static async releaseEscrow(transactionId: string) {
     const { data: transaction } = await supabase
       .from('transactions')
-      .select('*, wallet_transactions(*)')
+      .select(`
+        *,
+        sellers:seller_id (
+          wallet_id
+        )
+      `)
       .eq('id', transactionId)
       .single();
 
     if (!transaction) throw new Error('Transaction not found');
+    if (!transaction.sellers?.wallet_id) throw new Error('Seller wallet not found');
 
     // Release funds to seller
     const { error: releaseError } = await supabase
       .from('wallet_transactions')
       .insert({
-        wallet_id: transaction.seller_id,
+        wallet_id: transaction.sellers.wallet_id,
         transaction_id: transactionId,
         type: 'escrow_release',
         amount: transaction.amount,

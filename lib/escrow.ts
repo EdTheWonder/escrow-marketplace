@@ -118,7 +118,7 @@ export class EscrowService {
   static async releaseToSeller(transactionId: string) {
     try {
       const { data: transaction } = await supabase
-        .from('transactions')
+        .from('user_transactions')
         .select('*, escrow_wallets(*)')
         .eq('id', transactionId)
         .single();
