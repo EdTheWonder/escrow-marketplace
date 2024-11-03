@@ -19,12 +19,12 @@ interface Transaction {
   products: {
     title: string;
   }[];
-  buyers: {
+  buyer: {
     email: string;
-  }[];
-  sellers: {
+  };
+  seller: {
     email: string;
-  }[];
+  };
   messages: {
     content: string;
     created_at: string;
@@ -53,8 +53,8 @@ export default function MessagesPage() {
           id,
           status,
           products (title),
-          buyers:buyer_id (email),
-          sellers:seller_id (email),
+          buyer:buyer_id (email),
+          seller:seller_id (email),
           messages (
             content,
             created_at,
@@ -63,10 +63,14 @@ export default function MessagesPage() {
           )
         `)
         .eq('status', 'in_escrow')
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
-
       if (data) {
-        setTransactions(data);
+        setTransactions(data.map(transaction => ({
+          ...transaction,
+          buyer: transaction.buyer[0], // Convert array to single object
+          seller: transaction.seller[0] // Convert array to single object
+        })));
       }
     }
 
@@ -83,9 +87,9 @@ export default function MessagesPage() {
           const unreadCount = transaction.messages?.filter(
             msg => msg.recipient_id === currentUser?.id && !msg.read_at
           ).length || 0;
-          const otherPartyEmail = currentUser?.email === transaction.buyers[0].email 
-            ? transaction.sellers[0].email 
-            : transaction.buyers[0].email;
+          const otherPartyEmail = currentUser?.email === transaction.buyer.email 
+            ? transaction.seller.email 
+            : transaction.buyer.email;
 
           return (
             <Link href={`/chat/${transaction.id}`} key={transaction.id}>
