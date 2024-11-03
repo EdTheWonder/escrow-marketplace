@@ -57,9 +57,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!user) return;
 
     try {
-      // Normalize delivery method to match database constraints
-      const normalizedDeliveryMethod = deliveryMethod === 'meet_up' ? 'meetup' : 'sendbox';
-
       // Create transaction
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
@@ -69,8 +66,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
           seller_id: product.seller_id,
           amount: totalPrice,
           status: 'pending',
-          delivery_method: normalizedDeliveryMethod,
-          delivery_fee: normalizedDeliveryMethod === 'sendbox' ? 1000 : 0
+          delivery_method: deliveryMethod,
+          delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0,
+          delivery_status: 'pending'
         })
         .select()
         .single();

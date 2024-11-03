@@ -132,7 +132,37 @@ export class EscrowService {
       if (!transaction) throw new Error('Transaction not found');
       if (!transaction.escrow_wallets) throw new Error('No escrow wallet found');
 
-      // Create wallet if doesn't exist
+      // Update all statuses in a transaction
+      await Promise.all([
+        // Update transaction status
+        supabase
+          .from('transactions')
+          .update({ 
+            status: 'completed',
+            delivered_at: new Date().toISOString()
+          })
+          .eq('id', transactionId),
+        
+        // Update product status
+        supabase
+          .from('products')
+          .update({ status: 'sold' })
+          .eq('id', transaction.products.id),
+        
+        // Update escrow wallet status
+        supabase
+          .from('escrow_wallets')
+          .update({ status: 'released' })
+          .eq('transaction_id', transactionId),
+
+        // Update delivery status
+        supabase
+          .from('transactions')
+          .update({ delivery_status: 'delivered' })
+          .eq('id', transactionId)
+      ]);
+
+      // Handle wallet balance update
       const { data: wallet } = await supabase
         .from('wallets')
         .upsert({
@@ -142,15 +172,10 @@ export class EscrowService {
         .select()
         .single();
 
-      // Update all statuses in a transaction
-      const { error: updateError } = await supabase.rpc('complete_transaction', {
-        p_transaction_id: transactionId,
-        p_product_id: transaction.products.id,
-        p_wallet_id: wallet.id,
+      await supabase.rpc('update_wallet_balance', {
+        p_user_id: transaction.seller.id,
         p_amount: transaction.amount
       });
-
-      if (updateError) throw updateError;
 
       return true;
     } catch (error: any) {
