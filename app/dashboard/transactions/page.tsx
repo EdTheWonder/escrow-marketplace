@@ -237,8 +237,7 @@ export default function TransactionsPage() {
                       {transaction.delivery_deadline && (
                         <TransactionCountdown 
                           deadline={transaction.delivery_deadline}
-                          onExpire={() => getTransactions()}
-                        />
+                          onExpire={() => getTransactions()} transactionId={""} isSeller={false}                        />
                       )}
                     </div>
                   )}
