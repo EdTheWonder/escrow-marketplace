@@ -109,11 +109,13 @@ export default function PurchaseButton({ product }: { product: Product }) {
       
       // Create transaction with delivery details
       const transaction = await createTransactionAndEscrow();
+      console.log('Created transaction:', transaction);
       
       if (transaction) {
         setShowPayment(true);
       }
     } catch (error: any) {
+      console.error('Delivery selection error:', error);
       toast.error(error.message || 'Failed to process delivery selection');
     }
   }
@@ -122,11 +124,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!transactionId) return;
     
     try {
+      // Update transaction and product status
       await Promise.all([
-        supabase
-          .from('escrow_wallets')
-          .update({ status: 'holding' })
-          .eq('id', escrowId),
         supabase
           .from('transactions')
           .update({ 
@@ -143,13 +142,17 @@ export default function PurchaseButton({ product }: { product: Product }) {
       // After successful payment verification
       await updateTransactionToEscrow(transactionId);
 
-      // Close delivery dialog after successful payment
+      // Close delivery dialog
       setShowDelivery(false);
       
       // Start escrow timer
       TransactionTimer.startEscrowTimer(transactionId);
 
+      // Wait a brief moment for the database to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Redirect to chat
+      console.log('Redirecting to:', `/chat/${transactionId}`);
       router.push(`/chat/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
