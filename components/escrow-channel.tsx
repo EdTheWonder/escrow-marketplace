@@ -262,8 +262,7 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
           <h2 className="text-xl font-semibold">Escrow Chat</h2>
           {isSeller && transaction?.delivery_deadline && (
             <TransactionCountdown 
-              deadline={transaction.delivery_deadline}
-            />
+              deadline={transaction.delivery_deadline} transactionId={''} isSeller={false}            />
           )}
         </div>
         
