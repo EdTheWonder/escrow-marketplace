@@ -78,10 +78,10 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
               title,
               status
             ),
-            buyer:users!transactions_buyer_id_fkey (
+            buyer:auth_users!transactions_buyer_id_fkey (
               email
             ),
-            seller:users!transactions_seller_id_fkey (
+            seller:auth_users!transactions_seller_id_fkey (
               email
             ),
             messages (
