@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export type DeliveryMethod = 'meetup' | 'sendbox';
 export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered';
-export type TransactionStatus = 'pending' | 'in_escrow' | 'sold' | 'refunded' | 'disputed';
+export type TransactionStatus = 'pending' | 'in_escrow' | 'pending_feedback' | 'sold' | 'refunded' | 'disputed';
 
 export interface Transaction {
   id: string;
@@ -87,6 +87,7 @@ export async function getTransactionHistory(userId: string) {
       sellers:seller_id (email)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .in('status', ['in_escrow', 'sold'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;

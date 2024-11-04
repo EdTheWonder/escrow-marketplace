@@ -108,7 +108,7 @@ export class EscrowService {
         supabase
           .from('transactions')
           .update({ 
-            status: 'sold',
+            status: 'pending_feedback',
             completed_at: new Date().toISOString()
           })
           .eq('id', transactionId),
