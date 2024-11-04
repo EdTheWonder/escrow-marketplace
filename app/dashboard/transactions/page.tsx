@@ -72,6 +72,7 @@ export default function TransactionsPage() {
             messages (*)
           `)
           .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .in('status', ['in_escrow', 'pending_feedback', 'sold'])
           .order('created_at', { ascending: false });
 
         console.log('Transactions fetch response:', { data, error });
