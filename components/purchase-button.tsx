@@ -66,7 +66,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
           seller_id: product.seller_id,
           amount: totalPrice,
           status: 'pending',
-          delivery_method: deliveryMethod as DeliveryMethod,
+          delivery_method: deliveryMethod || 'meetup',
           delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0,
           delivery_status: 'pending'
         })
@@ -75,23 +75,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
 
       if (transactionError) throw transactionError;
 
-      // Create escrow wallet
-      const { data: escrow, error: escrowError } = await supabase
-        .from('escrow_wallets')
-        .insert({
-          transaction_id: transaction.id,
-          amount: totalPrice,
-          status: 'pending',
-          seller_id: product.seller_id,
-          buyer_id: user.id
-        })
-        .select()
-        .single();
-
-      if (escrowError) throw escrowError;
-
       setTransactionId(transaction.id);
-      setEscrowId(escrow.id);
       return transaction;
     } catch (error: any) {
       console.error('Transaction creation failed:', error);

@@ -8,24 +8,6 @@ const supabase = createClient(
 
 export class EscrowService {
   
-
-  static async createEscrowWallet(transactionId: string, amount: number) {
-    try {
-      // Create escrow wallet entry
-      const { error } = await supabase
-        .from('escrow_wallets')
-        .insert({
-          transaction_id: transactionId,
-          amount: amount,
-          status: 'holding'
-        });
-
-      if (error) throw error;
-    } catch (error: any) {
-      throw new Error(`Failed to create escrow wallet: ${error.message}`);
-    }
-  }
-
   static async holdPayment(transactionId: string, amount: number) {
     try {
       // Create escrow wallet and hold payment
@@ -41,6 +23,9 @@ export class EscrowService {
     } catch (error: any) {
       throw new Error(`Failed to hold payment: ${error.message}`);
     }
+  }
+  static createEscrowWallet(transactionId: string, amount: number) {
+    throw new Error('Method not implemented.');
   }
 
   static async releasePayment(transactionId: string) {

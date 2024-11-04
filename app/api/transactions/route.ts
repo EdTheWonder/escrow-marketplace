@@ -39,9 +39,7 @@ export async function POST(request: Request) {
       .single();
 
     if (transactionError) throw transactionError;
-    // Create escrow wallet
-    await EscrowService.createEscrowWallet(transaction.id, amount);
-
+      
     return NextResponse.json({ success: true, transaction });
   } catch (error: any) {
     console.error('Transaction error:', error);
