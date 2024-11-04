@@ -13,6 +13,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Ensure buyer profile exists
+    await supabase
+      .from('profiles')
+      .upsert({ 
+        id: user.id,
+        email: user.email,
+        role: 'user'
+      }, { 
+        onConflict: 'id' 
+      });
+
     // Get product details
     const { data: product } = await supabase
       .from('products')

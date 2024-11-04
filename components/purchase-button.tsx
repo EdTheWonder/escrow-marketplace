@@ -89,7 +89,13 @@ export default function PurchaseButton({ product }: { product: Product }) {
       return;
     }
 
-    setShowTerms(true);
+    try {
+      // Ensure buyer profile exists
+      await ensureUserProfile(user.id, user.email || '');
+      setShowTerms(true);
+    } catch (error: any) {
+      toast.error('Failed to initialize purchase: ' + error.message);
+    }
   }
 
   async function handleTermsAccepted() {
@@ -225,4 +231,18 @@ export default function PurchaseButton({ product }: { product: Product }) {
       </Dialog>
     </>
   );
+}
+
+export async function ensureUserProfile(userId: string, email: string) {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ 
+      id: userId,
+      email: email,
+      role: 'user'
+    }, { 
+      onConflict: 'id' 
+    });
+
+  if (error) throw error;
 }
