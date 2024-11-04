@@ -16,6 +16,7 @@ export default async function ProductsPage() {
     .from('products')
     .select('*')
     .eq('status', 'available')
+    .not('status', 'in', ['in_escrow', 'sold', 'pending'])
     .order('created_at', { ascending: false });
 
   if (error) {
