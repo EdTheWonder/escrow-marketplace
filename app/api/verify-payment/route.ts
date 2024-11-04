@@ -7,18 +7,30 @@ export async function POST(request: Request) {
     const supabase = createRouteHandlerClient({ cookies });
     const { reference, transactionId, productId } = await request.json();
 
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+
     // Set delivery deadline to 12 hours from now
     const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
 
-    // Update both product and transaction status atomically
-    const { error } = await supabase.rpc('sync_product_transaction_status', {
-      p_product_id: productId,
-      p_transaction_id: transactionId,
-      p_status: 'in_escrow',
-      p_delivery_deadline: deliveryDeadline.toISOString()
-    });
-
-    if (error) throw error;
+    // Update statuses separately since our RPC doesn't handle deadline
+    await Promise.all([
+      supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', productId),
+      supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          delivery_deadline: deliveryDeadline.toISOString()
+        })
+        .eq('id', transactionId)
+        .eq('buyer_id', user.id)
+    ]);
 
     return NextResponse.json({ status: 'success' });
   } catch (error: any) {
