@@ -45,13 +45,13 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         .select(`
           id,
           status,
-          product:product_id (
+          products (
             title
           ),
-          buyer:buyer_id (
+          buyer:profiles!buyer_id (
             email
           ),
-          seller:seller_id (
+          seller:profiles!seller_id (
             email
           )
         `)
@@ -62,9 +62,9 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         const transactionData: Transaction = {
           id: data.id,
           status: data.status,
-          products: [{
-            title: data.product?.[0]?.title || null
-          }],
+          products: data.products ? [{ 
+            title: data.products?.[0]?.title || null 
+          }] : [],
           buyers: [{
             email: data.buyer?.[0]?.email || null
           }],
