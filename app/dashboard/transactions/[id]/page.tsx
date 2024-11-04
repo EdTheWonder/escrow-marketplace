@@ -21,9 +21,11 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
         .from('transactions')
         .select(`
           *,
-          products (*),
-          buyer:buyer_id (email),
-          seller:seller_id (email),
+          products (
+            *
+          ),
+          buyer:profiles!buyer_id (*),
+          seller:profiles!seller_id (*),
           messages (*)
         `)
         .eq('id', params.id)
