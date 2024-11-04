@@ -40,7 +40,10 @@ export default function PaymentStatus({
             .eq('id', productId),
           supabase
             .from('transactions')
-            .update({ status: 'in_escrow' })
+            .update({ 
+              delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000)).toISOString(),
+              status: 'in_escrow' 
+            })
             .eq('id', transactionId)
         ]);
         setStatus('success');

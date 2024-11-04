@@ -1,35 +1,52 @@
 // lib/dispute.ts
 
-import { supabase as supabase } from './supabase';  // Add this import at the top
-// ... existing code ...
+import { supabase } from './supabase';
+import { toast } from 'sonner';
 
 export class DisputeService {
   static async createDispute(transactionId: string) {
-    const { data: transaction } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('id', transactionId)
-      .single();
+    try {
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('*, delivery_deadline')
+        .eq('id', transactionId)
+        .single();
 
-    if (!transaction) throw new Error('Transaction not found');
+      if (!transaction) throw new Error('Transaction not found');
 
-    const { error } = await supabase
-      .from('disputes')
-      .insert({
-        transaction_id: transactionId,
-        buyer_id: transaction.buyer_id,
-        seller_id: transaction.seller_id,
-        status: 'pending_review',
-        amount: transaction.amount
-      });
+      // Check if delivery deadline has passed
+      const now = new Date();
+      const deadline = new Date(transaction.delivery_deadline);
+      
+      if (now < deadline) {
+        throw new Error('Cannot create dispute before delivery deadline');
+      }
 
-    if (error) throw error;
+      // Create dispute record
+      const { error: disputeError } = await supabase
+        .from('disputes')
+        .insert({
+          transaction_id: transactionId,
+          buyer_id: transaction.buyer_id,
+          seller_id: transaction.seller_id,
+          status: 'pending_review',
+          amount: transaction.amount,
+          created_at: new Date().toISOString()
+        });
 
-    // Update transaction status
-    await supabase
-      .from('transactions')
-      .update({ status: 'disputed' })
-      .eq('id', transactionId);
+      if (disputeError) throw disputeError;
+
+      // Update transaction status
+      await supabase
+        .from('transactions')
+        .update({ status: 'disputed' })
+        .eq('id', transactionId);
+
+      toast.success('Dispute created successfully. Admin will review the case.');
+    } catch (error: any) {
+      toast.error(error.message);
+      throw error;
+    }
   }
 }
 

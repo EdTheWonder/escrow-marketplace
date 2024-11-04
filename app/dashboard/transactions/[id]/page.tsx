@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import BackButton from "@/components/back-button";
 import EscrowChannel from "@/components/escrow-channel";
 import { useRouter } from "next/navigation";
+import TransactionCountdown from "@/components/transaction-countdown";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,6 +39,7 @@ interface Transaction {
     media_url?: string;
     media_type?: string;
   }[];
+  delivery_deadline?: string;
 }
 
 export default function TransactionDetailsPage({ params }: { params: { id: string } }) {
@@ -145,6 +147,10 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
 
   if (!transaction) return null;
 
+  function fetchData() {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
@@ -187,6 +193,20 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
             allowMediaUpload={true}
           />
         </Card>
+
+        {transaction?.status === 'in_escrow' && transaction.delivery_deadline && (
+          <Card className="p-4 mb-4">
+            <TransactionCountdown 
+              deadline={transaction.delivery_deadline}
+              transactionId={transaction.id}
+              isSeller={currentUser?.email === transaction.seller.email}
+              onExpire={() => {
+                // Refresh the transaction data
+                fetchData();
+              }}
+            />
+          </Card>
+        )}
       </div>
     </div>
   );
