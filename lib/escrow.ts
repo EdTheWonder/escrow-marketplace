@@ -131,4 +131,15 @@ export class EscrowService {
       throw error;
     }
   }
+
+  static async syncProductAndTransactionStatus(productId: string, transactionId: string, status: string) {
+    const { error } = await supabase
+      .rpc('sync_product_transaction_status', {
+        p_product_id: productId,
+        p_transaction_id: transactionId,
+        p_status: status
+      });
+    
+    if (error) throw error;
+  }
 }

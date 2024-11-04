@@ -62,11 +62,12 @@ export default function TransactionsPage() {
         .from('transactions')
         .select(`
           *,
-          products (*),
+          products!inner (*),
           buyer:profiles!buyer_id (*),
           seller:profiles!seller_id (*)
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .eq('products.status', 'in_escrow')
         .order('created_at', { ascending: false });
 
       if (error) {
