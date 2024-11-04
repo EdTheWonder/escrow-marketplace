@@ -13,7 +13,7 @@ import { Button } from "./ui/button";
 import { User, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabaseClient, useSupabase } from "@/lib/supabase";
+import { supabase, useSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export default function NavMenu({ role }: { role: string }) {
@@ -22,9 +22,9 @@ export default function NavMenu({ role }: { role: string }) {
   
   useEffect(() => {
     async function getUserProfile() {
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabaseClient
+        const { data: profile } = await supabase
           .from('profiles')
           .select('email')
           .eq('id', user.id)
@@ -39,7 +39,7 @@ export default function NavMenu({ role }: { role: string }) {
   }, []);
     
   async function handleSignOut() {
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
       toast.error("Error signing out");

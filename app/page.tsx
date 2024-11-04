@@ -6,14 +6,14 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
     async function checkAuth() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         router.push('/dashboard');
       }

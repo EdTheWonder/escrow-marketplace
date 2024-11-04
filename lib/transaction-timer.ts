@@ -1,6 +1,6 @@
 import { DisputeService } from "./dispute";
 import { EscrowService } from "./escrow";
-import { supabaseClient as supabase } from './supabase';  // Add this import at the top
+import { supabase } from './supabase';  // Add this import at the top
 import { toast } from 'sonner';
 
 // lib/transaction-timer.ts

@@ -1,6 +1,6 @@
 // lib/dispute.ts
 
-import { supabaseClient as supabase } from './supabase';  // Add this import at the top
+import { supabase as supabase } from './supabase';  // Add this import at the top
 // ... existing code ...
 
 export class DisputeService {

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
-import { supabaseClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabaseClient.auth.signInWithPassword({ 
+    const { error } = await supabase.auth.signInWithPassword({ 
       email, 
       password 
     });

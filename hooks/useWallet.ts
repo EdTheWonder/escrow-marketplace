@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { WalletManager } from '@/lib/wallet';
-import { supabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export function useWallet() {
   const [balance, setBalance] = useState<number>(0);
@@ -13,7 +13,7 @@ export function useWallet() {
   const loadWalletBalance = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const balance = await WalletManager.getWalletBalance(user.id);
         setBalance(balance);
