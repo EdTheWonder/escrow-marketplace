@@ -44,7 +44,9 @@ export async function POST(request: Request) {
         seller_id: product.seller_id,
         amount,
         status: 'pending',
-        payment_reference: paymentReference
+        payment_reference: paymentReference,
+        delivery_method: product.delivery_method,
+        delivery_fee: product.delivery_fee
       })
       .select()
       .single();

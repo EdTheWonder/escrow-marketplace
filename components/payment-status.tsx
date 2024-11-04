@@ -69,9 +69,25 @@ export default function PaymentStatus({
     if (!transactionId) return;
     
     try {
-      console.log('Verifying payment with:', { reference, transactionId, productId });
+      console.log('Starting payment verification process...');
       
-      const response = await fetch('/api/verify-payment', {
+      // First verify with Paystack
+      const verifyResponse = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference })
+      });
+
+      const verifyData = await verifyResponse.json();
+      console.log('Paystack verification response:', verifyData);
+
+      if (!verifyResponse.ok) {
+        throw new Error(verifyData.error || 'Payment verification with Paystack failed');
+      }
+
+      // Then update statuses
+      console.log('Updating transaction and product status...');
+      const updateResponse = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -81,11 +97,11 @@ export default function PaymentStatus({
         })
       });
 
-      const data = await response.json();
-      console.log('Payment verification response:', data);
+      const updateData = await updateResponse.json();
+      console.log('Status update response:', updateData);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Payment verification failed');
+      if (!updateResponse.ok) {
+        throw new Error(updateData.error || 'Failed to update transaction status');
       }
 
       router.push(`/dashboard/transactions/${transactionId}`);
