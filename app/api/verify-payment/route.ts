@@ -20,7 +20,10 @@ export async function POST(request: Request) {
           .eq('id', productId),
         supabase
           .from('transactions')
-          .update({ status: 'in_escrow' })
+          .update({ 
+            status: 'in_escrow',
+            payment_reference: reference 
+          })
           .eq('id', transactionId)
       ]);
 
@@ -33,6 +36,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'failed' });
   } catch (error) {
     console.error('Payment verification error:', error);
-    return NextResponse.json({ status: 'failed' });
+    return NextResponse.json({ 
+      status: 'failed',
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    });
   }
 }

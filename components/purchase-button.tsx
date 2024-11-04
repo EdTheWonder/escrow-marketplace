@@ -57,7 +57,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!user) return;
 
     try {
-      // Create transaction
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert({
@@ -65,7 +64,6 @@ export default function PurchaseButton({ product }: { product: Product }) {
           buyer_id: user.id,
           seller_id: product.seller_id,
           amount: totalPrice,
-          status: 'pending',
           delivery_method: deliveryMethod || 'meetup',
           delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0,
           delivery_status: 'pending'
@@ -124,30 +122,22 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!transactionId) return;
     
     try {
-      // First update the transaction and product status
-      await Promise.all([
-        supabase
-          .from('transactions')
-          .update({ 
-            payment_reference: reference,
-            status: 'in_escrow'
-          })
-          .eq('id', transactionId),
-        supabase
-          .from('products')
-          .update({ status: 'in_escrow' })
-          .eq('id', product.id)
-      ]);
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          reference,
+          transactionId,
+          productId: product.id 
+        })
+      });
 
-      // Then start the escrow timer
-      await updateTransactionToEscrow(transactionId);
-      TransactionTimer.startEscrowTimer(transactionId);
-      
-      setShowPayment(false);
-      setShowPaymentStatus(false);
-      
+      if (!response.ok) {
+        throw new Error('Payment verification failed');
+      }
+
       // Redirect to chat
-      router.push(`/chat/${transactionId}`);
+      router.push(`/dashboard/transactions/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
     }
