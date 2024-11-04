@@ -139,18 +139,23 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
       if (!user) return;
       setCurrentUser(user);
 
-      const { data } = await supabase
+      const { data: transaction } = await supabase
         .from('transactions')
         .select(`
           *,
-          delivery_deadline
+          delivery_deadline,
+          status,
+          buyer:buyer_id (email),
+          seller:seller_id (email)
         `)
         .eq('id', transactionId)
         .single();
 
-      if (data) {
-        setTransaction(data);
-        setIsSeller(data.seller_id === user.id);
+      console.log('Transaction data:', transaction);
+      
+      if (transaction) {
+        setTransaction(transaction);
+        setIsSeller(transaction.seller_id === user.id);
       }
     }
 

@@ -33,6 +33,8 @@ export default function PaymentStatus({
       const data = await response.json();
       
       if (data.status === 'success') {
+        const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
+        
         await Promise.all([
           supabase
             .from('products')
@@ -41,14 +43,13 @@ export default function PaymentStatus({
           supabase
             .from('transactions')
             .update({ 
-              delivery_deadline: new Date(Date.now() + (12 * 60 * 60 * 1000)).toISOString(),
-              status: 'in_escrow' 
+              status: 'in_escrow',
+              delivery_deadline: deliveryDeadline.toISOString()
             })
             .eq('id', transactionId)
         ]);
-        setStatus('success');
         
-        // Call success callback instead of handling redirect
+        setStatus('success');
         if (onSuccess) {
           setTimeout(onSuccess, 2000);
         }
