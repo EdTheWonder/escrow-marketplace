@@ -10,6 +10,38 @@ export type DeliveryMethod = 'meetup' | 'sendbox';
 export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered';
 export type TransactionStatus = 'pending' | 'in_escrow' | 'sold' | 'refunded' | 'disputed';
 
+export interface Transaction {
+  id: string;
+  status: TransactionStatus;
+  amount: number;
+  delivery_method: DeliveryMethod;
+  delivery_fee: number;
+  delivery_status: DeliveryStatus;
+  product_id: string;
+  buyer_id: string;
+  seller_id: string;
+  created_at: string;
+  completed_at?: string;
+  delivery_deadline?: string;
+  products: {
+    title: string;
+    image_urls?: string[];
+    status: string;
+  };
+  buyer: {
+    email: string;
+  };
+  seller: {
+    email: string;
+  };
+  messages?: {
+    content: string;
+    created_at: string;
+    read_at: string | null;
+    recipient_id: string;
+  }[];
+}
+
 export async function createTransaction(data: {
   product_id: string;
   buyer_id: string;

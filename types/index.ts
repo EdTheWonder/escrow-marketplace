@@ -36,3 +36,35 @@ export interface SellOffer {
   bank_account_id: string;
   terms_accepted: boolean;
 }
+
+export interface Transaction {
+  id: string;
+  status: 'pending' | 'in_escrow' | 'sold' | 'refunded' | 'disputed';
+  amount: number;
+  delivery_method: 'meetup' | 'sendbox';
+  delivery_fee: number;
+  delivery_status: 'pending' | 'in_transit' | 'delivered';
+  product_id: string;
+  buyer_id: string;
+  seller_id: string;
+  created_at: string;
+  completed_at?: string;
+  delivery_deadline?: string;
+  products: {
+    title: string;
+    image_urls?: string[];
+    status: string;
+  };
+  buyer: {
+    email: string;
+  };
+  seller: {
+    email: string;
+  };
+  messages?: {
+    content: string;
+    created_at: string;
+    read_at: string | null;
+    recipient_id: string;
+  }[];
+}

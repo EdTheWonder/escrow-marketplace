@@ -2,12 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 export default function ProductStatusCheck({ productId }: { productId: string }) {
   const router = useRouter();
@@ -31,7 +26,7 @@ export default function ProductStatusCheck({ productId }: { productId: string })
       if (product?.status === 'in_escrow' || product?.status === 'sold') {
         const transactionId = product.transactions[0]?.id;
         if (transactionId) {
-          router.push(`/chat/${transactionId}`);
+          router.push(`/dashboard/transactions/${transactionId}`);
         }
       }
     }

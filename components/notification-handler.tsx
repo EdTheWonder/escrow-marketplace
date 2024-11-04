@@ -2,12 +2,7 @@
 
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 export default function NotificationHandler() {
   useEffect(() => {
@@ -36,7 +31,7 @@ export default function NotificationHandler() {
               description: `${sender?.email} sent you a message`,
               action: {
                 label: 'View',
-                onClick: () => window.location.href = `/chat/${payload.new.transaction_id}`
+                onClick: () => window.location.href = `/dashboard/transactions/${payload.new.transaction_id}`
               }
             });
           }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabaseClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   async function fetchDashboardData() {
     try {
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       if (user) {
@@ -37,7 +37,7 @@ export default function DashboardPage() {
         setUser(userProfile);
 
         // Fetch all products owned by the user, regardless of status
-        const { data: products, error: productsError } = await supabaseClient
+        const { data: products, error: productsError } = await supabase
           .from('products')
           .select(`
             *,
@@ -66,7 +66,7 @@ export default function DashboardPage() {
         setProducts(processedProducts || []);
 
         // Get cart count
-        const { data: cartData, error: cartError } = await supabaseClient
+        const { data: cartData, error: cartError } = await supabase
           .from('cart')
           .select('*')
           .eq('user_id', user.id);
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   }
 
   async function handleSignOut() {
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
       toast.error("Error signing out");
