@@ -179,6 +179,19 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
           </div>
         </Card>
 
+        {transaction?.status === 'in_escrow' && transaction.delivery_deadline && (
+          <div className="my-4">
+            <TransactionCountdown 
+              deadline={transaction.delivery_deadline}
+              transactionId={transaction.id}
+              isSeller={currentUser?.email === transaction.seller.email}
+              onExpire={() => {
+                fetchData();
+              }}
+            />
+          </div>
+        )}
+
         <Card className="p-6">
           <div className="mb-6">
             <h2 className="text-xl font-semibold">Chat</h2>
@@ -193,20 +206,6 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
             allowMediaUpload={true}
           />
         </Card>
-
-        {transaction?.status === 'in_escrow' && transaction.delivery_deadline && (
-          <Card className="p-4 mb-4">
-            <TransactionCountdown 
-              deadline={transaction.delivery_deadline}
-              transactionId={transaction.id}
-              isSeller={currentUser?.email === transaction.seller.email}
-              onExpire={() => {
-                // Refresh the transaction data
-                fetchData();
-              }}
-            />
-          </Card>
-        )}
       </div>
     </div>
   );
