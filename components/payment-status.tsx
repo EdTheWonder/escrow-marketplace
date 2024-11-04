@@ -3,6 +3,7 @@ import { Card } from './ui/card';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -59,6 +60,37 @@ export default function PaymentStatus({
       verifyPayment();
     }
   }, [reference, verifyPayment]);
+
+  async function handlePaymentSuccess(reference: string) {
+    if (!transactionId) return;
+    
+    try {
+      console.log('Verifying payment with:', { reference, transactionId, productId });
+      
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          reference,
+          transactionId,
+          productId 
+        })
+      });
+
+      const data = await response.json();
+      console.log('Payment verification response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Payment verification failed');
+      }
+
+      router.push(`/dashboard/transactions/${transactionId}`);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Payment verification error:', error);
+      toast.error(error.message);
+    }
+  }
 
   return (
     <div className="text-center p-6">

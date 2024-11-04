@@ -66,7 +66,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
           amount: totalPrice,
           delivery_method: deliveryMethod || 'meetup',
           delivery_fee: deliveryMethod === 'sendbox' ? 1000 : 0,
-          delivery_status: 'pending'
+          delivery_status: 'pending',
+          payment_reference: paymentReference,
+          status: 'pending'
         })
         .select()
         .single();

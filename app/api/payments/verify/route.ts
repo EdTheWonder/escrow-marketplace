@@ -25,7 +25,16 @@ export async function POST(request: Request) {
         );
       }
 
-      await EscrowService.holdPayment(transaction.id, transaction.amount);
+      console.log('Payment verification result:', verification.data);
+      console.log('Transaction found:', transaction);
+
+      try {
+        await EscrowService.holdPayment(transaction.id, transaction.amount);
+      } catch (error) {
+        console.error('Hold payment error:', error);
+        throw error;
+      }
+
       return NextResponse.json({ success: true });
     }
 

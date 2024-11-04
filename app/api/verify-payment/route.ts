@@ -30,12 +30,21 @@ export async function POST(request: Request) {
     // Set delivery deadline to 12 hours from now
     const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
 
-    // Update statuses in transaction
-    await supabase.rpc('update_product_and_transaction_status', {
-      p_product_id: productId,
-      p_transaction_id: transactionId,
-      p_delivery_deadline: deliveryDeadline.toISOString()
-    });
+    // Update both transaction and product status
+    await Promise.all([
+      supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          delivery_deadline: deliveryDeadline.toISOString()
+        })
+        .eq('id', transactionId),
+      
+      supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', productId)
+    ]);
 
     return NextResponse.json({ status: 'success' });
   } catch (error: any) {
