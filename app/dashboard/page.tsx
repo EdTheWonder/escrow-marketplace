@@ -169,9 +169,11 @@ export default function DashboardPage() {
                 <Link 
                   key={product.id} 
                   href={
-                    product.status === 'in_escrow' || product.status === 'sold'
+                    product.status === 'in_escrow' 
+                      ? `/chat/${product.transactions?.[0]?.id}`
+                      : product.status === 'sold'
                       ? `/dashboard/transactions/${product.transactions?.[0]?.id}`
-                      : `/dashboard/products/${product.id}`
+                      : `/products/${product.id}/edit`
                   }
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white/80 backdrop-blur-sm border border-white/20">
