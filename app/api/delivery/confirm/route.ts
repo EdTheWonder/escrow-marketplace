@@ -1,45 +1,45 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { confirmDelivery } from '@/lib/delivery';
 
 export async function POST(request: Request) {
   try {
-    const { transactionId } = await request.json();
     const supabase = createRouteHandlerClient({ cookies });
+    const { transactionId } = await request.json();
 
-    // Get transaction details with escrow wallet
-    const { data: transaction } = await supabase
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Begin transaction
+    const { data: transaction, error: txError } = await supabase
       .from('transactions')
-      .select(`
-        *,
-        products(*),
-        sellers:seller_id(wallet_balance),
-        transactions!left(*)
-      `)
+      .update({ 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
       .eq('id', transactionId)
+      .eq('buyer_id', user.id)
+      .select()
       .single();
 
-    if (!transaction) {
-      return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
-      );
-    }
+    if (txError) throw txError;
 
-    if (!transaction.transactions) {
-      return NextResponse.json(
-        { error: 'No escrow wallet found for this transaction' },
-        { status: 400 }
-      );
-    }
+    // Update product status
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ status: 'sold' })
+      .eq('id', transaction.product_id);
 
-    await confirmDelivery(transactionId);
-    return NextResponse.json({ success: true });
+    if (productError) throw productError;
+
+    return NextResponse.json({ status: 'success' });
   } catch (error: any) {
     console.error('Delivery confirmation error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to confirm delivery' },
+      { error: error.message || 'Failed to confirm delivery' }, 
       { status: 500 }
     );
   }

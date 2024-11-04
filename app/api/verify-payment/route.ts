@@ -1,6 +1,8 @@
 import { verifyPayment } from "@/lib/paystack";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,23 +11,32 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
+    const supabase = createRouteHandlerClient({ cookies });
     const { reference, transactionId, productId } = await request.json();
     const verification = await verifyPayment(reference);
     
     if (verification.data.status === 'success') {
-      await Promise.all([
-        supabase
-          .from('products')
-          .update({ status: 'in_escrow' })
-          .eq('id', productId),
-        supabase
-          .from('transactions')
-          .update({ 
-            status: 'in_escrow',
-            payment_reference: reference 
-          })
-          .eq('id', transactionId)
-      ]);
+      // Set delivery deadline to 12 hours from now
+      const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
+
+      // Update transaction and product status
+      const { error: txError } = await supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          delivery_deadline: deliveryDeadline.toISOString()
+        })
+        .eq('id', transactionId);
+
+      if (txError) throw txError;
+
+      // Update product status
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', productId);
+
+      if (productError) throw productError;
 
       return NextResponse.json({ 
         status: 'success',

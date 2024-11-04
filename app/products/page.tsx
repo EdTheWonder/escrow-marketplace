@@ -14,12 +14,8 @@ export default async function ProductsPage() {
   // Fetch seller's products
   const { data: products, error } = await supabase
     .from('products')
-    .select(`
-      *,
-      profiles:seller_id (
-        email
-      )
-    `)
+    .select('*')
+    .eq('status', 'available')
     .order('created_at', { ascending: false });
 
   if (error) {
