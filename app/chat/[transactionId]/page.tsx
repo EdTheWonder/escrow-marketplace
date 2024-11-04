@@ -16,14 +16,14 @@ interface Transaction {
   id: string;
   status: string;
   products: {
-    title: string | null;
-  }[];
-  buyers: {
-    email: any | null;
-  }[];
-  sellers: {
-    email: any | null;
-  }[];
+    title: string;
+  };
+  buyer: {
+    email: string;
+  };
+  seller: {
+    email: string;
+  };
 }
 
 export default function ChatPage({ params }: { params: { transactionId: string } }) {
@@ -62,15 +62,15 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         const transactionData: Transaction = {
           id: data.id,
           status: data.status,
-          products: data.products ? [{ 
-            title: data.products?.[0]?.title || null 
-          }] : [],
-          buyers: [{
-            email: data.buyer?.[0]?.email || null
-          }],
-          sellers: [{
-            email: data.seller?.[0]?.email || null
-          }]
+          products: {
+            title: data.products[0]?.title || ''
+          },
+          buyer: {
+            email: data.buyer[0]?.email || ''
+          },
+          seller: {
+            email: data.seller[0]?.email || ''
+          }
         };
         setTransaction(transactionData);
       }
@@ -87,12 +87,12 @@ export default function ChatPage({ params }: { params: { transactionId: string }
       <Card className="p-4">
         <div className="mb-6">
           <h2 className="text-xl font-semibold">
-            {transaction.products[0]?.title}
+            {transaction.products.title}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Chat with {currentUser?.email === transaction.buyers[0].email
-              ? transaction.sellers[0].email
-              : transaction.buyers[0].email}
+            Chat with {currentUser?.email === transaction.buyer.email
+              ? transaction.seller.email
+              : transaction.buyer.email}
           </p>
         </div>
         <EscrowChannel 

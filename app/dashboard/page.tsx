@@ -169,9 +169,7 @@ export default function DashboardPage() {
                 <Link 
                   key={product.id} 
                   href={
-                    product.status === 'in_escrow' 
-                      ? `/chat/${product.transactions?.[0]?.id}`
-                      : product.status === 'sold'
+                    product.status === 'in_escrow' || product.status === 'sold'
                       ? `/dashboard/transactions/${product.transactions?.[0]?.id}`
                       : `/products/${product.id}/edit`
                   }

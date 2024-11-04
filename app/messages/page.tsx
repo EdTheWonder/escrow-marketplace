@@ -93,7 +93,7 @@ export default function MessagesPage() {
             : transaction.buyer?.email;
 
           return (
-            <Link href={`/chat/${transaction.id}`} key={transaction.id}>
+            <Link href={`/dashboard/transactions/${transaction.id}`} key={transaction.id}>
               <Card className="p-4 hover:bg-accent transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
