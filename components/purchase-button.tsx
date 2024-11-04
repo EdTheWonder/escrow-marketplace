@@ -124,6 +124,7 @@ export default function PurchaseButton({ product }: { product: Product }) {
     if (!transactionId) return;
     
     try {
+      // First update the transaction and product status
       await Promise.all([
         supabase
           .from('transactions')
@@ -138,12 +139,14 @@ export default function PurchaseButton({ product }: { product: Product }) {
           .eq('id', product.id)
       ]);
 
+      // Then start the escrow timer
       await updateTransactionToEscrow(transactionId);
-      setShowDelivery(false);
       TransactionTimer.startEscrowTimer(transactionId);
+      
+      // Wait a moment for the database to update
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Redirect to chat instead of transaction details
+      // Finally, redirect to chat
       router.push(`/chat/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);

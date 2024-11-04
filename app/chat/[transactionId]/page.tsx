@@ -16,13 +16,13 @@ interface Transaction {
   id: string;
   status: string;
   products: {
-    title: string;
+    title: string | null;
   }[];
   buyers: {
-    email: string;
+    email: any | null;
   }[];
   sellers: {
-    email: string;
+    email: any | null;
   }[];
 }
 
@@ -45,26 +45,32 @@ export default function ChatPage({ params }: { params: { transactionId: string }
         .select(`
           id,
           status,
-          products:product_id (title),
-          buyer:buyer_id (email),
-          seller:seller_id (email)
+          product:product_id (
+            title
+          ),
+          buyer:buyer_id (
+            email
+          ),
+          seller:seller_id (
+            email
+          )
         `)
         .eq('id', params.transactionId)
         .single();
       
       if (data) {
-        const processedData = {
-          ...data,
-          products: Array.isArray(data.products) ? data.products : [data.products],
-          buyer: data.buyer?.[0] || {},
-          seller: data.seller?.[0] || {}
-        };
         const transactionData: Transaction = {
-          id: processedData.id,
-          status: processedData.status,
-          products: processedData.products,
-          buyers: [processedData.buyer],
-          sellers: [processedData.seller]
+          id: data.id,
+          status: data.status,
+          products: [{
+            title: data.product?.[0]?.title || null
+          }],
+          buyers: [{
+            email: data.buyer?.[0]?.email || null
+          }],
+          sellers: [{
+            email: data.seller?.[0]?.email || null
+          }]
         };
         setTransaction(transactionData);
       }
@@ -80,7 +86,9 @@ export default function ChatPage({ params }: { params: { transactionId: string }
       <BackButton />
       <Card className="p-4">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold">{transaction.products[0].title}</h2>
+          <h2 className="text-xl font-semibold">
+            {transaction.products[0]?.title}
+          </h2>
           <p className="text-sm text-muted-foreground">
             Chat with {currentUser?.email === transaction.buyers[0].email
               ? transaction.sellers[0].email
