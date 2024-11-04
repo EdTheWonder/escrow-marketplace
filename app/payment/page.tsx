@@ -31,6 +31,7 @@ export default function PaymentPage() {
       email: searchParams.get('email')!,
       amount: Math.round(Number(searchParams.get('amount')!) * 100),
       currency: 'NGN',
+      reference: searchParams.get('reference')!,
       channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
       metadata: {
         transactionId: searchParams.get('transactionId'),
@@ -48,7 +49,7 @@ export default function PaymentPage() {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
-            reference: response.reference
+            reference: searchParams.get('reference')
           }, '*');
           window.close();
         }

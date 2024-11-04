@@ -35,6 +35,9 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
         return;
       }
 
+      // Generate a unique reference before opening payment
+      const reference = `PSK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
       // Create event listener before opening window
       const handleMessage = async (event: MessageEvent) => {
         if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
@@ -42,7 +45,8 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
           
           if (event.data.status === 'success') {
             try {
-              await onSuccess(event.data.reference);
+              // Pass the pre-generated reference
+              await onSuccess(reference);
               onClose();
               window.location.href = `/dashboard/transactions/${transactionId}`;
             } catch (error) {
@@ -58,9 +62,9 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
 
       window.addEventListener('message', handleMessage);
 
-      // Open payment in new window
+      // Include the reference in the URL params
       const paymentWindow = window.open(
-        `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}`,
+        `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}&reference=${reference}`,
         'PaystackPayment',
         'width=500,height=600'
       );
