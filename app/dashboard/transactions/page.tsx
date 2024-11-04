@@ -133,6 +133,10 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleTransactionClick = (transactionId: string) => {
+    router.push(`/dashboard/transactions/${transactionId}`);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <BackButton />
@@ -147,7 +151,11 @@ export default function TransactionsPage() {
           ) : (
             <div className="space-y-4">
               {transactions.map((transaction) => (
-                <Card key={transaction.id} className="p-4 bg-white/80 backdrop-blur-sm border border-white/20">
+                <Card 
+                  key={transaction.id}
+                  className="p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handleTransactionClick(transaction.id)}
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold">{transaction.products.title}</h3>

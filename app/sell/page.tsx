@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import BankAccountForm from "@/components/bank-account-form";
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +20,7 @@ export default function SellPage() {
   const [platformFee, setPlatformFee] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [hasBankAccount, setHasBankAccount] = useState(false);
+  const router = useRouter();
   
   useEffect(() => {
     checkBankAccount();
@@ -60,6 +62,23 @@ export default function SellPage() {
 
   const handlePriceChange = (value: number) => {
     setBasePrice(value);
+  };
+
+  const handleProductClick = async (product: any) => {
+    if (product.status === 'in_escrow' || product.status === 'sold') {
+      // Get transaction ID for this product
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('product_id', product.id)
+        .single();
+        
+      if (transaction) {
+        router.push(`/dashboard/transactions/${transaction.id}`);
+      }
+    } else if (product.status === 'available') {
+      router.push(`/products/${product.id}/edit`);
+    }
   };
 
   return (
