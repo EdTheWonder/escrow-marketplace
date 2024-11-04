@@ -32,7 +32,7 @@ export class EscrowService {
     try {
       const { data: transaction } = await supabase
         .from('transactions')
-        .select('*, escrow_wallets(*)')
+        .select('*, transactions(*)')
         .eq('id', transactionId)
         .single();
 
@@ -50,10 +50,6 @@ export class EscrowService {
           .from('transactions')
           .update({ status: 'completed' })
           .eq('id', transactionId),
-        supabase
-          .from('escrow_wallets')
-          .update({ status: 'released' })
-          .eq('transaction_id', transactionId),
         supabase
           .from('products')
           .update({ status: 'sold' })
@@ -86,10 +82,6 @@ export class EscrowService {
           .from('transactions')
           .update({ status: 'refunded' })
           .eq('id', transactionId),
-        supabase
-          .from('escrow_wallets')
-          .update({ status: 'refunded' })
-          .eq('transaction_id', transactionId),
         supabase
           .from('products')
           .update({ status: 'available' })

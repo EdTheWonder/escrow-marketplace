@@ -16,7 +16,11 @@ interface BankAccount {
   bank_name: string;
 }
 
-export default function BankAccountForm() {
+interface BankAccountFormProps {
+  onComplete?: (value: boolean) => void;
+}
+
+export default function BankAccountForm({ onComplete }: BankAccountFormProps) {
   const [bankAccount, setBankAccount] = useState<BankAccount>({
     account_name: '',
     account_number: '',
@@ -40,6 +44,7 @@ export default function BankAccountForm() {
       if (error) throw error;
       
       toast.success('Bank account information saved successfully');
+      onComplete?.(true);
     } catch (error: any) {
       toast.error(error.message);
     }

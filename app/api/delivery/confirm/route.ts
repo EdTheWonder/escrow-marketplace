@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         *,
         products(*),
         sellers:seller_id(wallet_balance),
-        escrow_wallets!left(*)
+        transactions!left(*)
       `)
       .eq('id', transactionId)
       .single();
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!transaction.escrow_wallets) {
+    if (!transaction.transactions) {
       return NextResponse.json(
         { error: 'No escrow wallet found for this transaction' },
         { status: 400 }

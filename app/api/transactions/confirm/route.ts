@@ -1,39 +1,40 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { WalletManager } from '@/lib/wallet';
 
 export async function POST(request: Request) {
   try {
     const { transactionId } = await request.json();
     const supabase = createRouteHandlerClient({ cookies });
 
-    // Get transaction details
+    // Get transaction and bank account details
     const { data: transaction } = await supabase
       .from('transactions')
-      .select('*, products(*), sellers:seller_id(wallet_balance)')
+      .select(`
+        *,
+        products(*),
+        seller:seller_id (
+          id,
+          bank_accounts(*)
+        )
+      `)
       .eq('id', transactionId)
       .single();
 
     if (!transaction) {
-      return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    // Update seller's wallet balance
-    const newBalance = (transaction.sellers.wallet_balance || 0) + transaction.amount;
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ wallet_balance: newBalance })
-      .eq('id', transaction.seller_id);
-
-    if (updateError) {
-      throw updateError;
+    // Initiate bank transfer to seller
+    const bankAccount = transaction.seller.bank_accounts[0];
+    if (!bankAccount) {
+      return NextResponse.json({ error: 'Seller bank account not found' }, { status: 400 });
     }
 
-    // Update transaction and product status
+    // Here you would integrate with your bank transfer API
+    // await initiateTransfer(bankAccount, transaction.amount);
+
+    // Update statuses
     await Promise.all([
       supabase
         .from('transactions')
@@ -48,9 +49,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Transaction confirmation error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
