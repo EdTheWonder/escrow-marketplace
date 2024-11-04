@@ -48,35 +48,46 @@ export default function TransactionsPage() {
   }, []);
 
   async function getTransactions() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      setUser({ ...user, ...profile });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          products!inner (*),
-          buyer:profiles!buyer_id (*),
-          seller:profiles!seller_id (*)
-        `)
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        console.log('User profile:', profile);
+        setUser({ ...user, ...profile });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        return;
+        const { data, error } = await supabase
+          .from('transactions')
+          .select(`
+            *,
+            products!inner (*),
+            buyer:profiles!buyer_id (*),
+            seller:profiles!seller_id (*),
+            messages (*)
+          `)
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
+
+        console.log('Transactions fetch response:', { data, error });
+
+        if (error) {
+          console.error('Supabase error:', error);
+          return;
+        }
+
+        if (data) {
+          console.log('Setting transactions:', data);
+          setTransactions(data);
+        }
       }
-
-      if (data) {
-        setTransactions(data);
-      }
+    } catch (error) {
+      console.error('Error in getTransactions:', error);
     }
   }
 

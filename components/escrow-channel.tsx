@@ -54,24 +54,41 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
   }, [currentUser]);
 
   const fetchMessages = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      if (!user) {
+        console.log('No user found');
+        return;
+      }
 
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('transaction_id', transactionId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: true });
-    
-    if (data) {
-      setMessages(data);
-      // Mark received messages as read
-      data.forEach(msg => {
-        if (msg.recipient_id === user.id && !msg.read_at) {
-          markMessageAsRead(msg.id);
-        }
-      });
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: true });
+      
+      console.log('Messages fetch response:', { data, error });
+
+      if (error) {
+        console.error('Messages fetch error:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('Setting messages:', data);
+        setMessages(data);
+        // Mark received messages as read
+        data.forEach(msg => {
+          if (msg.recipient_id === user.id && !msg.read_at) {
+            markMessageAsRead(msg.id);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
     }
   }, [transactionId, markMessageAsRead]);
 

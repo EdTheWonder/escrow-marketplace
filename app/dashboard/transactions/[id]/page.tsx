@@ -28,6 +28,16 @@ interface Transaction {
   seller: {
     email: string;
   };
+  messages?: {
+    id: string;
+    content: string;
+    created_at: string;
+    sender_id: string;
+    recipient_id: string;
+    read_at: string;
+    media_url?: string;
+    media_type?: string;
+  }[];
 }
 
 export default function TransactionDetailsPage({ params }: { params: { id: string } }) {
@@ -37,57 +47,96 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
 
   useEffect(() => {
     async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/login');
-        return;
-      }
-      setCurrentUser(user);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('Current user:', user);
+        
+        if (userError) {
+          console.error('User auth error:', userError);
+          router.push('/auth/login');
+          return;
+        }
 
-      const { data } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          status,
-          amount,
-          delivery_method,
-          delivery_fee,
-          delivery_status,
-          products (
-            title
-          ),
-          buyer:profiles!buyer_id (
-            email
-          ),
-          seller:profiles!seller_id (
-            email
-          ),
-          messages (
+        if (!user) {
+          console.log('No user found');
+          router.push('/auth/login');
+          return;
+        }
+        
+        setCurrentUser(user);
+
+        const { data, error } = await supabase
+          .from('transactions')
+          .select(`
             id,
-            content,
-            created_at,
-            sender_id,
-            recipient_id,
-            read_at,
-            media_url,
-            media_type
-          )
-        `)
-        .eq('id', params.id)
-        .single();
+            status,
+            amount,
+            delivery_method,
+            delivery_fee,
+            delivery_status,
+            products (
+              title,
+              status
+            ),
+            buyer:profiles!buyer_id (
+              email
+            ),
+            seller:profiles!seller_id (
+              email
+            ),
+            messages (
+              id,
+              content,
+              created_at,
+              sender_id,
+              recipient_id,
+              read_at,
+              media_url,
+              media_type
+            )
+          `)
+          .eq('id', params.id)
+          .single();
 
-      if (data) {
-        setTransaction({
-          id: data.id,
-          status: data.status,
-          amount: data.amount,
-          delivery_method: data.delivery_method,
-          delivery_fee: data.delivery_fee,
-          delivery_status: data.delivery_status,
-          products: data.products[0], // Take first product since type expects single product
-          buyer: data.buyer[0], // Take first buyer since type expects single buyer
-          seller: data.seller[0] // Take first seller since type expects single seller
-        });
+        console.log('Transaction fetch response:', { data, error });
+
+        if (error) {
+          console.error('Transaction fetch error:', error);
+          return;
+        }
+
+        if (data) {
+          console.log('Setting transaction:', data);
+          setTransaction({
+            id: data.id,
+            status: data.status,
+            amount: data.amount,
+            delivery_method: data.delivery_method,
+            delivery_fee: data.delivery_fee,
+            delivery_status: data.delivery_status,
+            products: {
+              title: data.products[0]?.title || ''
+            },
+            buyer: {
+              email: data.buyer[0]?.email || ''
+            },
+            seller: {
+              email: data.seller[0]?.email || ''
+            },
+            messages: data.messages?.map(msg => ({
+              id: msg.id,
+              content: msg.content,
+              created_at: msg.created_at,
+              sender_id: msg.sender_id,
+              recipient_id: msg.recipient_id,
+              read_at: msg.read_at,
+              media_url: msg.media_url,
+              media_type: msg.media_type
+            }))
+          });
+        }
+      } catch (error) {
+        console.error('Error in fetchData:', error);
       }
     }
 
