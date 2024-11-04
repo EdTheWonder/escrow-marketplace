@@ -86,7 +86,7 @@ export default function NavMenu({ role }: { role: string }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/products" className="flex items-center gap-2">
+          <Link href="/feed" className="flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" />
             <span>Products</span>
           </Link>
