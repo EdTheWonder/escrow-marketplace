@@ -49,7 +49,7 @@ export default function PaymentPage() {
           window.opener.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
             status: 'success',
-            reference: searchParams.get('reference')
+            reference: response.reference
           }, '*');
           window.close();
         }

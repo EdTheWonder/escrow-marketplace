@@ -25,6 +25,8 @@ export default function PaymentStatus({
 
   const verifyPayment = useCallback(async () => {
     try {
+      console.log('Starting payment verification with:', { reference, transactionId, productId });
+      
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,22 +34,24 @@ export default function PaymentStatus({
       });
 
       const data = await response.json();
+      console.log('Verification response:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Payment verification failed');
+      }
       
       if (data.status === 'success') {
-        const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
         setStatus('success');
         if (onSuccess) {
           setTimeout(onSuccess, 2000);
         }
       } else {
-        setStatus('failed');
-        setTimeout(() => {
-          router.push('/dashboard');
-          router.refresh();
-        }, 2000);
+        throw new Error(data.error || 'Payment verification failed');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Payment verification error:', error);
       setStatus('failed');
+      toast.error(error.message);
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh();
