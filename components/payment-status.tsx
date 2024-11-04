@@ -34,21 +34,6 @@ export default function PaymentStatus({
       
       if (data.status === 'success') {
         const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
-        
-        await Promise.all([
-          supabase
-            .from('products')
-            .update({ status: 'in_escrow' })
-            .eq('id', productId),
-          supabase
-            .from('transactions')
-            .update({ 
-              status: 'in_escrow',
-              delivery_deadline: deliveryDeadline.toISOString()
-            })
-            .eq('id', transactionId)
-        ]);
-        
         setStatus('success');
         if (onSuccess) {
           setTimeout(onSuccess, 2000);

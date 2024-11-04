@@ -13,24 +13,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
+    // Check if product is already in escrow
+    const { data: product } = await supabase
+      .from('products')
+      .select('status')
+      .eq('id', productId)
+      .single();
+
+    if (product?.status === 'in_escrow') {
+      return NextResponse.json(
+        { error: 'Product is already in escrow' },
+        { status: 400 }
+      );
+    }
+
     // Set delivery deadline to 12 hours from now
     const deliveryDeadline = new Date(Date.now() + (12 * 60 * 60 * 1000));
 
-    // Update statuses separately since our RPC doesn't handle deadline
-    await Promise.all([
-      supabase
-        .from('products')
-        .update({ status: 'in_escrow' })
-        .eq('id', productId),
-      supabase
-        .from('transactions')
-        .update({ 
-          status: 'in_escrow',
-          delivery_deadline: deliveryDeadline.toISOString()
-        })
-        .eq('id', transactionId)
-        .eq('buyer_id', user.id)
-    ]);
+    // Update statuses in transaction
+    await supabase.rpc('update_product_and_transaction_status', {
+      p_product_id: productId,
+      p_transaction_id: transactionId,
+      p_delivery_deadline: deliveryDeadline.toISOString()
+    });
 
     return NextResponse.json({ status: 'success' });
   } catch (error: any) {

@@ -51,6 +51,18 @@ export async function createTransaction(data: {
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
+  // Check for existing active transaction
+  const { data: existingTransaction } = await supabase
+    .from('transactions')
+    .select('id')
+    .eq('product_id', data.product_id)
+    .in('status', ['pending', 'in_escrow'])
+    .single();
+
+  if (existingTransaction) {
+    throw new Error('This product already has an active transaction');
+  }
+
   const { error } = await supabase
     .from('transactions')
     .insert({
