@@ -13,25 +13,27 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-function calculatePrices(basePrice: number) {
-  const platformFee = basePrice * 0.05; // 5% platform fee
-  const listingPrice = basePrice + platformFee;
-  return {
-    platformFee,
-    listingPrice
-  };
-}
-
 export default function SellPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [basePrice, setBasePrice] = useState<number>(0);
   const [platformFee, setPlatformFee] = useState<number>(0);
-  const [listingPrice, setListingPrice] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
   const [hasBankAccount, setHasBankAccount] = useState(false);
   
   useEffect(() => {
     checkBankAccount();
   }, []);
+
+  useEffect(() => {
+    if (basePrice > 0) {
+      const fee = basePrice * 0.05; // 5% platform fee
+      setPlatformFee(fee);
+      setTotalPrice(basePrice + fee);
+    } else {
+      setPlatformFee(0);
+      setTotalPrice(0);
+    }
+  }, [basePrice]);
 
   async function checkBankAccount() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -55,12 +57,6 @@ export default function SellPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    const { platformFee, listingPrice } = calculatePrices(basePrice);
-    setPlatformFee(platformFee);
-    setListingPrice(listingPrice);
-  }, [basePrice]);
 
   const handlePriceChange = (value: number) => {
     setBasePrice(value);
@@ -98,7 +94,7 @@ export default function SellPage() {
               </div>
               <div className="flex justify-between font-medium">
                 <span>Total Listing Price:</span>
-                <span>₦{listingPrice.toFixed(2)}</span>
+                <span>₦{totalPrice.toFixed(2)}</span>
               </div>
             </div>
           </div>
