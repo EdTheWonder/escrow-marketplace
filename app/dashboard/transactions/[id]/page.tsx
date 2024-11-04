@@ -61,6 +61,16 @@ export default function TransactionDetailsPage({ params }: { params: { id: strin
           ),
           seller:profiles!seller_id (
             email
+          ),
+          messages (
+            id,
+            content,
+            created_at,
+            sender_id,
+            recipient_id,
+            read_at,
+            media_url,
+            media_type
           )
         `)
         .eq('id', params.id)
