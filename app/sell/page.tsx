@@ -74,7 +74,7 @@ export default function SellPage() {
         .single();
         
       if (transaction) {
-        router.push(`/dashboard/transactions/${transaction.id}`);
+        router.push(`/chat/${transaction.id}`);
       }
     } else if (product.status === 'available') {
       router.push(`/products/${product.id}/edit`);

@@ -143,8 +143,8 @@ export default function PurchaseButton({ product }: { product: Product }) {
       TransactionTimer.startEscrowTimer(transactionId);
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Updated redirect to transaction details
-      router.push(`/dashboard/transactions/${transactionId}`);
+      // Redirect to chat instead of transaction details
+      router.push(`/chat/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
     }
