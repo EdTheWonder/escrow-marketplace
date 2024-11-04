@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,15 +10,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { User } from "lucide-react";
+import { User, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient, useSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { MessageSquare } from "lucide-react";
 
 export default function NavMenu({ role }: { role: string }) {
   const router = useRouter();
+  const [userEmail, setUserEmail] = useState<string>('');
+  
+  useEffect(() => {
+    async function getUserProfile() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.email) {
+          setUserEmail(profile.email);
+        }
+      }
+    }
+    getUserProfile();
+  }, []);
     
   async function handleSignOut() {
     const { error } = await supabaseClient.auth.signOut();
@@ -38,7 +57,12 @@ export default function NavMenu({ role }: { role: string }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          My Account
+          {userEmail && (
+            <p className="text-sm text-muted-foreground mt-1">{userEmail}</p>
+          )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard/transactions">Transactions</Link>

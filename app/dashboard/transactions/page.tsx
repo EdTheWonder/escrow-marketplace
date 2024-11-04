@@ -50,15 +50,21 @@ export default function TransactionsPage() {
   async function getTransactions() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      setUser(user);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      setUser({ ...user, ...profile });
 
       const { data, error } = await supabase
         .from('transactions')
         .select(`
           *,
           products (*),
-          buyer:buyer_id (email),
-          seller:seller_id (email)
+          buyer:profiles!buyer_id (*),
+          seller:profiles!seller_id (*)
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
