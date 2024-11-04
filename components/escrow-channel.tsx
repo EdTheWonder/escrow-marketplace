@@ -260,12 +260,20 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Escrow Chat</h2>
-          {isSeller && transaction?.delivery_deadline && (
-            <TransactionCountdown 
-              deadline={transaction.delivery_deadline} transactionId={''} isSeller={false}            />
-          )}
         </div>
         
+        {transaction?.status === 'in_escrow' && transaction.delivery_deadline && (
+          <TransactionCountdown 
+            deadline={transaction.delivery_deadline}
+            transactionId={transaction.id}
+            isSeller={isSeller}
+            onExpire={() => {
+              // Refresh messages and transaction data
+              fetchMessages();
+            }}
+          />
+        )}
+
         {canOpenDispute && (
           <div className="bg-red-50 p-4 rounded-lg">
             <p className="text-red-700 text-sm">
