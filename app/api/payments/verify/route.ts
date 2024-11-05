@@ -6,46 +6,57 @@ import { EscrowService } from '@/lib/escrow';
 
 export async function POST(request: Request) {
   try {
-    const { reference } = await request.json();
+    const { reference, transactionId, productId } = await request.json();
     const supabase = createRouteHandlerClient({ cookies });
     
+    // 1. Verify payment with Paystack
     const verification = await verifyPayment(reference);
     
-    if (verification.data.status === 'success') {
-      const { data: transaction } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('payment_reference', reference)
-        .single();
-
-      if (!transaction) {
-        return NextResponse.json(
-          { error: 'Transaction not found' },
-          { status: 404 }
-        );
-      }
-
-      console.log('Payment verification result:', verification.data);
-      console.log('Transaction found:', transaction);
-
-      try {
-        await EscrowService.holdPayment(transaction.id, transaction.amount);
-      } catch (error) {
-        console.error('Hold payment error:', error);
-        throw error;
-      }
-
-      return NextResponse.json({ success: true });
+    if (verification.data.status !== 'success') {
+      return NextResponse.json(
+        { error: 'Payment verification failed' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(
-      { error: 'Payment verification failed' },
-      { status: 400 }
-    );
+    // 2. Get transaction details
+    const { data: transaction } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('id', transactionId)
+      .single();
+
+    if (!transaction) {
+      return NextResponse.json(
+        { error: 'Transaction not found' },
+        { status: 404 }
+      );
+    }
+
+    // 3. Hold payment in escrow
+    await EscrowService.holdPayment(transaction.id, transaction.amount);
+
+    // 4. Update transaction and product status
+    await Promise.all([
+      supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          payment_reference: reference
+        })
+        .eq('id', transactionId),
+      
+      supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', productId)
+    ]);
+
+    return NextResponse.json({ status: 'success', transactionId });
   } catch (error) {
     console.error('Payment verification error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Payment verification failed' },
       { status: 500 }
     );
   }
