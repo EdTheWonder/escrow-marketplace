@@ -52,7 +52,7 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
           } else {
             toast.error("Payment failed. Please try again.");
             onClose();
-          }
+          } 
         }
       };
 
