@@ -25,7 +25,7 @@ export default function PaymentStatus({
 
   const verifyPayment = useCallback(async () => {
     try {
-      console.log('Starting payment verification with:', { reference, transactionId, productId });
+      console.log('Starting payment verification with:', { reference });
       
       const verifyResponse = await fetch('/api/payments/verify', {
         method: 'POST',
@@ -34,7 +34,6 @@ export default function PaymentStatus({
       });
 
       const verifyData = await verifyResponse.json();
-      console.log('Verification response:', verifyData);
       
       if (!verifyResponse.ok) {
         throw new Error(verifyData.error || 'Payment verification failed');
@@ -55,7 +54,7 @@ export default function PaymentStatus({
         router.push('/dashboard');
       }, 2000);
     }
-  }, [reference, transactionId, productId, onSuccess, router]);
+  }, [reference, transactionId, onSuccess, router]);
 
   useEffect(() => {
     if (reference) {
