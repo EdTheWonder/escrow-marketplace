@@ -37,10 +37,12 @@ export default function PaymentStatus({
       console.log('Verification response:', verifyData);
       
       if (!verifyResponse.ok) {
+        console.error('Verification failed:', verifyData);
         throw new Error(verifyData.error || 'Payment verification failed');
       }
       
       setStatus('success');
+      toast.success('Payment verified successfully!');
       setTimeout(() => {
         router.push(`/dashboard/transactions/${transactionId}`);
         onSuccess?.();
@@ -50,10 +52,6 @@ export default function PaymentStatus({
       console.error('Payment verification error:', error);
       setStatus('failed');
       toast.error(error.message);
-      setTimeout(() => {
-        router.push('/dashboard');
-        router.refresh();
-      }, 2000);
     }
   }, [reference, transactionId, productId, onSuccess, router]);
 

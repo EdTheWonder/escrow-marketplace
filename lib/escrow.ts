@@ -24,8 +24,21 @@ export class EscrowService {
       throw new Error(`Failed to hold payment: ${error.message}`);
     }
   }
-  static createEscrowWallet(transactionId: string, amount: number) {
-    throw new Error('Method not implemented.');
+  static async createEscrowWallet(transactionId: string, amount: number) {
+    try {
+      const { error } = await supabase
+        .from('escrow_wallets')
+        .insert({
+          transaction_id: transactionId,
+          amount: amount,
+          status: 'held'
+        });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Create escrow wallet error:', error);
+      throw new Error(`Failed to create escrow wallet: ${error.message}`);
+    }
   }
 
   static async releasePayment(transactionId: string) {

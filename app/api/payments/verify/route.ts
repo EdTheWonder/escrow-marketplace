@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { verifyPayment } from '@/lib/paystack';
 import { EscrowService } from '@/lib/escrow';
+import { WalletManager } from '@/lib/wallet';
 
 export async function POST(request: Request) {
   try {
@@ -26,14 +27,20 @@ export async function POST(request: Request) {
         );
       }
 
-      // Update both transaction and product status atomically
-      await supabase.rpc('sync_product_transaction_status', {
+      // First create the escrow wallet
+      await EscrowService.createEscrowWallet(transaction.id, transaction.amount);
+
+      // Then hold the payment in escrow
+      await WalletManager.holdEscrow(transaction.id, transaction.amount);
+
+      // Finally update the statuses
+      const { error: updateError } = await supabase.rpc('update_transaction_product_status', {
         p_transaction_id: transaction.id,
         p_product_id: transaction.product_id,
         p_status: 'in_escrow'
       });
 
-      await EscrowService.holdPayment(transaction.id, transaction.amount);
+      if (updateError) throw updateError;
       
       return NextResponse.json({ 
         status: 'success',
@@ -45,10 +52,10 @@ export async function POST(request: Request) {
       { error: 'Payment verification failed with Paystack' },
       { status: 400 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Payment verification error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
