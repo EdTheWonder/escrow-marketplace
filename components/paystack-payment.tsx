@@ -23,56 +23,72 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
     try {
       setLoading(true);
       
-      // Create payment reference
-      const reference = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Update transaction with payment reference
-      const { error: updateError } = await supabase
-        .from('transactions')
-        .update({ payment_reference: reference })
-        .eq('id', transactionId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login to continue");
+        return;
+      }
 
-      if (updateError) throw updateError;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        toast.error("User email not found");
+        return;
+      }
 
-      // Open Paystack popup
+      // Create event listener before opening window
+      const handleMessage = async (event: MessageEvent) => {
+        if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
+          window.removeEventListener('message', handleMessage);
+          
+          if (event.data.status === 'success') {
+            try {
+              await onSuccess(event.data.reference);
+              onClose();
+              window.location.href = `/dashboard/transactions/${transactionId}`;
+            } catch (error) {
+              console.error('Payment success handler error:', error);
+              toast.error("Error processing payment success");
+            }
+          } else {
+            toast.error("Payment failed. Please try again.");
+            onClose();
+          } 
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Open payment in new window
       const paymentWindow = window.open(
-        `/api/payments/initiate?reference=${reference}&amount=${amount * 100}`,
+        `/payment?amount=${amount}&email=${user.email}&transactionId=${transactionId}&productId=${productId}`,
         'PaystackPayment',
         'width=500,height=600'
       );
 
       if (!paymentWindow) {
-        throw new Error("Popup blocked. Please allow popups and try again.");
+        toast.error("Popup blocked. Please allow popups and try again.");
       }
-
-      // Listen for payment completion
-      window.addEventListener('message', async (event) => {
-        if (event.data.type === 'PAYSTACK_PAYMENT_COMPLETE') {
-          if (event.data.status === 'success') {
-            onSuccess(reference);
-          } else {
-            toast.error("Payment failed");
-            onClose();
-          }
-        }
-      });
 
     } catch (error: any) {
       toast.error(error.message);
-      onClose();
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Button 
-      onClick={handlePayment} 
-      className="w-full"
-      disabled={loading}
-    >
-      {loading ? "Processing..." : "Pay with Paystack"}
-    </Button>
+    <div className="p-4">
+      <p className="text-lg font-semibold mb-4">
+        Amount to Pay: ₦{amount}
+      </p>
+      <Button 
+        onClick={handlePayment} 
+        className="w-full"
+        disabled={loading}
+      >
+        {loading ? "Processing..." : "Pay with Paystack"}
+      </Button>
+    </div>
   );
 }
 
