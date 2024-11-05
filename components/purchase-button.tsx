@@ -127,28 +127,9 @@ export default function PurchaseButton({ product }: { product: Product }) {
   }
 
   async function handlePaymentSuccess(reference: string) {
-    if (!transactionId) return;
-    
-    try {
-      const response = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          reference,
-          transactionId,
-          productId: product.id 
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Payment verification failed');
-      }
-
-      // Redirect to chat
-      router.push(`/dashboard/transactions/${transactionId}`);
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+    setPaymentReference(reference);
+    setShowPayment(false);
+    setShowPaymentStatus(true);
   }
 
   return (

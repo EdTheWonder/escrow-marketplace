@@ -44,7 +44,7 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
             try {
               await onSuccess(event.data.reference);
               onClose();
-              window.location.href = `/transactions/${transactionId}`;
+              window.location.href = `/dashboard/transactions/${transactionId}`;
             } catch (error) {
               console.error('Payment success handler error:', error);
               toast.error("Error processing payment success");
