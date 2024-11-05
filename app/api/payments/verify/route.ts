@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     console.log('Paystack verification response:', verification);
     
     if (verification.data.status === 'success') {
+      // Get transaction details
       const { data: transaction } = await supabase
         .from('transactions')
         .select('*, products(*)')
@@ -27,16 +28,26 @@ export async function POST(request: Request) {
         );
       }
 
-      // Update all statuses in a single transaction
-      const { error: updateError } = await supabase.rpc('sync_payment_verification', {
-        p_transaction_id: transaction.id,
-        p_product_id: transaction.product_id,
-        p_reference: reference,
-        p_amount: transaction.amount
-      });
+      // Update transaction status
+      const { error: updateError } = await supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          payment_verified_at: new Date().toISOString(),
+          payment_status: 'success'
+        })
+        .eq('id', transaction.id);
 
       if (updateError) throw updateError;
-      
+
+      // Update product status
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', transaction.product_id);
+
+      if (productError) throw productError;
+
       return NextResponse.json({ 
         status: 'success',
         transaction 
