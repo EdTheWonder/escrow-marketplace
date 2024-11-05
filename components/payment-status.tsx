@@ -41,8 +41,21 @@ export default function PaymentStatus({
       console.log('Verification response:', verifyData);
       
       if (!verifyResponse.ok) {
+        console.error('Verification failed:', verifyData);
         throw new Error(verifyData.error || 'Payment verification failed');
       }
+      
+      // Update transaction status locally after successful verification
+      const { error: updateError } = await supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          payment_verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transactionId);
+
+      if (updateError) throw updateError;
       
       setStatus('success');
       toast.success('Payment verified successfully!');

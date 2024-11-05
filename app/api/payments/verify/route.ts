@@ -34,11 +34,16 @@ export async function POST(request: Request) {
       await WalletManager.holdEscrow(transaction.id, transaction.amount);
 
       // Finally update the statuses
-      const { error: updateError } = await supabase.rpc('update_transaction_product_status', {
-        p_transaction_id: transaction.id,
-        p_product_id: transaction.product_id,
-        p_status: 'in_escrow'
-      });
+      const { error: updateError } = await supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          payment_verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          payment_reference: reference,
+          payment_status: 'success'
+        })
+        .eq('id', transaction.id);
 
       if (updateError) throw updateError;
       
