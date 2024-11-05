@@ -27,23 +27,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // First create the escrow wallet
-      await EscrowService.createEscrowWallet(transaction.id, transaction.amount);
-
-      // Then hold the payment in escrow
-      await WalletManager.holdEscrow(transaction.id, transaction.amount);
-
-      // Finally update the statuses
-      const { error: updateError } = await supabase
-        .from('transactions')
-        .update({ 
-          status: 'in_escrow',
-          payment_verified_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          payment_reference: reference,
-          payment_status: 'success'
-        })
-        .eq('id', transaction.id);
+      // Update all statuses in a single transaction
+      const { error: updateError } = await supabase.rpc('sync_payment_verification', {
+        p_transaction_id: transaction.id,
+        p_product_id: transaction.product_id,
+        p_reference: reference,
+        p_amount: transaction.amount
+      });
 
       if (updateError) throw updateError;
       
