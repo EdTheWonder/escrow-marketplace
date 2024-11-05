@@ -30,14 +30,17 @@ export default function PaymentStatus({
       const verifyResponse = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference })
+        body: JSON.stringify({ 
+          reference,
+          transactionId,
+          productId 
+        })
       });
 
       const verifyData = await verifyResponse.json();
       console.log('Verification response:', verifyData);
       
       if (!verifyResponse.ok) {
-        console.error('Verification failed:', verifyData);
         throw new Error(verifyData.error || 'Payment verification failed');
       }
       
@@ -52,6 +55,9 @@ export default function PaymentStatus({
       console.error('Payment verification error:', error);
       setStatus('failed');
       toast.error(error.message);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
     }
   }, [reference, transactionId, productId, onSuccess, router]);
 
