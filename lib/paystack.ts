@@ -39,13 +39,7 @@ export async function verifyPayment(reference: string) {
     const data = await response.json();
     console.log('Paystack verification response:', data);
 
-    if (data.status && data.data.status === 'success') {
-      // Update product status to in_escrow
-      await supabase.rpc('update_product_status', {
-        p_product_id: data.data.metadata.productId,
-        p_status: 'in_escrow'
-      });
-    }
+    if (data.status && data.data.status === 'success') 
 
     return data;
   } catch (error) {

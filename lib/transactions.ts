@@ -127,48 +127,8 @@ export async function updateTransactionToEscrow(transactionId: string) {
   }
 }
 
-export async function handleSuccessfulPayment(transactionId: string) {
-  try {
-    // Get transaction details
-    const { data: transaction, error: txError } = await supabase
-      .from('transactions')
-      .select('*, products(*)')
-      .eq('id', transactionId)
-      .single();
-
-    if (txError || !transaction) throw new Error('Transaction not found');
-
-    // Update all statuses in a transaction
-    await Promise.all([
-      // Update transaction status
-      supabase
-        .from('transactions')
-        .update({ status: 'in_escrow' })
-        .eq('id', transactionId),
-      
-      // Update product status
-      supabase
-        .from('products')
-        .update({ 
-          status: 'in_escrow',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.product_id),
-      
-      // Create escrow wallet entry
-      EscrowService.createEscrowWallet(transactionId, transaction.amount)
-    ]);
-
-    return transaction;
-  } catch (error) {
-    console.error('Payment success handling error:', error);
-    throw error;
-  }
-}
-
 export async function handlePaymentVerification(transactionId: string) {
   try {
-    // Get transaction details with product info
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .select('*, products(*)')
@@ -177,8 +137,15 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Hold payment in escrow and update statuses
-    await EscrowService.holdPayment(transactionId, transaction.amount);
+    // Use the sync function to update both statuses atomically
+    await EscrowService.syncProductAndTransactionStatus(
+      transaction.product_id,
+      transactionId,
+      'in_escrow'
+    );
+
+    // Create escrow wallet entry
+    await EscrowService.createEscrowWallet(transactionId, transaction.amount);
 
     return transaction;
   } catch (error) {
