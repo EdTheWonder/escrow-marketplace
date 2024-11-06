@@ -41,7 +41,7 @@ export default function DashboardPage() {
           .from('products')
           .select(`
             *,
-            transactions (
+            transactions!transactions_product_id_fkey (
               id,
               status
             )
