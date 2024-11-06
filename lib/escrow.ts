@@ -16,16 +16,15 @@ export class EscrowService {
         .eq('id', transactionId)
         .single();
 
+      if (!transaction) throw new Error('Transaction not found');
+
       await Promise.all([
         this.createEscrowWallet(transactionId, amount),
-        supabase
-          .from('transactions')
-          .update({ status: 'in_escrow' })
-          .eq('id', transactionId),
-        supabase
-          .from('products')
-          .update({ status: 'in_escrow' })
-          .eq('id', transaction?.product_id)
+        this.syncProductAndTransactionStatus(
+          transaction.product_id,
+          transactionId,
+          'in_escrow'
+        )
       ]);
     } catch (error: any) {
       throw new Error(`Failed to hold payment: ${error.message}`);

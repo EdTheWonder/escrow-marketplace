@@ -105,3 +105,20 @@ export async function getAvailableProducts() {
   if (error) throw error;
   return data;
 }
+
+export async function syncProductTransactionStatus(
+  productId: string,
+  transactionId: string,
+  status: string
+) {
+  const { error } = await supabase.rpc('sync_product_transaction_status', {
+    p_product_id: productId,
+    p_transaction_id: transactionId,
+    p_status: status
+  });
+
+  if (error) {
+    console.error('Status sync error:', error);
+    throw error;
+  }
+}
