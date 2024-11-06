@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     .from('products')
     .select('*')
     .eq('status', 'available')
+    .not('status', 'in', ['in_escrow', 'sold'])
     .order('created_at', { ascending: false });
 
   if (error) {
