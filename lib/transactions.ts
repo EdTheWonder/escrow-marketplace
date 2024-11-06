@@ -137,12 +137,32 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Use the sync function to update both statuses atomically
-    await EscrowService.syncProductAndTransactionStatus(
-      transaction.product_id,
+    // Log before sync attempt
+    console.log('Attempting to sync status for:', {
+      productId: transaction.product_id,
       transactionId,
-      'in_escrow'
-    );
+      status: 'in_escrow'
+    });
+
+    // Try sync first
+    try {
+      await EscrowService.syncProductAndTransactionStatus(
+        transaction.product_id,
+        transactionId,
+        'in_escrow'
+      );
+    } catch (syncError) {
+      console.error('Sync failed, attempting direct update:', syncError);
+      
+      // Fallback to direct update
+      await supabase
+        .from('products')
+        .update({ 
+          status: 'in_escrow',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transaction.product_id);
+    }
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);
