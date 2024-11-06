@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { EscrowService } from './escrow';
+import { updateProductStatus } from './products';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -151,21 +152,10 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // First update product status
-    const { error: productError } = await supabase
-      .from('products')
-      .update({ 
-        status: 'in_escrow',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transaction.product_id)
-      .single();
+    // Update product status using the dedicated function
+    await updateProductStatus(transaction.product_id, 'in_escrow');
 
-    if (productError) {
-      throw new Error('Failed to update product status');
-    }
-
-    // Only if product update succeeds, update transaction
+    // Update transaction status
     const { error: transactionError } = await supabase
       .from('transactions')
       .update({ 
@@ -175,14 +165,8 @@ export async function handlePaymentVerification(transactionId: string) {
       .eq('id', transactionId);
 
     if (transactionError) {
-      // Rollback product status if transaction update fails
-      await supabase
-        .from('products')
-        .update({ 
-          status: 'available',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.product_id);
+      // Rollback product status
+      await updateProductStatus(transaction.product_id, 'available');
       throw new Error('Failed to update transaction status');
     }
 

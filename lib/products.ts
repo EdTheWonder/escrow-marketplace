@@ -122,3 +122,28 @@ export async function syncProductTransactionStatus(
     throw error;
   }
 }
+
+export async function updateProductStatus(productId: string, status: string) {
+  try {
+    console.log('Updating product status:', { productId, status });
+    
+    const { error } = await supabase
+      .from('products')
+      .update({ 
+        status: status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', productId);
+
+    if (error) {
+      console.error('Product status update error:', error);
+      throw error;
+    }
+
+    console.log('Product status updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Product update error:', error);
+    throw error;
+  }
+}
