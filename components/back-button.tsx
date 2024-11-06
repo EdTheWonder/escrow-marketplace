@@ -2,18 +2,30 @@
 
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-export default function BackButton() {
+interface BackButtonProps {
+  postPayment?: boolean;
+}
+
+export default function BackButton({ postPayment }: BackButtonProps) {
   const router = useRouter();
+
+  const handleBack = () => {
+    if (postPayment) {
+      router.push('/dashboard');
+    } else {
+      router.back();
+    }
+  };
 
   return (
     <Button 
       variant="ghost" 
-      onClick={() => router.back()}
-      className="mb-6"
+      onClick={handleBack}
+      className="mb-4"
     >
-      <ChevronLeft className="mr-2 h-4 w-4" />
+      <ArrowLeft className="mr-2 h-4 w-4" />
       Back
     </Button>
   );

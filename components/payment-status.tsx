@@ -42,7 +42,7 @@ export default function PaymentStatus({
       setStatus('success');
       toast.success('Payment verified successfully!');
       setTimeout(() => {
-        router.push(`/dashboard/transactions/${transactionId}`);
+        router.push(`/dashboard/transactions/${transactionId}?from=payment`);
         onSuccess?.();
       }, 2000);
       
