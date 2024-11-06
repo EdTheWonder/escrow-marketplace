@@ -33,10 +33,16 @@ export default function DashboardPage() {
       if (userError) throw userError;
 
       if (user) {
-        const userProfile = user.user_metadata as UserProfile;
-        setUser(userProfile);
+        // First get the profile data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
 
-        // Fetch all products owned by the user, regardless of status
+        setUser({ ...user, ...profile });
+
+        // Fetch products with transactions
         const { data: products, error: productsError } = await supabase
           .from('products')
           .select(`
@@ -49,12 +55,8 @@ export default function DashboardPage() {
           .eq('seller_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (productsError) {
-          console.error('Error fetching products:', productsError);
-          throw productsError;
-        }
+        if (productsError) throw productsError;
 
-        // Process the image URLs before setting the products
         const processedProducts = products?.map((product) => ({
           ...product,
           image_urls: Array.isArray(product.image_urls) 
@@ -62,7 +64,6 @@ export default function DashboardPage() {
             : JSON.parse(product.image_urls || '[]')
         }));
 
-        console.log('Fetched products:', processedProducts);
         setProducts(processedProducts || []);
 
         // Get cart count

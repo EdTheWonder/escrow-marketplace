@@ -52,38 +52,31 @@ export async function createTransaction(data: {
   delivery_fee: number;
 }) {
   try {
-    // Start a transaction block
-    const { data: transaction, error: txError } = await supabase
-      .from('transactions')
-      .insert({
-        ...data,
-        status: 'pending',
-        delivery_status: 'pending',
-        payment_reference: null
-      })
-      .select()
-      .single();
-
-    if (txError) throw txError;
-
-    // Immediately update product status to pending
-    const { error: productError } = await supabase
+    // First verify the product is available
+    const { data: product, error: productError } = await supabase
       .from('products')
-      .update({ 
-        status: 'pending',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', data.product_id);
-
-    if (productError) {
-      // Rollback transaction if product update fails
-      await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', transaction.id);
-      throw new Error('Failed to update product status');
+      .select('status')
+      .eq('id', data.product_id)
+      .single();
+    
+    if (productError) throw productError;
+    if (!product) throw new Error('Product not found');
+    if (product.status !== 'available') {
+      throw new Error('Product is not available for purchase');
     }
 
+    // Create transaction and update product status in one operation
+    const { data: transaction, error: txError } = await supabase
+      .rpc('create_transaction_and_update_product', {
+        p_product_id: data.product_id,
+        p_buyer_id: data.buyer_id,
+        p_seller_id: data.seller_id,
+        p_amount: data.amount,
+        p_delivery_method: data.delivery_method,
+        p_delivery_fee: data.delivery_fee
+      });
+
+    if (txError) throw txError;
     return transaction;
   } catch (error) {
     console.error('Transaction creation error:', error);
