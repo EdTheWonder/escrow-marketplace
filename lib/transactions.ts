@@ -51,44 +51,44 @@ export async function createTransaction(data: {
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
-  // First check product status
-  const { data: product, error: productError } = await supabase
-    .from('products')
-    .select('status')
-    .eq('id', data.product_id)
-    .single();
+  try {
+    // Start a transaction block
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        ...data,
+        status: 'pending',
+        delivery_status: 'pending',
+        payment_reference: null
+      })
+      .select()
+      .single();
 
-  if (productError) throw productError;
-  if (!product) throw new Error('Product not found');
-  if (product.status !== 'available') {
-    throw new Error('This product is not available for purchase');
+    if (txError) throw txError;
+
+    // Immediately update product status to pending
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ 
+        status: 'pending',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.product_id);
+
+    if (productError) {
+      // Rollback transaction if product update fails
+      await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transaction.id);
+      throw new Error('Failed to update product status');
+    }
+
+    return transaction;
+  } catch (error) {
+    console.error('Transaction creation error:', error);
+    throw error;
   }
-
-  // Then check for existing transactions
-  const { data: existingTransaction } = await supabase
-    .from('transactions')
-    .select('id')
-    .eq('product_id', data.product_id)
-    .in('status', ['pending', 'in_escrow'])
-    .single();
-
-  if (existingTransaction) {
-    throw new Error('This product already has an active transaction');
-  }
-
-  const { data: transaction, error } = await supabase
-    .from('transactions')
-    .insert({
-      ...data,
-      status: 'pending',
-      delivery_status: 'pending',
-      payment_reference: null
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return transaction;
 }
 
 export async function updateTransactionStatus(id: string, status: string) {
@@ -152,46 +152,47 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // First update product status
-    const { error: productError } = await supabase
-      .from('products')
-      .update({ 
-        status: 'in_escrow',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transaction.product_id);
-
-    if (productError) {
-      console.error('Product update error:', productError);
-      throw new Error('Failed to update product status');
-    }
-
-    // Then update transaction status
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .update({ 
-        status: 'in_escrow',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transactionId);
-
-    if (transactionError) {
-      // Rollback product status if transaction update fails
-      await supabase
+    // Update both statuses atomically
+    await Promise.all([
+      supabase
         .from('products')
         .update({ 
-          status: 'available',
+          status: 'in_escrow',
           updated_at: new Date().toISOString()
         })
-        .eq('id', transaction.product_id);
-      throw new Error('Failed to update transaction status');
-    }
+        .eq('id', transaction.product_id),
+      
+      supabase
+        .from('transactions')
+        .update({ 
+          status: 'in_escrow',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transactionId)
+    ]);
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);
 
     return transaction;
   } catch (error) {
+    // If anything fails, revert product status to available
+    const transaction = await supabase
+      .from('transactions')
+      .select('product_id')
+      .eq('id', transactionId)
+      .single();
+
+    if (transaction?.data) {
+      await supabase
+        .from('products')
+        .update({ 
+          status: 'available',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transaction.data.product_id);
+    }
+
     console.error('Payment verification handling error:', error);
     throw error;
   }
