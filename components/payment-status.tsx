@@ -30,7 +30,11 @@ export default function PaymentStatus({
       const verifyResponse = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference })
+        body: JSON.stringify({ 
+          reference,
+          transactionId,
+          productId 
+        })
       });
 
       const verifyData = await verifyResponse.json();
@@ -54,7 +58,7 @@ export default function PaymentStatus({
         router.push('/dashboard');
       }, 2000);
     }
-  }, [reference, transactionId, onSuccess, router]);
+  }, [reference, transactionId, productId, onSuccess, router]);
 
   useEffect(() => {
     if (reference) {

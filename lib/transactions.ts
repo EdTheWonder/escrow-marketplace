@@ -126,3 +126,42 @@ export async function updateTransactionToEscrow(transactionId: string) {
     throw error;
   }
 }
+
+export async function handleSuccessfulPayment(transactionId: string) {
+  try {
+    // Get transaction details
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .select('*, products(*)')
+      .eq('id', transactionId)
+      .single();
+
+    if (txError || !transaction) throw new Error('Transaction not found');
+
+    // Update all statuses in a transaction
+    await Promise.all([
+      // Update transaction status
+      supabase
+        .from('transactions')
+        .update({ status: 'in_escrow' })
+        .eq('id', transactionId),
+      
+      // Update product status
+      supabase
+        .from('products')
+        .update({ 
+          status: 'in_escrow',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transaction.product_id),
+      
+      // Create escrow wallet entry
+      EscrowService.createEscrowWallet(transactionId, transaction.amount)
+    ]);
+
+    return transaction;
+  } catch (error) {
+    console.error('Payment success handling error:', error);
+    throw error;
+  }
+}
