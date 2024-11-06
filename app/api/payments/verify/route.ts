@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { verifyPayment } from '@/lib/paystack';
+import { EscrowService } from '@/lib/escrow';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       // Get transaction by reference
       const { data: transaction } = await supabase
         .from('transactions')
-        .select('*')
+        .select('*, products(*)')
         .eq('payment_reference', reference)
         .single();
 
@@ -23,13 +24,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
       }
 
-      // Update transaction and product status atomically
-      const { error: updateError } = await supabase.rpc('sync_payment_verification', {
+      // Update transaction and product status atomically using a transaction
+      const { error: updateError } = await supabase.rpc('update_transaction_and_product', {
         p_transaction_id: transaction.id,
-        p_reference: reference
+        p_product_id: transaction.product_id
       });
 
       if (updateError) throw updateError;
+
+      // Hold payment in escrow
+      await EscrowService.holdPayment(transaction.id, transaction.amount);
 
       return NextResponse.json({ status: 'success', transaction });
     }
