@@ -103,12 +103,26 @@ export async function getTransactionHistory(userId: string) {
   return data;
 }
 
-
 export async function updateTransactionToEscrow(transactionId: string) {
-  const { error } = await supabase
-    .from('transactions')
-    .update({ status: 'in_escrow' })
-    .eq('id', transactionId);
+  try {
+    // Get product_id from transaction first
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .select('product_id')
+      .eq('id', transactionId)
+      .single();
 
-  if (error) throw error;
+    if (txError) throw txError;
+    if (!transaction) throw new Error('Transaction not found');
+
+    // Use the sync method to update both statuses
+    await EscrowService.syncProductAndTransactionStatus(
+      transaction.product_id,
+      transactionId,
+      'in_escrow'
+    );
+  } catch (error) {
+    console.error('Failed to update to escrow:', error);
+    throw error;
+  }
 }
