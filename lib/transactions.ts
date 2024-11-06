@@ -78,9 +78,10 @@ export async function createTransaction(data: {
 
 export async function updateTransactionStatus(id: string, status: string) {
   const { error } = await supabase
-    .from('transactions')
-    .update({ status })
-    .eq('id', id);
+    .rpc('sync_transaction_product_status', {
+      p_transaction_id: id,
+      p_status: status
+    });
 
   if (error) throw error;
 }
