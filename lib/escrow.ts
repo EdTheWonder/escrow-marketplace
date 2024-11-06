@@ -10,16 +10,23 @@ export class EscrowService {
   
   static async holdPayment(transactionId: string, amount: number) {
     try {
-      // Create escrow wallet and hold payment
-      await this.createEscrowWallet(transactionId, amount);
-
-      // Update transaction status
-      const { error } = await supabase
+      const { data: transaction } = await supabase
         .from('transactions')
-        .update({ status: 'in_escrow' })
-        .eq('id', transactionId);
+        .select('product_id')
+        .eq('id', transactionId)
+        .single();
 
-      if (error) throw error;
+      await Promise.all([
+        this.createEscrowWallet(transactionId, amount),
+        supabase
+          .from('transactions')
+          .update({ status: 'in_escrow' })
+          .eq('id', transactionId),
+        supabase
+          .from('products')
+          .update({ status: 'in_escrow' })
+          .eq('id', transaction?.product_id)
+      ]);
     } catch (error: any) {
       throw new Error(`Failed to hold payment: ${error.message}`);
     }
