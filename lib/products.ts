@@ -72,7 +72,10 @@ export async function getProduct(id: string) {
 export async function updateProduct(id: string, data: Partial<Product>) {
   const { error } = await supabase
     .from('products')
-    .update(data)
+    .update({
+      ...data,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', id);
 
   if (error) throw error;
