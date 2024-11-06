@@ -152,16 +152,39 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Direct database updates in a transaction
-    const { error: updateError } = await supabase.rpc('update_transaction_and_product', {
-      p_transaction_id: transactionId,
-      p_product_id: transaction.product_id,
-      p_status: 'in_escrow'
-    });
+    // First update product status
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ 
+        status: 'in_escrow',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transaction.product_id);
 
-    if (updateError) {
-      console.error('Status update error:', updateError);
-      throw updateError;
+    if (productError) {
+      console.error('Product update error:', productError);
+      throw new Error('Failed to update product status');
+    }
+
+    // Then update transaction status
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .update({ 
+        status: 'in_escrow',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transactionId);
+
+    if (transactionError) {
+      // Rollback product status if transaction update fails
+      await supabase
+        .from('products')
+        .update({ 
+          status: 'available',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transaction.product_id);
+      throw new Error('Failed to update transaction status');
     }
 
     // Create escrow wallet entry
