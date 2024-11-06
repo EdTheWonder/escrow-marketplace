@@ -11,26 +11,28 @@ export async function POST(request: Request) {
     const verification = await verifyPayment(reference);
     
     if (verification.data.status === 'success') {
-      // First update the transaction with the payment reference
-      const { data: transaction, error: updateError } = await supabase
+      // Get transaction by reference or pending status
+      const { data: transactions, error: fetchError } = await supabase
         .from('transactions')
-        .update({ payment_reference: reference })
+        .select('*')
         .eq('status', 'pending')
-        .select()
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (updateError || !transaction) {
-        throw new Error('Failed to update transaction with reference');
+      if (fetchError || !transactions?.length) {
+        throw new Error('No pending transaction found');
       }
 
-      // Then update both transaction and product status
-      const { error: statusError } = await supabase.rpc('update_transaction_status', {
+      const transaction = transactions[0];
+
+      // Update transaction and product status atomically
+      const { error: updateError } = await supabase.rpc('process_payment_verification', {
         p_transaction_id: transaction.id,
         p_product_id: transaction.product_id,
         p_reference: reference
       });
 
-      if (statusError) throw statusError;
+      if (updateError) throw updateError;
 
       return NextResponse.json({ status: 'success', transaction });
     }

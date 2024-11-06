@@ -47,11 +47,9 @@ export async function createTransaction(data: {
   buyer_id: string;
   seller_id: string;
   amount: number;
-  payment_reference: string;
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
-  // Check for existing active transaction
   const { data: existingTransaction } = await supabase
     .from('transactions')
     .select('id')
@@ -63,21 +61,19 @@ export async function createTransaction(data: {
     throw new Error('This product already has an active transaction');
   }
 
-  const { error } = await supabase
+  const { data: transaction, error } = await supabase
     .from('transactions')
     .insert({
       ...data,
       status: 'pending',
-      delivery_status: 'pending'
-    });
+      delivery_status: 'pending',
+      payment_reference: null
+    })
+    .select()
+    .single();
 
   if (error) throw error;
-
-  // Update product status
-  await supabase
-    .from('products')
-    .update({ status: 'pending' })
-    .eq('id', data.product_id);
+  return transaction;
 }
 
 export async function updateTransactionStatus(id: string, status: string) {
