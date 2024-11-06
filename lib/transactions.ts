@@ -165,3 +165,24 @@ export async function handleSuccessfulPayment(transactionId: string) {
     throw error;
   }
 }
+
+export async function handlePaymentVerification(transactionId: string) {
+  try {
+    // Get transaction details with product info
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .select('*, products(*)')
+      .eq('id', transactionId)
+      .single();
+
+    if (txError || !transaction) throw new Error('Transaction not found');
+
+    // Hold payment in escrow and update statuses
+    await EscrowService.holdPayment(transactionId, transaction.amount);
+
+    return transaction;
+  } catch (error) {
+    console.error('Payment verification handling error:', error);
+    throw error;
+  }
+}

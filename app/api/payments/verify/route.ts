@@ -1,21 +1,15 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { verifyPayment } from '@/lib/paystack';
-import { handleSuccessfulPayment } from '@/lib/transactions';
+import { handlePaymentVerification } from '@/lib/transactions';
 
 export async function POST(request: Request) {
   try {
-    const { reference, transactionId, productId } = await request.json();
+    const { reference, transactionId } = await request.json();
     
-    // Verify payment with Paystack
-    const paymentValid = await verifyPayment(reference);
-    if (!paymentValid) {
-      throw new Error('Payment verification failed');
-    }
+    // Verify payment with Paystack first
+    await verifyPaystackPayment(reference);
 
-    // Update all statuses
-    await handleSuccessfulPayment(transactionId);
+    // Update transaction and product status
+    await handlePaymentVerification(transactionId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -26,3 +20,7 @@ export async function POST(request: Request) {
     );
   }
 }
+function verifyPaystackPayment(reference: any) {
+  throw new Error('Function not implemented.');
+}
+
