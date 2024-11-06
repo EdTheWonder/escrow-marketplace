@@ -42,9 +42,13 @@ interface Transaction {
   delivery_deadline?: string;
 }
 
-export default function TransactionDetailsPage({ params }: { params: {
-  searchParams: any; id: string 
-} }) {
+export default function TransactionDetailsPage({ 
+  params,
+  searchParams 
+}: { 
+  params: { id: string },
+  searchParams: { [key: string]: string | undefined }
+}) {
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
@@ -155,7 +159,7 @@ export default function TransactionDetailsPage({ params }: { params: {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <BackButton postPayment={params.searchParams.get('from') === 'payment'} />
+      <BackButton postPayment={searchParams?.from === 'payment'} />
       <div className="max-w-4xl mx-auto space-y-6">
         <Card className="p-6">
           <div className="space-y-4">

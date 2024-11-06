@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from '@supabase/supabase-js';
 import { toast } from "sonner";
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/paystack';
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -18,6 +19,7 @@ interface PaystackPaymentProps {
 
 export default function PaystackPayment({ amount, onSuccess, onClose, transactionId, productId }: PaystackPaymentProps) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handlePayment() {
     try {
@@ -44,7 +46,7 @@ export default function PaystackPayment({ amount, onSuccess, onClose, transactio
             try {
               await onSuccess(event.data.reference);
               onClose();
-              window.location.href = `/dashboard/transactions/${transactionId}`;
+              router.push(`/dashboard/transactions/${transactionId}?from=payment`);
             } catch (error) {
               console.error('Payment success handler error:', error);
               toast.error("Error processing payment success");
