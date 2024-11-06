@@ -50,6 +50,20 @@ export async function createTransaction(data: {
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
+  // First check product status
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('status')
+    .eq('id', data.product_id)
+    .single();
+
+  if (productError) throw productError;
+  if (!product) throw new Error('Product not found');
+  if (product.status !== 'available') {
+    throw new Error('This product is not available for purchase');
+  }
+
+  // Then check for existing transactions
   const { data: existingTransaction } = await supabase
     .from('transactions')
     .select('id')
@@ -137,31 +151,39 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Log before sync attempt
-    console.log('Attempting to sync status for:', {
-      productId: transaction.product_id,
-      transactionId,
-      status: 'in_escrow'
-    });
+    // First update product status
+    const { error: productError } = await supabase
+      .from('products')
+      .update({ 
+        status: 'in_escrow',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transaction.product_id)
+      .single();
 
-    // Try sync first
-    try {
-      await EscrowService.syncProductAndTransactionStatus(
-        transaction.product_id,
-        transactionId,
-        'in_escrow'
-      );
-    } catch (syncError) {
-      console.error('Sync failed, attempting direct update:', syncError);
-      
-      // Fallback to direct update
+    if (productError) {
+      throw new Error('Failed to update product status');
+    }
+
+    // Only if product update succeeds, update transaction
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .update({ 
+        status: 'in_escrow',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transactionId);
+
+    if (transactionError) {
+      // Rollback product status if transaction update fails
       await supabase
         .from('products')
         .update({ 
-          status: 'in_escrow',
+          status: 'available',
           updated_at: new Date().toISOString()
         })
         .eq('id', transaction.product_id);
+      throw new Error('Failed to update transaction status');
     }
 
     // Create escrow wallet entry
