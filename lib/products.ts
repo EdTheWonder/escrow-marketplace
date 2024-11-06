@@ -125,25 +125,44 @@ export async function syncProductTransactionStatus(
 
 export async function updateProductStatus(productId: string, status: string) {
   try {
-    console.log('Updating product status:', { productId, status });
+    console.log('Starting product status update:', { productId, status });
     
-    const { error } = await supabase
+    // First verify the product exists
+    const { data: product, error: fetchError } = await supabase
       .from('products')
-      .update({ 
+      .select('status')
+      .eq('id', productId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Product fetch error:', fetchError);
+      throw fetchError;
+    }
+    
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    console.log('Current product status:', product.status);
+    
+    // Then update the status
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({
         status: status,
         updated_at: new Date().toISOString()
       })
       .eq('id', productId);
 
-    if (error) {
-      console.error('Product status update error:', error);
-      throw error;
+    if (updateError) {
+      console.error('Product update error:', updateError);
+      throw updateError;
     }
 
-    console.log('Product status updated successfully');
+    console.log('Product status update completed');
     return true;
   } catch (error) {
-    console.error('Product update error:', error);
+    console.error('Product update failed:', error);
     throw error;
   }
 }
