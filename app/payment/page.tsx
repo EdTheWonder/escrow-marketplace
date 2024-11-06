@@ -3,34 +3,52 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+declare global {
+  interface Window {
+    PaystackPop: any;
+  }
+}
+
 export default function PaymentPage() {
   const searchParams = useSearchParams();
-  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPaystack = async () => {
       try {
-        // Add timeout to ensure DOM is ready
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        // Remove existing Paystack script if any
+        const existingScript = document.querySelector('script[src*="paystack"]');
+        if (existingScript) {
+          document.body.removeChild(existingScript);
+        }
+
+        // Create and load new script
         const script = document.createElement('script');
         script.src = 'https://js.paystack.co/v1/inline.js';
         script.async = true;
-        
-        script.onload = () => {
-          setScriptLoaded(true);
-          setLoading(false);
+
+        // Wait for script to load
+        await new Promise((resolve, reject) => {
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+
+        // Wait additional time for Paystack to initialize
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Initialize payment only if Paystack is loaded
+        if (window.PaystackPop) {
           initializePayment();
-        };
-
-        script.onerror = () => {
-          throw new Error('Failed to load Paystack script');
-        };
-
-        document.body.appendChild(script);
+        } else {
+          throw new Error('Paystack failed to initialize');
+        }
       } catch (error) {
         console.error('Paystack script error:', error);
+        window.opener?.postMessage({
+          type: 'PAYSTACK_PAYMENT_COMPLETE',
+          status: 'failed'
+        }, '*');
         window.close();
       }
     };
@@ -48,37 +66,43 @@ export default function PaymentPage() {
       window.close();
       return;
     }
-    
-    const handler = window.PaystackPop.setup({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
-      email: searchParams.get('email')!,
-      amount: Math.round(Number(searchParams.get('amount')!) * 100),
-      currency: 'NGN',
-      channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
-      metadata: {
-        transactionId: searchParams.get('transactionId'),
-        productId: searchParams.get('productId')
-      },
-      onClose: function() {
-        window.opener?.postMessage({
-          type: 'PAYSTACK_PAYMENT_COMPLETE',
-          status: 'failed'
-        }, '*');
-        window.close();
-      },
-      callback: function(response: { reference: string, status: string }) {
-        if (response.status === 'success') {
+
+    try {
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+        email: searchParams.get('email')!,
+        amount: Math.round(Number(searchParams.get('amount')!) * 100),
+        currency: 'NGN',
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
+        metadata: {
+          transactionId: searchParams.get('transactionId'),
+          productId: searchParams.get('productId')
+        },
+        onClose: function() {
           window.opener?.postMessage({
             type: 'PAYSTACK_PAYMENT_COMPLETE',
-            status: 'success',
-            reference: response.reference
+            status: 'failed'
           }, '*');
           window.close();
+        },
+        callback: function(response: { reference: string, status: string }) {
+          if (response.status === 'success') {
+            window.opener?.postMessage({
+              type: 'PAYSTACK_PAYMENT_COMPLETE',
+              status: 'success',
+              reference: response.reference
+            }, '*');
+            window.close();
+          }
         }
-      }
-    });
-    
-    handler.openIframe();
+      });
+      
+      setLoading(false);
+      handler.openIframe();
+    } catch (error) {
+      console.error('Payment initialization error:', error);
+      window.close();
+    }
   }
 
   return (
