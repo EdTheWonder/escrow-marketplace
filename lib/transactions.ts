@@ -152,47 +152,22 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Update both statuses atomically
-    await Promise.all([
-      supabase
-        .from('products')
-        .update({ 
-          status: 'in_escrow',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.product_id),
-      
-      supabase
-        .from('transactions')
-        .update({ 
-          status: 'in_escrow',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transactionId)
-    ]);
+    // Update transaction status only - product status will update via trigger
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .update({ 
+        status: 'in_escrow',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transactionId);
+
+    if (transactionError) throw transactionError;
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);
 
     return transaction;
   } catch (error) {
-    // If anything fails, revert product status to available
-    const transaction = await supabase
-      .from('transactions')
-      .select('product_id')
-      .eq('id', transactionId)
-      .single();
-
-    if (transaction?.data) {
-      await supabase
-        .from('products')
-        .update({ 
-          status: 'available',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.data.product_id);
-    }
-
     console.error('Payment verification handling error:', error);
     throw error;
   }
