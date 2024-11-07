@@ -51,37 +51,19 @@ export async function createTransaction(data: {
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
-  try {
-    // First verify the product is available
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('status')
-      .eq('id', data.product_id)
-      .single();
-    
-    if (productError) throw productError;
-    if (!product) throw new Error('Product not found');
-    if (product.status !== 'available') {
-      throw new Error('Product is not available for purchase');
-    }
+  const { data: transaction, error } = await supabase
+    .from('transactions')
+    .insert({
+      ...data,
+      status: 'pending',
+      delivery_status: 'pending',
+      payment_reference: null
+    })
+    .select()
+    .single();
 
-    // Create transaction and update product status in one operation
-    const { data: transaction, error: txError } = await supabase
-      .rpc('create_transaction_and_update_product', {
-        p_product_id: data.product_id,
-        p_buyer_id: data.buyer_id,
-        p_seller_id: data.seller_id,
-        p_amount: data.amount,
-        p_delivery_method: data.delivery_method,
-        p_delivery_fee: data.delivery_fee
-      });
-
-    if (txError) throw txError;
-    return transaction;
-  } catch (error) {
-    console.error('Transaction creation error:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return transaction;
 }
 
 export async function updateTransactionStatus(id: string, status: string) {
@@ -145,12 +127,16 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Use the sync method to update both statuses
-    await EscrowService.syncProductAndTransactionStatus(
-      transaction.product_id,
-      transactionId,
-      'in_escrow'
-    );
+    // Update transaction status
+    const { error: updateError } = await supabase
+      .from('transactions')
+      .update({ status: 'in_escrow' })
+      .eq('id', transactionId);
+
+    if (updateError) throw updateError;
+
+    // Update product status
+    await updateProductStatus(transaction.product_id, 'in_escrow');
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);
