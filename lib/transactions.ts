@@ -145,16 +145,12 @@ export async function handlePaymentVerification(transactionId: string) {
 
     if (txError || !transaction) throw new Error('Transaction not found');
 
-    // Update transaction status only - product status will update via trigger
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .update({ 
-        status: 'in_escrow',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transactionId);
-
-    if (transactionError) throw transactionError;
+    // Use the sync method to update both statuses
+    await EscrowService.syncProductAndTransactionStatus(
+      transaction.product_id,
+      transactionId,
+      'in_escrow'
+    );
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);

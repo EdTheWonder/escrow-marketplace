@@ -82,7 +82,7 @@ export default function TransactionDetailsPage({
             delivery_method,
             delivery_fee,
             delivery_status,
-            products (
+            products!transactions_product_id_fkey (
               title,
               status
             ),
