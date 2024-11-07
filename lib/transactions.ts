@@ -121,22 +121,25 @@ export async function handlePaymentVerification(transactionId: string) {
   try {
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
-      .select('*, products(*)')
+      .select('product_id, amount')
       .eq('id', transactionId)
       .single();
 
-    if (txError || !transaction) throw new Error('Transaction not found');
+    if (txError) throw txError;
+    if (!transaction) throw new Error('Transaction not found');
 
-    // Update transaction status
-    const { error: updateError } = await supabase
-      .from('transactions')
-      .update({ status: 'in_escrow' })
-      .eq('id', transactionId);
-
-    if (updateError) throw updateError;
-
-    // Update product status
-    await updateProductStatus(transaction.product_id, 'in_escrow');
+    // Update both transaction and product status
+    await Promise.all([
+      supabase
+        .from('transactions')
+        .update({ status: 'in_escrow' })
+        .eq('id', transactionId),
+      
+      supabase
+        .from('products')
+        .update({ status: 'in_escrow' })
+        .eq('id', transaction.product_id)
+    ]);
 
     // Create escrow wallet entry
     await EscrowService.createEscrowWallet(transactionId, transaction.amount);

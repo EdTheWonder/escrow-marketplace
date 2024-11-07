@@ -66,7 +66,7 @@ export default function TransactionsPage() {
           .from('transactions')
           .select(`
             *,
-            products!inner (*),
+            products!transactions_product_id_fkey (*),
             buyer:profiles!buyer_id (*),
             seller:profiles!seller_id (*),
             messages (*)
