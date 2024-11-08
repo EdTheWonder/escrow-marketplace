@@ -21,7 +21,9 @@ export default function TransactionsPage() {
     async function loadTransactions() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) {
+        if (!mounted) return;
+        
+        if (!user) {
           router.push('/auth/login');
           return;
         }
