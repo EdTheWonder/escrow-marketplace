@@ -66,10 +66,11 @@ export async function createTransaction(data: {
   return transaction;
 }
 
-export async function updateTransactionStatus(id: string, status: string) {
+export async function updateTransactionStatus(productId: string, transactionId: string, status: string) {
   const { error } = await supabase
-    .rpc('sync_transaction_product_status', {
-      p_transaction_id: id,
+    .rpc('sync_product_transaction_status', {
+      p_product_id: productId,
+      p_transaction_id: transactionId,
       p_status: status
     });
 
@@ -128,21 +129,8 @@ export async function handlePaymentVerification(transactionId: string) {
     if (txError) throw txError;
     if (!transaction) throw new Error('Transaction not found');
 
-    // Update both transaction and product status
-    await Promise.all([
-      supabase
-        .from('transactions')
-        .update({ status: 'in_escrow' })
-        .eq('id', transactionId),
-      
-      supabase
-        .from('products')
-        .update({ status: 'in_escrow' })
-        .eq('id', transaction.product_id)
-    ]);
-
-    // Create escrow wallet entry
-    await EscrowService.createEscrowWallet(transactionId, transaction.amount);
+    // Use EscrowService to handle both status updates and wallet creation
+    await EscrowService.holdPayment(transactionId, transaction.amount);
 
     return transaction;
   } catch (error) {
