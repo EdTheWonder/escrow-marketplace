@@ -8,7 +8,6 @@ const supabase = createClient(
 
 export async function confirmDelivery(transactionId: string) {
   try {
-    // Get transaction details first
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .select('*')
@@ -20,15 +19,7 @@ export async function confirmDelivery(transactionId: string) {
     // Release payment to seller
     await EscrowService.releaseToSeller(transactionId);
 
-    // Update product status based on user role
-    await supabase
-      .from('products')
-      .update({ 
-        status: 'sold',
-        sold_at: new Date().toISOString()
-      })
-      .eq('id', transaction.product_id);
-
+    // Product status is updated through releaseToSeller
     return { 
       success: true,
       transaction 

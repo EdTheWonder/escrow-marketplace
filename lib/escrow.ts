@@ -21,15 +21,25 @@ export class EscrowService {
       // Create escrow wallet first
       await this.createEscrowWallet(transactionId, amount);
 
-      // Use RPC to update both statuses atomically
-      const { error } = await supabase
-        .rpc('sync_product_transaction_status', {
-          p_product_id: transaction.product_id,
-          p_transaction_id: transactionId,
-          p_status: 'in_escrow'
-        });
+      // Update transaction status
+      await supabase
+        .from('transactions')
+        .update({ status: 'in_escrow' })
+        .eq('id', transactionId);
 
-      if (error) throw error;
+      // Update product status through API
+      const response = await fetch('/api/products/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: transaction.product_id,
+          status: 'in_escrow'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product status');
+      }
 
       return transaction;
     } catch (error: any) {
@@ -58,7 +68,7 @@ export class EscrowService {
     try {
       const { data: transaction } = await supabase
         .from('transactions')
-        .select('*, transactions(*)')
+        .select('*')
         .eq('id', transactionId)
         .single();
 
@@ -70,17 +80,25 @@ export class EscrowService {
         p_amount: transaction.amount
       });
 
-      // Update all relevant statuses
-      await Promise.all([
-        supabase
-          .from('transactions')
-          .update({ status: 'completed' })
-          .eq('id', transactionId),
-        supabase
-          .from('products')
-          .update({ status: 'sold' })
-          .eq('id', transaction.product_id)
-      ]);
+      // Update transaction status
+      await supabase
+        .from('transactions')
+        .update({ status: 'completed' })
+        .eq('id', transactionId);
+
+      // Update product status through API
+      const response = await fetch('/api/products/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: transaction.product_id,
+          status: 'sold'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product status');
+      }
     } catch (error: any) {
       throw new Error(`Failed to release payment: ${error.message}`);
     }
@@ -102,17 +120,25 @@ export class EscrowService {
         p_amount: transaction.amount
       });
 
-      // Update all relevant statuses
-      await Promise.all([
-        supabase
-          .from('transactions')
-          .update({ status: 'refunded' })
-          .eq('id', transactionId),
-        supabase
-          .from('products')
-          .update({ status: 'available' })
-          .eq('id', transaction.product_id)
-      ]);
+      // Update transaction status
+      await supabase
+        .from('transactions')
+        .update({ status: 'refunded' })
+        .eq('id', transactionId);
+
+      // Update product status through API
+      const response = await fetch('/api/products/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: transaction.product_id,
+          status: 'available'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product status');
+      }
     } catch (error: any) {
       throw new Error(`Failed to process refund: ${error.message}`);
     }
@@ -129,21 +155,30 @@ export class EscrowService {
       if (error) throw new Error('Failed to fetch transaction');
       if (!transaction) throw new Error('Transaction not found');
 
-      // Update all statuses in a transaction
-      await Promise.all([
-        supabase
-          .from('transactions')
-          .update({ 
-            status: 'pending_feedback',
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', transactionId),
-        
-        supabase
-          .from('products')
-          .update({ status: 'sold' })
-          .eq('id', transaction.product_id)
-      ]);
+      // Update transaction status
+      const { error: txError } = await supabase
+        .from('transactions')
+        .update({ 
+          status: 'pending_feedback',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', transactionId);
+
+      if (txError) throw txError;
+
+      // Update product status through API
+      const response = await fetch('/api/products/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: transaction.product_id,
+          status: 'sold'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product status');
+      }
 
       // Handle wallet balance update
       await supabase.rpc('update_wallet_balance', {
@@ -162,16 +197,24 @@ export class EscrowService {
     try {
       console.log('Syncing status:', { productId, transactionId, status });
       
-      const { error } = await supabase
-        .rpc('sync_product_transaction_status', {
-          p_product_id: productId,
-          p_transaction_id: transactionId,
-          p_status: status
-        });
-      
-      if (error) {
-        console.error('Status sync error:', error);
-        throw error;
+      // Update transaction status
+      await supabase
+        .from('transactions')
+        .update({ status })
+        .eq('id', transactionId);
+
+      // Update product status through API
+      const response = await fetch('/api/products/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          status
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product status');
       }
       
       console.log('Status sync completed successfully');

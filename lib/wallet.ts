@@ -71,59 +71,33 @@ export class WalletManager {
   }
 
   static async releaseEscrow(transactionId: string) {
-    const { data: transaction, error } = await supabase
+    const { data: transaction } = await supabase
       .from('transactions')
-      .select(`
-        *,
-        seller:seller_id (
-          id,
-          wallet_id
-        )
-      `)
+      .select('*')
       .eq('id', transactionId)
       .single();
 
-    if (error) {
-      console.error('Transaction query error:', error);
-      throw new Error('Failed to fetch transaction details');
-    }
-
     if (!transaction) throw new Error('Transaction not found');
-    if (!transaction.seller?.id) throw new Error('Seller not found');
-
-    // Create wallet if it doesn't exist
-    const { data: wallet, error: walletError } = await supabase
-      .from('wallets')
-      .upsert({
-        user_id: transaction.seller.id,
-        balance: 0
-      })
-      .select()
-      .single();
-
-    if (walletError) throw walletError;
-
-    // Release funds to seller
-    const { error: releaseError } = await supabase
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        transaction_id: transactionId,
-        type: 'escrow_release',
-        amount: transaction.amount,
-        status: 'completed',
-        metadata: {
-          buyer_id: transaction.buyer_id
-        }
-      });
-
-    if (releaseError) throw releaseError;
 
     // Update transaction status
     await supabase
       .from('transactions')
       .update({ status: 'completed' })
       .eq('id', transactionId);
+
+    // Update product status through API
+    const response = await fetch('/api/products/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: transaction.product_id,
+        status: 'sold'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update product status');
+    }
 
     // Update seller's wallet balance
     await supabase.rpc('update_wallet_balance', {
