@@ -11,7 +11,8 @@ import { Card } from "@/components/ui/card";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,20 +21,47 @@ export default function TransactionsPage() {
     async function loadTransactions() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !mounted) return;
+        if (!user || !mounted) {
+          router.push('/auth/login');
+          return;
+        }
         
+        setCurrentUser(user);
         const data = await getTransactionHistory(user.id);
         if (mounted) {
           setTransactions(data);
         }
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
+        toast.error('Failed to load transactions');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     loadTransactions();
     return () => { mounted = false };
-  }, []);
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <BackButton />
+        <div className="min-h-screen p-4">
+          <div className="container mx-auto max-w-4xl">
+            <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+            <Card className="p-8 text-center">
+              <p>Loading transactions...</p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) return null;
 
   async function handleConfirmDelivery(transactionId: string) {
     try {
@@ -81,9 +109,8 @@ export default function TransactionsPage() {
         <div className="container mx-auto max-w-4xl">
           <h1 className="text-2xl font-bold mb-6">Transactions</h1>
           {transactions.length === 0 ? (
-            <Card className="p-8 text-center bg-white/80 backdrop-blur-sm border border-white/20">
-              <h3 className="text-lg font-medium mb-2">No transactions yet</h3>
-              <p className="text-muted-foreground">Your transaction history will appear here</p>
+            <Card className="p-8 text-center">
+              <p>No transactions found</p>
             </Card>
           ) : (
             <div className="space-y-4">
@@ -91,7 +118,7 @@ export default function TransactionsPage() {
                 <Card 
                   key={transaction.id}
                   className="p-6 cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => handleTransactionClick(transaction.id)}
+                  onClick={() => router.push(`/dashboard/transactions/${transaction.id}`)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -100,7 +127,7 @@ export default function TransactionsPage() {
                         Amount: ₦{transaction.amount}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {user.id === transaction.buyer_id
+                        {currentUser.id === transaction.buyer_id
                           ? `Seller: ${transaction.seller.email}`
                           : `Buyer: ${transaction.buyer.email}`}
                       </p>
@@ -125,7 +152,7 @@ export default function TransactionsPage() {
                       >
                         {transaction.status}
                       </span>
-                      {user.id === transaction.buyer_id && 
+                      {currentUser.id === transaction.buyer_id && 
                        transaction.status === 'in_escrow' && (
                         <div className="flex flex-col gap-2">
                           <Button
@@ -140,7 +167,7 @@ export default function TransactionsPage() {
                           </p>
                         </div>
                       )}
-                      {user.id === transaction.seller_id && 
+                      {currentUser.id === transaction.seller_id && 
                        transaction.status === 'in_escrow' && 
                        transaction.delivery_deadline && 
                        new Date(transaction.delivery_deadline) < new Date() && (
@@ -156,7 +183,7 @@ export default function TransactionsPage() {
                   </div>
                   {transaction.status && 
                    transaction.status === 'in_escrow' && 
-                   user.id === transaction.seller_id && (
+                   currentUser.id === transaction.seller_id && (
                     <div className="mt-2">
                       {transaction.delivery_deadline && (
                         <TransactionCountdown 
