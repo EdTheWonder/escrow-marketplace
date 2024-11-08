@@ -181,18 +181,27 @@ export async function getTransactionById(id: string) {
 }
 
 export async function confirmDelivery(transactionId: string) {
+  console.log('Starting delivery confirmation process for transaction:', transactionId);
+  
   const response = await fetch('/api/delivery/confirm', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ transactionId })
   });
 
+  const data = await response.json();
+  
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to confirm delivery');
+    console.error('Delivery confirmation failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: data
+    });
+    throw new Error(data.error || 'Failed to confirm delivery');
   }
 
-  return response.json();
+  console.log('Delivery confirmation successful:', data);
+  return data;
 }
 
 export async function createDispute(transactionId: string) {

@@ -150,50 +150,64 @@ export class EscrowService {
   }
 
   static async releaseToSeller(transactionId: string) {
+    console.log('Starting release to seller process for transaction:', transactionId);
     try {
-      const { data: transaction, error } = await supabase
+      const { data: transaction, error: txError } = await supabase
         .from('transactions')
-        .select('*')
+        .select('*, products!transactions_product_id_fkey (*)')
         .eq('id', transactionId)
         .single();
 
-      if (error) throw new Error('Failed to fetch transaction');
-      if (!transaction) throw new Error('Transaction not found');
+      if (txError) {
+        console.error('Failed to fetch transaction:', txError);
+        throw txError;
+      }
+      if (!transaction) {
+        console.error('Transaction not found:', transactionId);
+        throw new Error('Transaction not found');
+      }
 
-      // Update transaction status
-      const { error: txError } = await supabase
+      console.log('Updating transaction status to sold...');
+      const { error: updateError } = await supabase
         .from('transactions')
         .update({ 
-          status: 'pending_feedback',
+          status: 'sold',
+          delivery_status: 'delivered',
           completed_at: new Date().toISOString()
         })
         .eq('id', transactionId);
 
-      if (txError) throw txError;
-
-      // Update product status through API
-      const response = await fetch('/api/products/status', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: transaction.product_id,
-          status: 'sold'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update product status');
+      if (updateError) {
+        console.error('Failed to update transaction:', updateError);
+        throw updateError;
       }
 
-      // Handle wallet balance update
-      await supabase.rpc('update_wallet_balance', {
+      console.log('Updating product status to sold...');
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ status: 'sold' })
+        .eq('id', transaction.product_id);
+
+      if (productError) {
+        console.error('Failed to update product:', productError);
+        throw productError;
+      }
+
+      console.log('Updating seller wallet balance...');
+      const { error: walletError } = await supabase.rpc('update_wallet_balance', {
         p_user_id: transaction.seller_id,
         p_amount: transaction.amount
       });
 
+      if (walletError) {
+        console.error('Failed to update wallet:', walletError);
+        throw walletError;
+      }
+
+      console.log('Release to seller completed successfully');
       return true;
     } catch (error) {
-      console.error('Release to seller error:', error);
+      console.error('Release to seller process failed:', error);
       throw error;
     }
   }
