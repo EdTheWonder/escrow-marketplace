@@ -43,7 +43,7 @@ export default function EscrowChannel({ transactionId, allowMediaUpload = false 
   const router = useRouter();
 
   const markMessageAsRead = useCallback(async (messageId: string) => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
     
     await supabase
       .from('messages')

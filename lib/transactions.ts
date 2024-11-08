@@ -10,6 +10,7 @@ const supabase = createClient(
 export type DeliveryMethod = 'meetup' | 'sendbox';
 export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered';
 export type TransactionStatus = 'pending' | 'in_escrow' | 'pending_feedback' | 'sold' | 'refunded' | 'disputed';
+export type ProductStatus = 'available' | 'in_escrow' | 'sold';
 
 export interface Transaction {
   id: string;

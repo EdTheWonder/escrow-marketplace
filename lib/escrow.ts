@@ -18,15 +18,22 @@ export class EscrowService {
 
       if (!transaction) throw new Error('Transaction not found');
 
-      await Promise.all([
-        this.createEscrowWallet(transactionId, amount),
-        this.syncProductAndTransactionStatus(
-          transaction.product_id,
-          transactionId,
-          'in_escrow'
-        )
-      ]);
+      // Create escrow wallet first
+      await this.createEscrowWallet(transactionId, amount);
+
+      // Use RPC to update both statuses atomically
+      const { error } = await supabase
+        .rpc('sync_product_transaction_status', {
+          p_product_id: transaction.product_id,
+          p_transaction_id: transactionId,
+          p_status: 'in_escrow'
+        });
+
+      if (error) throw error;
+
+      return transaction;
     } catch (error: any) {
+      console.error('Hold payment error:', error);
       throw new Error(`Failed to hold payment: ${error.message}`);
     }
   }
@@ -152,13 +159,25 @@ export class EscrowService {
   }
 
   static async syncProductAndTransactionStatus(productId: string, transactionId: string, status: string) {
-    const { error } = await supabase
-      .rpc('sync_product_transaction_status', {
-        p_product_id: productId,
-        p_transaction_id: transactionId,
-        p_status: status
-      });
-    
-    if (error) throw error;
+    try {
+      console.log('Syncing status:', { productId, transactionId, status });
+      
+      const { error } = await supabase
+        .rpc('sync_product_transaction_status', {
+          p_product_id: productId,
+          p_transaction_id: transactionId,
+          p_status: status
+        });
+      
+      if (error) {
+        console.error('Status sync error:', error);
+        throw error;
+      }
+      
+      console.log('Status sync completed successfully');
+    } catch (error) {
+      console.error('Status sync failed:', error);
+      throw error;
+    }
   }
 }

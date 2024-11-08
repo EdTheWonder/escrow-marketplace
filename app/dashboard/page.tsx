@@ -27,6 +27,34 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('product_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        (payload) => {
+          // Update local state when product status changes
+          setProducts(currentProducts => 
+            currentProducts.map(product => 
+              'id' in product && 'id' in payload.new && product.id === payload.new.id
+                ? { ...product, ...payload.new }
+                : product
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+
   async function fetchDashboardData() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
