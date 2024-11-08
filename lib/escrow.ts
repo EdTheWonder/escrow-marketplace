@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { WalletManager } from './wallet';
+import { updateProductStatus } from './products';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,41 +10,45 @@ const supabase = createClient(
 export class EscrowService {
   
   static async holdPayment(transactionId: string, amount: number) {
+    console.log('Starting hold payment process:', { transactionId, amount });
     try {
-      const { data: transaction } = await supabase
+      const { data: transaction, error: txError } = await supabase
         .from('transactions')
         .select('product_id')
         .eq('id', transactionId)
         .single();
 
-      if (!transaction) throw new Error('Transaction not found');
+      if (txError) {
+        console.error('Failed to fetch transaction:', txError);
+        throw txError;
+      }
+      if (!transaction) {
+        console.error('Transaction not found:', transactionId);
+        throw new Error('Transaction not found');
+      }
 
-      // Create escrow wallet first
+      console.log('Creating escrow wallet...');
       await this.createEscrowWallet(transactionId, amount);
+      console.log('Escrow wallet created successfully');
 
-      // Update transaction status
-      await supabase
+      console.log('Updating transaction status to in_escrow...');
+      const { error: updateError } = await supabase
         .from('transactions')
         .update({ status: 'in_escrow' })
         .eq('id', transactionId);
 
-      // Update product status through API
-      const response = await fetch('/api/products/status', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: transaction.product_id,
-          status: 'in_escrow'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update product status');
+      if (updateError) {
+        console.error('Failed to update transaction status:', updateError);
+        throw updateError;
       }
+
+      console.log('Updating product status to in_escrow...');
+      await updateProductStatus(transaction.product_id, 'in_escrow');
+      console.log('Hold payment process completed successfully');
 
       return transaction;
     } catch (error: any) {
-      console.error('Hold payment error:', error);
+      console.error('Hold payment process failed:', error);
       throw new Error(`Failed to hold payment: ${error.message}`);
     }
   }

@@ -24,34 +24,42 @@ export default function PaymentStatus({
   const router = useRouter();
 
   const verifyPayment = useCallback(async () => {
+    console.log('Starting payment verification process:', { 
+      reference, 
+      transactionId, 
+      productId 
+    });
+    
     try {
-      console.log('Starting payment verification with:', { reference });
-      
       const verifyResponse = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          reference,
-          transactionId,
-          productId 
-        })
+        body: JSON.stringify({ reference, transactionId, productId })
       });
 
+      console.log('Verify payment response status:', verifyResponse.status);
       const verifyData = await verifyResponse.json();
-      
+      console.log('Verify payment response data:', verifyData);
+
       if (!verifyResponse.ok) {
+        console.error('Payment verification failed:', verifyData);
         throw new Error(verifyData.error || 'Payment verification failed');
       }
-      
+
+      console.log('Payment verified successfully, updating status...');
       setStatus('success');
-      toast.success('Payment verified successfully!');
+      
+      console.log('Redirecting to transaction page...');
       setTimeout(() => {
         router.push(`/dashboard/transactions/${transactionId}?from=payment`);
         onSuccess?.();
       }, 2000);
-      
+
     } catch (error: any) {
-      console.error('Payment verification error:', error);
+      console.error('Payment verification process failed:', {
+        error: error.message,
+        stack: error.stack
+      });
       setStatus('failed');
       toast.error(error.message);
       setTimeout(() => {

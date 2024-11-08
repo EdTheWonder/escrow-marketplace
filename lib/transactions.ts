@@ -52,19 +52,30 @@ export async function createTransaction(data: {
   delivery_method: DeliveryMethod;
   delivery_fee: number;
 }) {
-  const { data: transaction, error } = await supabase
-    .from('transactions')
-    .insert({
-      ...data,
-      status: 'pending',
-      delivery_status: 'pending',
-      payment_reference: null
-    })
-    .select()
-    .single();
+  console.log('Starting transaction creation:', data);
+  try {
+    const { data: transaction, error } = await supabase
+      .from('transactions')
+      .insert({
+        ...data,
+        status: 'pending',
+        delivery_status: 'pending',
+        payment_reference: null
+      })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return transaction;
+    if (error) {
+      console.error('Transaction creation failed:', error);
+      throw error;
+    }
+    
+    console.log('Transaction created successfully:', transaction);
+    return transaction;
+  } catch (error) {
+    console.error('Transaction creation error:', error);
+    throw error;
+  }
 }
 
 export async function updateTransactionStatus(productId: string, transactionId: string, status: string) {
@@ -97,7 +108,6 @@ export async function getTransactionHistory(userId: string) {
 
 export async function updateTransactionToEscrow(transactionId: string) {
   try {
-    // Get product_id from transaction first
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .select('product_id')
@@ -138,4 +148,58 @@ export async function handlePaymentVerification(transactionId: string) {
     console.error('Payment verification handling error:', error);
     throw error;
   }
+}
+
+export async function getTransactionById(id: string) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(`
+      *,
+      products!transactions_product_id_fkey (
+        title,
+        status
+      ),
+      buyer:buyer_id (
+        email
+      ),
+      seller:seller_id (
+        email
+      ),
+      messages (*)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function confirmDelivery(transactionId: string) {
+  const response = await fetch('/api/delivery/confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to confirm delivery');
+  }
+
+  return response.json();
+}
+
+export async function createDispute(transactionId: string) {
+  const response = await fetch('/api/transactions/dispute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create dispute');
+  }
+
+  return response.json();
 }

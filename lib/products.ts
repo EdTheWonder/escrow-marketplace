@@ -37,18 +37,31 @@ export async function createProduct(data: {
   if (error) throw error;
 }
 
-export async function getProducts() {
-  const { data, error } = await supabase
+export async function getProducts(filters?: {
+  status?: string;
+  seller_id?: string;
+  limit?: number;
+}) {
+  let query = supabase
     .from('products')
     .select(`
       *,
       profiles:seller_id (
         email
       )
-    `)
-    .eq('status', 'available')
-    .order('created_at', { ascending: false });
+    `);
 
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+  if (filters?.seller_id) {
+    query = query.eq('seller_id', filters.seller_id);
+  }
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
@@ -120,17 +133,9 @@ export async function updateProductStatus(productId: string, status: string) {
       .eq('id', productId)
       .single();
     
-    if (fetchError) {
-      console.error('Product fetch error:', fetchError);
-      throw fetchError;
-    }
-    
-    if (!product) {
-      throw new Error('Product not found');
-    }
+    if (fetchError) throw fetchError;
+    if (!product) throw new Error('Product not found');
 
-    console.log('Current product status:', product.status);
-    
     // Then update the status
     const { error: updateError } = await supabase
       .from('products')
@@ -140,12 +145,8 @@ export async function updateProductStatus(productId: string, status: string) {
       })
       .eq('id', productId);
 
-    if (updateError) {
-      console.error('Product update error:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
-    console.log('Product status update completed');
     return true;
   } catch (error) {
     console.error('Product update failed:', error);

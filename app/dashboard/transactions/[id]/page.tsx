@@ -1,46 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from '@supabase/supabase-js';
 import { Card } from "@/components/ui/card";
 import BackButton from "@/components/back-button";
 import EscrowChannel from "@/components/escrow-channel";
 import { useRouter } from "next/navigation";
 import TransactionCountdown from "@/components/transaction-countdown";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-interface Transaction {
-  id: string;
-  status: string;
-  amount: number;
-  delivery_method: string;
-  delivery_fee: number;
-  delivery_status: string;
-  products: {
-    title: string;
-  };
-  buyer: {
-    email: string;
-  };
-  seller: {
-    email: string;
-  };
-  messages?: {
-    id: string;
-    content: string;
-    created_at: string;
-    sender_id: string;
-    recipient_id: string;
-    read_at: string;
-    media_url?: string;
-    media_type?: string;
-  }[];
-  delivery_deadline?: string;
-}
+import { Transaction, getTransactionById } from "@/lib/transactions";
+import { supabase } from "@/lib/supabase";
 
 export default function TransactionDetailsPage({ 
   params,
@@ -53,109 +20,30 @@ export default function TransactionDetailsPage({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        console.log('Current user:', user);
-        
-        if (userError) {
-          console.error('User auth error:', userError);
-          router.push('/auth/login');
-          return;
-        }
-
-        if (!user) {
-          console.log('No user found');
-          router.push('/auth/login');
-          return;
-        }
-        
-        setCurrentUser(user);
-
-        const { data, error } = await supabase
-          .from('transactions')
-          .select(`
-            id,
-            status,
-            amount,
-            delivery_method,
-            delivery_fee,
-            delivery_status,
-            products!transactions_product_id_fkey (
-              title,
-              status
-            ),
-            buyer:buyer_id (
-              email
-            ),
-            seller:seller_id (
-              email
-            ),
-            messages (
-              id,
-              content,
-              created_at,
-              sender_id,
-              recipient_id,
-              read_at,
-              media_url,
-              media_type
-            )
-          `)
-          .eq('id', params.id)
-          .single();
-
-        console.log('Transaction fetch response:', { data, error });
-
-        if (error) {
-          console.error('Transaction fetch error:', error);
-          return;
-        }
-
-        if (data) {
-          console.log('Setting transaction:', data);
-          setTransaction({
-            id: data.id,
-            status: data.status,
-            amount: data.amount,
-            delivery_method: data.delivery_method,
-            delivery_fee: data.delivery_fee,
-            delivery_status: data.delivery_status,
-            products: {
-              title: data.products[0]?.title || ''
-            },
-            buyer: {
-              email: data.buyer[0]?.email || ''
-            },
-            seller: {
-              email: data.seller[0]?.email || ''
-            },
-            messages: data.messages?.map(msg => ({
-              id: msg.id,
-              content: msg.content,
-              created_at: msg.created_at,
-              sender_id: msg.sender_id,
-              recipient_id: msg.recipient_id,
-              read_at: msg.read_at,
-              media_url: msg.media_url,
-              media_type: msg.media_type
-            }))
-          });
-        }
-      } catch (error) {
-        console.error('Error in fetchData:', error);
+  async function fetchData() {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        router.push('/auth/login');
+        return;
       }
+      
+      setCurrentUser(user);
+      const data = await getTransactionById(params.id);
+      setTransaction(data);
+    } catch (error) {
+      console.error('Error fetching transaction:', error);
     }
+  }
 
+  useEffect(() => {
     fetchData();
-  }, [params.id, router]);
+  }, [params.id]);
 
   if (!transaction) return null;
 
-  function fetchData() {
-    throw new Error("Function not implemented.");
-  }
+
 
   return (
     <div className="container mx-auto py-8 px-4">

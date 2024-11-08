@@ -1,110 +1,33 @@
 "use client";
 import { useEffect, useState } from "react";
-import { createClient } from '@supabase/supabase-js';
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Transaction, getTransactionHistory, confirmDelivery, createDispute } from "@/lib/transactions";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import BackButton from "@/components/back-button";
-import { format } from 'date-fns';
+import router from "next/router";
+import { Button } from "@/components/ui/button";
 import TransactionCountdown from "@/components/transaction-countdown";
-import { useRouter } from 'next/navigation';
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-
-interface Transaction {
-  transactions: any;
-  id: string;
-  product_id: string;
-  buyer_id: string;
-  seller_id: string;
-  amount: number;
-  status: string;
-  delivery_method: string;
-  delivery_fee: number;
-  delivery_status: string;
-  created_at: string;
-  completed_at?: string;
-  delivery_deadline?: string;
-  products: {
-    title: string;
-    image_urls: string[];
-    status: string;
-  };
-  buyer: {
-    email: string;
-  };
-  seller: {
-    email: string;
-  };
-}
+import { Card } from "@/components/ui/card";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<any>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    getTransactions();
-  }, []);
 
   async function getTransactions() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user:', user);
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        console.log('User profile:', profile);
-        setUser({ ...user, ...profile });
-
-        const { data, error } = await supabase
-          .from('transactions')
-          .select(`
-            *,
-            products!transactions_product_id_fkey (*),
-            buyer:profiles!buyer_id (*),
-            seller:profiles!seller_id (*),
-            messages (*)
-          `)
-          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-          .in('status', ['in_escrow', 'pending_feedback', 'sold'])
-          .order('created_at', { ascending: false });
-
-        console.log('Transactions fetch response:', { data, error });
-
-        if (error) {
-          console.error('Supabase error:', error);
-          return;
-        }
-
-        if (data) {
-          console.log('Setting transactions:', data);
-          setTransactions(data);
-        }
-      }
+      if (!user) return;
+      
+      const data = await getTransactionHistory(user.id);
+      setTransactions(data);
     } catch (error) {
-      console.error('Error in getTransactions:', error);
+      console.error('Failed to fetch transactions:', error);
     }
   }
 
   async function handleConfirmDelivery(transactionId: string) {
     try {
-      const response = await fetch('/api/delivery/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionId })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to confirm delivery');
-      }
-
+      await confirmDelivery(transactionId);
       toast.success("Delivery confirmed! Payment released to seller.");
       getTransactions();
     } catch (error: any) {
@@ -114,23 +37,17 @@ export default function TransactionsPage() {
 
   async function handleCreateDispute(transactionId: string) {
     try {
-      const response = await fetch('/api/transactions/dispute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionId })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create dispute');
-      }
-
+      await createDispute(transactionId);
       toast.success("Dispute created! Our team will review the transaction.");
       getTransactions();
     } catch (error: any) {
       toast.error(error.message);
     }
   }
+
+  useEffect(() => {
+    getTransactions();
+  }, []);
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
