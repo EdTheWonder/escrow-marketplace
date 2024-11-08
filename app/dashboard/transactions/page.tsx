@@ -4,7 +4,7 @@ import { Transaction, getTransactionHistory, confirmDelivery, createDispute } fr
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import BackButton from "@/components/back-button";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import TransactionCountdown from "@/components/transaction-countdown";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
