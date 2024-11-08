@@ -94,7 +94,7 @@ export async function getTransactionHistory(userId: string) {
     .from('transactions')
     .select(`
       *,
-      products (*),
+      products!transactions_product_id_fkey (*),
       buyers:buyer_id (email),
       sellers:seller_id (email)
     `)

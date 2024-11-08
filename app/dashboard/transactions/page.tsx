@@ -13,23 +13,32 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<any>(null);
 
-  async function getTransactions() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      const data = await getTransactionHistory(user.id);
-      setTransactions(data);
-    } catch (error) {
-      console.error('Failed to fetch transactions:', error);
+  useEffect(() => {
+    let mounted = true;
+    
+    async function loadTransactions() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !mounted) return;
+        
+        const data = await getTransactionHistory(user.id);
+        if (mounted) {
+          setTransactions(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error);
+      }
     }
-  }
+
+    loadTransactions();
+    return () => { mounted = false };
+  }, []);
 
   async function handleConfirmDelivery(transactionId: string) {
     try {
       await confirmDelivery(transactionId);
       toast.success("Delivery confirmed! Payment released to seller.");
-      getTransactions();
+      router.push(`/dashboard/transactions/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -39,15 +48,11 @@ export default function TransactionsPage() {
     try {
       await createDispute(transactionId);
       toast.success("Dispute created! Our team will review the transaction.");
-      getTransactions();
+      router.push(`/dashboard/transactions/${transactionId}`);
     } catch (error: any) {
       toast.error(error.message);
     }
   }
-
-  useEffect(() => {
-    getTransactions();
-  }, []);
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
@@ -157,7 +162,7 @@ export default function TransactionsPage() {
                           deadline={transaction.delivery_deadline}
                           transactionId={transaction.id}
                           isSeller={true}
-                          onExpire={() => getTransactions()}
+                          onExpire={() => router.push(`/dashboard/transactions/${transaction.id}`)}
                         />
                       )}
                     </div>

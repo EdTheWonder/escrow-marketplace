@@ -47,9 +47,20 @@ export default function PurchaseButton({ product }: { product: Product }) {
     getUser();
   }, []);
 
-  // Don't show button if product is sold or user is the buyer
-  if (product.status === 'sold' || product.status === 'in_escrow') {
-    return null;
+  // Don't show button if product is sold/in escrow or if user is the seller
+  if (
+    product.status === 'sold' || 
+    product.status === 'in_escrow' || 
+    (currentUser && currentUser.id === product.seller_id)
+  ) {
+    return (
+      <Button
+        onClick={() => router.push(`/dashboard/products/${product.id}/edit`)}
+        className="w-full"
+      >
+        Edit Listing
+      </Button>
+    );
   }
 
   async function createTransactionAndEscrow() {
