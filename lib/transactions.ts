@@ -95,15 +95,21 @@ export async function getTransactionHistory(userId: string) {
     .select(`
       *,
       products!transactions_product_id_fkey (*),
-      buyers:buyer_id (email),
-      sellers:seller_id (email)
+      buyer:buyer_id (email),
+      seller:seller_id (email)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-    .in('status', ['in_escrow', 'sold'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data;
+
+  // Transform the data to match the expected structure
+  return data?.map(transaction => ({
+    ...transaction,
+    products: transaction.products,
+    buyer: transaction.buyer?.[0] || {},
+    seller: transaction.seller?.[0] || {}
+  })) || [];
 }
 
 export async function updateTransactionToEscrow(transactionId: string) {
