@@ -170,11 +170,11 @@ export class EscrowService {
         throw new Error('Transaction not found');
       }
 
-      console.log('Updating transaction status to sold...');
+      console.log('Updating transaction status to pending_feedback...');
       const { error: updateError } = await supabase
         .from('transactions')
         .update({ 
-          status: 'sold',
+          status: 'pending_feedback',
           delivery_status: 'delivered'
         })
         .eq('id', transactionId);
@@ -184,10 +184,10 @@ export class EscrowService {
         throw updateError;
       }
 
-      console.log('Updating product status to sold...');
+      console.log('Updating product status to pending_feedback...');
       const { error: productError } = await supabase
         .from('products')
-        .update({ status: 'sold' })
+        .update({ status: 'pending_feedback' })
         .eq('id', transaction.product_id);
 
       if (productError) {

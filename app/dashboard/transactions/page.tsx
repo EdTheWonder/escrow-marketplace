@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import TransactionCountdown from "@/components/transaction-countdown";
 import { Card } from "@/components/ui/card";
 import ConfirmDeliveryButton from "@/components/delivery/ConfirmDeliveryButton";
+import FeedbackDialog from "@/components/feedback/FeedbackDialog";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -84,6 +85,8 @@ export default function TransactionsPage() {
         return { text: 'In Escrow', color: 'var(--warning)' };
       case 'pending_feedback':
         return { text: 'Pending Feedback', color: 'var(--warning)' };
+      case 'completed':
+        return { text: 'Completed', color: 'var(--success)' };
       case 'sold':
         return { text: 'Trade Completed', color: 'var(--muted)' };
       default:
@@ -172,6 +175,36 @@ export default function TransactionsPage() {
                         >
                           Open Dispute
                         </Button>
+                      )}
+                      {currentUser.id === transaction.buyer_id && 
+                       transaction.status === 'pending_feedback' && (
+                        <div className="flex flex-col gap-2">
+                          <FeedbackDialog
+                            isOpen={true}
+                            onClose={() => router.refresh()}
+                            transactionId={transaction.id}
+                            recipientId={transaction.seller_id}
+                            recipientRole="seller"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Please leave feedback for the seller
+                          </p>
+                        </div>
+                      )}
+                      {currentUser.id === transaction.seller_id && 
+                       transaction.status === 'pending_feedback' && (
+                        <div className="flex flex-col gap-2">
+                          <FeedbackDialog
+                            isOpen={true}
+                            onClose={() => router.refresh()}
+                            transactionId={transaction.id}
+                            recipientId={transaction.buyer_id}
+                            recipientRole="buyer"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Please leave feedback for the buyer
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -58,13 +58,21 @@ export default function FeedbackDialog({
 
       if (feedbackError) throw feedbackError;
 
-      // Update transaction status to completed
-      const { error: updateError } = await supabase
-        .from('transactions')
-        .update({ status: 'completed' })
-        .eq('id', transactionId);
+      // Check if both parties have left feedback
+      const { data: feedbacks } = await supabase
+        .from('feedback')
+        .select('reviewer_id')
+        .eq('transaction_id', transactionId);
 
-      if (updateError) throw updateError;
+      // If both parties have left feedback, mark as completed
+      if (feedbacks && feedbacks.length === 2) {
+        const { error: updateError } = await supabase
+          .from('transactions')
+          .update({ status: 'completed' })
+          .eq('id', transactionId);
+
+        if (updateError) throw updateError;
+      }
 
       toast.success(`Feedback submitted for ${recipientRole}`);
       router.refresh();
